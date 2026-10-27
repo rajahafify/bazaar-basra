@@ -9,6 +9,8 @@ export interface Rng {
   /** An integer in [min, max], both ends included. */
   int(min: number, max: number): number;
   pick<T>(items: readonly T[]): T;
+  /** The internal state, to save and later resume with createRng(state). */
+  state(): number;
 }
 
 export function createRng(seed: number): Rng {
@@ -28,5 +30,6 @@ export function createRng(seed: number): Rng {
       if (items.length === 0) throw new Error('pick from an empty list');
       return items[Math.floor(next() * items.length)]!;
     },
+    state: () => a,
   };
 }

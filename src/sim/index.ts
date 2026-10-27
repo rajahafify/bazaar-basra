@@ -6,3 +6,5 @@ export * from './costing';
 export * from './packing';
 export * from './customers';
 export * from './ledger';
+export * from './game';
+export * from './day';

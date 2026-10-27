@@ -12,6 +12,8 @@ export interface WeekInput {
   rent: number;
   /** Landed cost of goods spoiled or broken this week. */
   writtenOff: number;
+  /** Cart hire paid for cells left empty (gdd 3.4). Not part of any good's landed cost. */
+  wastedHire?: number;
 }
 
 export interface WeekLedger {
@@ -19,6 +21,7 @@ export interface WeekLedger {
   costOfGoodsSold: number;
   rent: number;
   writtenOff: number;
+  wastedHire: number;
   profit: number;
   cashAtEnd: number;
 }
@@ -29,7 +32,8 @@ export function weekLedger(w: WeekInput): WeekLedger {
     costOfGoodsSold: w.costOfGoodsSold,
     rent: w.rent,
     writtenOff: w.writtenOff,
-    profit: w.revenue - w.costOfGoodsSold - w.rent - w.writtenOff,
+    wastedHire: w.wastedHire ?? 0,
+    profit: w.revenue - w.costOfGoodsSold - w.rent - w.writtenOff - (w.wastedHire ?? 0),
     // Cash moves on what was paid, not on cost of goods sold.
     cashAtEnd: w.cashAtStart - w.stockBought - w.rent + w.revenue,
   };
