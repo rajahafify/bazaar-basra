@@ -3,6 +3,7 @@ import {
   DaySim, EVENTS, FRIDAY, GOOD_IDS, TOWNS, advanceDay, arriveHome, buyUpgrade, canSetOut, chooseNode, chooseOption,
   endFriday, endShopDay, eventOptions, finishEvent, finishPrologue, leaveTown, newGame, notebookRange, restockSlot,
   retrySeason, setOut, setPrice, setSlotGood, settleFriday, startShopDay, stockOf, townBuy, yearEndCount,
+  MAIN_QUESTS, QUEST_MIN_DAYS, checkMainQuest, dayIndex, deliverOrder, questDue, repayDebt,
   type GameState,
 } from '../index';
 
@@ -94,8 +95,8 @@ describe('expeditions', () => {
   });
 
   it('every event has 2 or 3 choices and one that is always open', () => {
-    expect(EVENTS).toHaveLength(30);
-    expect(new Set(EVENTS.map(e => e.id)).size).toBe(30);
+    expect(EVENTS).toHaveLength(33);
+    expect(new Set(EVENTS.map(e => e.id)).size).toBe(33);
     for (const e of EVENTS) {
       expect(e.options.length, e.id).toBeGreaterThanOrEqual(2);
       expect(e.options.length, e.id).toBeLessThanOrEqual(3);
@@ -155,5 +156,51 @@ describe('the year end', () => {
     buyUpgrade(s, 'camel');
     expect(yearEndCount(s).zakatableTotal).toBe(before - 70);
     expect(yearEndCount(s).zakat).toBeCloseTo(yearEndCount(s).zakatableTotal / 40);
+  });
+});
+
+describe('quests', () => {
+  it('side quests are due on a Friday at least a week away, and can be delivered early', () => {
+    const s = fresh();
+    s.dow = 4;
+    const due = questDue(s)!;
+    expect(due % 7).toBe(FRIDAY);
+    expect(due - dayIndex(s)).toBeGreaterThanOrEqual(QUEST_MIN_DAYS);
+    s.orders.push({ from: 'imam', good: 'dates', qty: 4, price: 6, due, written: true, amanah: 4, helps: true });
+    const cash = s.cash;
+    expect(deliverOrder(s, 0)).toBe('filled');
+    expect(s.cash).toBe(cash + 24);
+    expect(s.orders).toHaveLength(0);
+    expect(s.counters.helped).toBe(1);
+  });
+
+  it('cannot deliver early without the goods, and a missed written order costs amanah on its Friday', () => {
+    const s = fresh();
+    s.orders.push({ from: 'purser', good: 'fish', qty: 6, price: 12, due: dayIndex(s) + (FRIDAY - s.dow), written: true, amanah: 2 });
+    expect(deliverOrder(s, 0)).toBeNull();
+    while (s.dow !== FRIDAY) advanceDay(s);
+    const amanah = s.amanah;
+    const r = settleFriday(s);
+    expect(r.ordersFilled[0]!.result).toBe('short');
+    expect(s.amanah).toBeLessThan(amanah);
+    expect(s.orders).toHaveLength(0);
+  });
+
+  it('debts can be repaid early', () => {
+    const s = fresh();
+    s.debts.push({ who: 'friend', amount: 40, due: questDue(s, 14)! });
+    const cash = s.cash;
+    expect(repayDebt(s, 0)).toBe(true);
+    expect(s.cash).toBe(cash - 40);
+    expect(s.debts).toHaveLength(0);
+  });
+
+  it('the main quest pays once, as soon as it is done', () => {
+    const s = fresh();
+    for (const g of MAIN_QUESTS[1].objectives) s.counters[g.counter] = g.target;
+    const cash = s.cash;
+    expect(checkMainQuest(s)).toBe(MAIN_QUESTS[1].reward);
+    expect(checkMainQuest(s)).toBe(0);
+    expect(s.cash).toBe(cash + MAIN_QUESTS[1].reward);
   });
 });

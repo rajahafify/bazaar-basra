@@ -11,7 +11,7 @@ import { zakatCount, type ZakatResult } from './ledger';
 import { createRng, type Rng } from './rng';
 import type { Trip } from './expedition';
 
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 export type Phase =
   | 'prologue'
@@ -48,12 +48,22 @@ export interface Owed {
   amount: number;
 }
 
+/** Who placed a delivery order: a side quest from an event on the road. */
+export type OrderFrom = 'cook' | 'imam' | 'purser' | 'caravan';
+
 export interface Order {
+  from: OrderFrom;
   good: GoodId;
   qty: number;
+  /** Paid per unit on delivery. */
   price: number;
+  /** Day index of the Friday it is due. It can be delivered any morning before. */
   due: number;
   written: boolean;
+  /** Amanah gained when delivered, and lost when missed. */
+  amanah: number;
+  /** Delivering it counts as helping someone. */
+  helps?: boolean;
 }
 
 /** Something that happens on a later morning because of a choice on the road. */
@@ -240,6 +250,7 @@ export function daysBeforeFriday(s: GameState): number {
 
 /** Moves to the next day. Market days lead to the morning, Friday to the rest day. */
 export function advanceDay(s: GameState) {
+  checkMainQuest(s);
   s.dow += 1;
   overnight(s);
   s.phase = s.dow === FRIDAY ? 'friday' : 'morning';
@@ -439,7 +450,7 @@ export interface FridayResult {
   rentPaid: number;
   debtsPaid: number;
   debtsLate: number;
-  ordersFilled: Array<{ order: Order; filled: boolean; backedOut: boolean }>;
+  ordersFilled: Array<{ order: Order; result: OrderResult }>;
   mudarabahPaid: number;
   /** Stock sold at half price to the wholesaler to cover rent. */
   wholesale: { units: number; cash: number };
@@ -470,27 +481,13 @@ export function settleFriday(s: GameState): FridayResult {
   const out: FridayResult = { broke: false, rentPaid: 0, debtsPaid: 0, debtsLate: 0, ordersFilled: [], mudarabahPaid: 0, wholesale: { units: 0, cash: 0 } };
   withRng(s, rng => {
     for (const o of r.ordersDue) {
-      const backedOut = !o.written && rng.chance(0.5);
-      const have = stockOf(s, o.good) >= o.qty;
-      const filled = !backedOut && have;
-      if (filled) {
-        let left = o.qty;
-        const fromStore = Math.min(left, s.store[o.good].qty);
-        const cost = takeStock(s, o.good, fromStore);
-        left -= fromStore;
-        let slotCost = 0;
-        for (const sl of s.slots) {
-          if (left <= 0 || sl.good !== o.good) continue;
-          const n = Math.min(left, sl.qty);
-          const c = sl.qty ? (sl.cost / sl.qty) * n : 0;
-          sl.qty -= n; sl.cost -= c; left -= n; slotCost += c;
-        }
-        const rev = o.qty * o.price;
-        s.cash += rev; s.week_.revenue += rev; s.week_.costOfSold += cost + slotCost;
-        s.counters.revenue += rev; s.counters.sold += o.qty;
-        changeAmanah(s, 2);
-      } else if (!backedOut) changeAmanah(s, -4);
-      out.ordersFilled.push({ order: o, filled, backedOut });
+      let result: OrderResult;
+      if (stockOf(s, o.good) < o.qty) {
+        // A handshake order may be forgotten by both sides; a written one is owed.
+        result = !o.written && rng.chance(0.5) ? 'backedOut' : 'short';
+        if (result === 'short') changeAmanah(s, -Math.max(3, o.amanah + 1));
+      } else result = fillOrder(s, o, rng);
+      out.ordersFilled.push({ order: o, result });
     }
   });
   s.orders = s.orders.filter(o => !r.ordersDue.includes(o));
@@ -529,39 +526,127 @@ export function buyUpgrade(s: GameState, id: UpgradeId): boolean {
   s.upgradesSpent += cost;
   s.counters.upgrades += 1;
   if (id === 'shelf') s.slots.push({ good: null, qty: 0, cost: 0 });
+  checkMainQuest(s);
   return true;
 }
 
-/** Season goals: three per season, rewarded at the season's end. */
-export const GOALS: Readonly<Record<Season, ReadonlyArray<{ counter: keyof Counters; target: number }>>> = {
-  1: [{ counter: 'sold', target: 40 }, { counter: 'trips', target: 3 }, { counter: 'upgrades', target: 1 }],
-  2: [{ counter: 'revenue', target: 500 }, { counter: 'helped', target: 2 }, { counter: 'trips', target: 4 }],
-  3: [{ counter: 'sold', target: 90 }, { counter: 'upgrades', target: 2 }, { counter: 'helped', target: 3 }],
-  4: [{ counter: 'revenue', target: 1200 }, { counter: 'trips', target: 5 }, { counter: 'helped', target: 3 }],
-};
-export const GOAL_REWARD = 25;
+// ---------- quests ----------
 
-export function goalsDone(s: GameState): boolean[] {
-  return GOALS[s.season].map(g => s.counters[g.counter] >= g.target);
+export interface MainQuest {
+  objectives: ReadonlyArray<{ counter: keyof Counters; target: number }>;
+  /** Paid by the merchants' guild the moment every objective is met. */
+  reward: number;
+}
+
+/** The main quest: one chapter a season, all of its objectives counted within that season. */
+export const MAIN_QUESTS: Readonly<Record<Season, MainQuest>> = {
+  1: { objectives: [{ counter: 'sold', target: 40 }, { counter: 'trips', target: 3 }, { counter: 'upgrades', target: 1 }], reward: 60 },
+  2: { objectives: [{ counter: 'revenue', target: 500 }, { counter: 'helped', target: 2 }, { counter: 'trips', target: 4 }], reward: 90 },
+  3: { objectives: [{ counter: 'sold', target: 90 }, { counter: 'upgrades', target: 2 }, { counter: 'helped', target: 3 }], reward: 120 },
+  4: { objectives: [{ counter: 'revenue', target: 1200 }, { counter: 'trips', target: 5 }, { counter: 'helped', target: 3 }], reward: 150 },
+};
+
+export function mainProgress(s: GameState): boolean[] {
+  return MAIN_QUESTS[s.season].objectives.map(g => s.counters[g.counter] >= g.target);
+}
+
+export function mainQuestDone(s: GameState): boolean {
+  return s.flags.mainDone === s.season;
+}
+
+/** Pays the main quest's reward once, as soon as every objective is met. */
+export function checkMainQuest(s: GameState): number {
+  if (mainQuestDone(s) || !mainProgress(s).every(Boolean)) return 0;
+  const reward = MAIN_QUESTS[s.season].reward;
+  s.flags.mainDone = s.season;
+  s.cash += reward;
+  s.notices.push({ key: 'notice.mainDone', vars: { n: reward } });
+  return reward;
+}
+
+/** Side quests open at once: orders and debts. */
+export const MAX_SIDE_QUESTS = 4;
+/** A side quest always gives at least a full week. */
+export const QUEST_MIN_DAYS = 7;
+/** Day index of the year's last Friday. */
+export const LAST_FRIDAY = 4 * WEEKS_PER_SEASON * 7 - 1;
+
+export function sideQuestCount(s: GameState): number {
+  return s.orders.length + s.debts.length;
+}
+
+/** The first Friday at least `days` from today, or null if that is past the year's end. */
+export function questDue(s: GameState, days = QUEST_MIN_DAYS): number | null {
+  const d = dayIndex(s) + days;
+  const due = d + ((FRIDAY - (d % 7) + 7) % 7);
+  return due <= LAST_FRIDAY ? due : null;
+}
+
+/** Whether a new side quest can be offered now. */
+export function canOfferQuest(s: GameState): boolean {
+  return sideQuestCount(s) < MAX_SIDE_QUESTS && questDue(s) !== null;
+}
+
+export type OrderResult = 'filled' | 'backedOut' | 'short';
+
+/** Hands over the goods and takes payment. A handshake buyer may back out. */
+function fillOrder(s: GameState, o: Order, rng: Rng): OrderResult {
+  if (stockOf(s, o.good) < o.qty) return 'short';
+  if (!o.written && rng.chance(0.3)) return 'backedOut';
+  let left = o.qty;
+  const fromStore = Math.min(left, s.store[o.good].qty);
+  let cost = takeStock(s, o.good, fromStore);
+  left -= fromStore;
+  for (const sl of s.slots) {
+    if (left <= 0 || sl.good !== o.good) continue;
+    const n = Math.min(left, sl.qty);
+    const c = sl.qty ? (sl.cost / sl.qty) * n : 0;
+    sl.qty -= n; sl.cost -= c; left -= n; cost += c;
+  }
+  const rev = o.qty * o.price;
+  s.cash += rev; s.week_.revenue += rev; s.week_.costOfSold += cost;
+  s.counters.revenue += rev; s.counters.sold += o.qty;
+  changeAmanah(s, o.amanah);
+  if (o.helps) { s.counters.helped += 1; s.flags.helpedTotal = (s.flags.helpedTotal ?? 0) + 1; }
+  return 'filled';
+}
+
+/** Delivers an order before its Friday. Needs the goods in the storeroom or on the slots. */
+export function deliverOrder(s: GameState, i: number): OrderResult | null {
+  const o = s.orders[i];
+  if (!o || stockOf(s, o.good) < o.qty) return null;
+  const result = withRng(s, rng => fillOrder(s, o, rng));
+  s.orders.splice(i, 1);
+  return result;
+}
+
+/** Pays a debt back before it is due. */
+export function repayDebt(s: GameState, i: number): boolean {
+  const d = s.debts[i];
+  if (!d || s.cash < d.amount) return false;
+  s.cash -= d.amount;
+  s.debts.splice(i, 1);
+  changeAmanah(s, 1);
+  return true;
 }
 
 export interface WeekEnd {
   seasonEnded: boolean;
-  goalReward: number;
+  /** Whether this season's main quest was finished. */
+  mainDone: boolean;
   yearEnded: boolean;
 }
 
 /** After Friday: on to Saturday, a new season, or the year end. */
 export function endFriday(s: GameState): WeekEnd {
-  const out: WeekEnd = { seasonEnded: false, goalReward: 0, yearEnded: false };
+  checkMainQuest(s);
+  const out: WeekEnd = { seasonEnded: false, mainDone: mainQuestDone(s), yearEnded: false };
   s.wanted = goodsRecord(() => 0);
   s.week_ = emptyWeek(s.amanah);
   s.week += 1;
   s.dow = 0;
   if (s.week > WEEKS_PER_SEASON) {
     out.seasonEnded = true;
-    out.goalReward = goalsDone(s).filter(Boolean).length * GOAL_REWARD;
-    s.cash += out.goalReward;
     s.counters = emptyCounters();
     s.week = 1;
     if (s.season === 4) {

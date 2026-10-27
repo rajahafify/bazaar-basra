@@ -54,7 +54,7 @@
     "open": "Open the shop",
     "setOut": "Set out",
     "notebook": "Notebook",
-    "goals": "Goals",
+    "goals": "Quests",
     "store": "Storeroom",
     "storeEmpty": "Empty",
     "wanted": "Asked for this week",
@@ -64,7 +64,8 @@
     "nextSetOut": "Your shelves are nearly bare. Set out to buy more.",
     "nextFriday": "Friday is near. Keep {n} dirham for the rent.",
     "nextBroke": "Not enough for rent yet. Sell what you have.",
-    "rent": "Rent on Friday: {n}"
+    "rent": "Rent on Friday: {n}",
+    "nextQuest": "A quest is due this Friday. Check your quests."
   },
   "notices": {
     "badFish": "A customer came back with your bad fish. You paid {n} back.",
@@ -77,7 +78,8 @@
     "debtorPays": "The merchant who owed you paid {n} dirham.",
     "teacher": "The teacher sends his students to your stall, with {n} dirham of thanks.",
     "traveller": "The traveller you helped came back with a gift of {n} dirham.",
-    "brother": "You delivered the goods to the traveller's brother. He becomes a regular."
+    "brother": "You delivered the goods to the traveller's brother. He becomes a regular.",
+    "mainDone": "The merchants' guild pays you {n} dirham. You finished this season's main quest."
   },
   "shop": {
     "setupHint": "Tap a slot to choose a good. Set prices with − and +.",
@@ -366,7 +368,7 @@
     },
     "bigOrder": {
       "title": "A big order",
-      "body": "A cook wants 10 sacks of salt at 7 each, delivered next Friday.",
+      "body": "A cook wants {qty} sacks of salt at {price} each. Bring them any morning within {days} days.",
       "a": "Agree, in writing",
       "b": "Agree on a handshake",
       "c": "Decline",
@@ -516,6 +518,39 @@
         "b": "You keep all {n} dirham."
       },
       "lesson": "Buried treasure (rikaz) owes one fifth at once. Unlike zakat, there is no year to wait."
+    },
+    "purser": {
+      "title": "The ship's purser",
+      "body": "A purser loading a ship for India needs {qty} {good} at {price} each, within {days} days.",
+      "a": "Agree, in writing",
+      "b": "Decline",
+      "out": {
+        "a": "He writes the order down. Bring the goods to the stall.",
+        "b": "He asks the next caravan."
+      },
+      "lesson": "\"O you who believe, fulfil your contracts\" (Al-Ma'idah 5:1)."
+    },
+    "caravanMaster": {
+      "title": "The caravan master",
+      "body": "A caravan leaving for Damascus needs {qty} {good} at {price} each, within {days} days.",
+      "a": "Agree, in writing",
+      "b": "Decline",
+      "out": {
+        "a": "The deal is written and witnessed.",
+        "b": "He nods and moves on."
+      },
+      "lesson": "You may promise goods you don't have yet if the amount, price and date are clear. Then keep your word."
+    },
+    "mosqueKitchen": {
+      "title": "The mosque kitchen",
+      "body": "The imam feeds the poor after Jumu'ah. He asks for {qty} baskets of dates at {price} each, within {days} days.",
+      "a": "Promise to bring them",
+      "b": "Not this time",
+      "out": {
+        "a": "He thanks you and writes your name down.",
+        "b": "He understands."
+      },
+      "lesson": "Feeding the hungry is among the best of deeds. A promise is a trust to keep."
     }
   },
   "change": {
@@ -523,7 +558,8 @@
     "cash": "{n} dirham",
     "supplies": "{n} supplies",
     "amanah": "{n} amanah",
-    "good": "{n} {good}"
+    "good": "{n} {good}",
+    "quest": "New quest"
   },
   "friday": {
     "title": "Friday",
@@ -538,7 +574,7 @@
     "partner": "Paid to the widow",
     "wholesale": "Sold {n} goods to the wholesaler at half price",
     "orderFilled": "Order filled: {qty} {good}",
-    "orderBackedOut": "The cook backed out of the handshake order",
+    "orderBackedOut": "A buyer backed out of a handshake order",
     "orderShort": "You did not have the {good} you promised",
     "cash": "Cash in the chest",
     "upgrades": "The carpenter and the caravan master",
@@ -558,7 +594,7 @@
     },
     "buy": "{n}",
     "owned": "Done",
-    "goals": "Season goals",
+    "goals": "Main quest",
     "goalNames": {
       "sold": "Sell {n} goods",
       "trips": "Make {n} trips",
@@ -566,11 +602,11 @@
       "helped": "Help {n} people",
       "revenue": "Take {n} dirham in sales"
     },
-    "goalReward": "{n} dirham from the merchants' guild for each goal met.",
     "next": "Next week",
     "seasonTitle": "The end of {season}",
-    "seasonReward": "The guild pays you {n} dirham for your goals.",
-    "yearEnd": "To the bayt al-mal"
+    "yearEnd": "To the bayt al-mal",
+    "mainDone": "You finished the main quest. The guild paid you {n} dirham.",
+    "mainMissed": "The main quest wasn't finished this season. A new one starts now."
   },
   "broke": {
     "title": "The stall is lost",
@@ -650,5 +686,47 @@
     "share": "Share",
     "again": "Play again",
     "shareText": "My year at the Basra bazaar: {profit} dirham profit, amanah {amanah}, {zakat} dirham zakat paid."
+  },
+  "quests": {
+    "title": "Quests",
+    "main": "Main quest",
+    "side": "Side quests",
+    "mainTitles": [
+      "Stand on your own",
+      "A name in Basra",
+      "The road to Mada'in",
+      "Your uncle's ledger"
+    ],
+    "mainBody": [
+      "Show the bazaar your uncle's stall is in good hands.",
+      "Grow your trade and help people on the road.",
+      "Sell more, build up the stall, keep helping.",
+      "A full year of honest trade. Finish strong, then count your zakat."
+    ],
+    "reward": "Reward {n} dirham",
+    "done": "Complete",
+    "none": "No side quests yet. People on the road may ask you for goods.",
+    "order": {
+      "cook": "Bring {qty} {good} to the cook",
+      "imam": "Bring {qty} {good} to the mosque kitchen",
+      "purser": "Bring {qty} {good} to the ship's purser",
+      "caravan": "Bring {qty} {good} to the caravan master"
+    },
+    "repay": {
+      "lender": "Repay {n} dirham to the moneylender",
+      "friend": "Repay {n} dirham to your uncle's friend",
+      "widow": "Repay {n} dirham to the widow"
+    },
+    "pays": "Pays {n} each",
+    "handshake": "Handshake only",
+    "have": "You have {a}/{b}",
+    "due": "Due Friday, in {n} days",
+    "dueToday": "Due today",
+    "deliver": "Deliver",
+    "repayBtn": "Repay",
+    "delivered": "Delivered. You were paid {n} dirham.",
+    "backedOut": "The buyer backed out. Nothing was written down.",
+    "repaid": "Debt repaid early. Your name is good in the bazaar.",
+    "rule": "Each side quest gives at least a week. Finish it early any morning, or it is settled on its Friday."
   }
 }

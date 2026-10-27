@@ -1,9 +1,11 @@
-// The 30 events of the road. Each has two or three choices; each choice changes money, supplies,
+// The 33 events of the road. Each has two or three choices; each choice changes money, supplies,
 // cargo, time or amanah, and some set up something for a later day. The text lives in the
 // language files under events.<id>; the lesson line under events.<id>.lesson.
 
-import { GOODS, RIKAZ_RATE, seasonPrice, type GoodId, type Season } from './data';
-import { caravanSpace, type GameState, type Pending } from './game';
+import { GOODS, RIKAZ_RATE, TOWNS, TOWN_IDS, seasonPrice, type GoodId, type Season } from './data';
+import {
+  LAST_FRIDAY, caravanSpace, canOfferQuest, dayIndex, questDue, type Debt, type GameState, type Order, type Pending,
+} from './game';
 import type { Trip } from './expedition';
 import type { Rng } from './rng';
 
@@ -26,6 +28,12 @@ export interface EventCtx {
   helped(): void;
   later(p: Pending): void;
   today(): number;
+  /** Numbers rolled when the stop was reached, shown in the event's text. */
+  vars: Record<string, string | number>;
+  /** Takes on a delivery order: a side quest due on the first Friday a week or more away. */
+  order(o: Omit<Order, 'due'>): void;
+  /** Takes on a debt, due on the first Friday at least this many days away. */
+  debt(who: Debt['who'], amount: number, days: number): void;
 }
 
 export interface EventOption {
@@ -41,6 +49,8 @@ export interface EventDef {
   minSeason?: Season;
   /** Whether the event can happen now. */
   when?: (s: GameState, t: Trip) => boolean;
+  /** Rolls the numbers the event's text shows, once, when the stop is reached. */
+  setup?: (s: GameState, rng: Rng) => Record<string, string | number>;
   options: EventOption[];
 }
 
@@ -68,6 +78,26 @@ function giveFood(c: EventCtx, n: number) {
 
 const fair = (s: GameState, g: GoodId) => Math.round(seasonPrice(g, s.season));
 const WEEK = 7;
+
+/** Days until a new side quest would be due. */
+const questDays = (s: GameState) => (questDue(s) ?? LAST_FRIDAY) - dayIndex(s);
+
+/** Goods sold in the towns open this season, rare ones included. */
+function openGoods(s: GameState): GoodId[] {
+  const out = new Set<GoodId>();
+  for (const id of TOWN_IDS) if (s.season >= TOWNS[id].opens) for (const x of TOWNS[id].sells) out.add(x.good);
+  return [...out];
+}
+
+/** An order for a good from the open towns, priced above fair so it is worth the trip. */
+function rollOrder(s: GameState, rng: Rng, pool: readonly GoodId[], markup: number) {
+  const open = openGoods(s);
+  const goods = pool.filter(g => open.includes(g));
+  const good = rng.pick(goods.length ? goods : open);
+  const dear = GOODS[good].fair >= 30;
+  const qty = dear ? rng.int(3, 4) : rng.int(6, 10);
+  return { good, qty, price: Math.round(fair(s, good) * markup), days: questDays(s) };
+}
 
 // ---------- the events ----------
 
@@ -188,21 +218,21 @@ export const EVENTS: readonly EventDef[] = [
   },
   {
     id: 'moneylender', kind: 'trader',
-    when: s => !s.debts.some(d => d.who === 'lender'),
+    when: s => canOfferQuest(s) && !s.debts.some(d => d.who === 'lender'),
     options: [
-      { id: 'a', resolve: c => { c.cash(50); c.amanah(-5); c.s.debts.push({ who: 'lender', amount: 60, due: c.today() + 2 * WEEK }); } },
+      { id: 'a', resolve: c => { c.cash(50); c.amanah(-5); c.debt('lender', 60, 2 * WEEK); } },
       { id: 'b', resolve: c => { c.amanah(1); } },
     ],
   },
   {
     id: 'friendlyLoan', kind: 'trader',
-    when: s => !s.debts.some(d => d.who === 'friend'),
+    when: s => canOfferQuest(s) && !s.debts.some(d => d.who === 'friend'),
     options: [
-      { id: 'a', resolve: c => { c.cash(40); c.amanah(1); c.s.debts.push({ who: 'friend', amount: 40, due: c.today() + 2 * WEEK }); } },
+      { id: 'a', resolve: c => { c.cash(40); c.amanah(1); c.debt('friend', 40, 2 * WEEK); } },
       { id: 'b', resolve: c => {
         c.cash(40);
         const disputed = c.rng.chance(0.5);
-        c.s.debts.push({ who: 'friend', amount: disputed ? 55 : 40, due: c.today() + 2 * WEEK });
+        c.debt('friend', disputed ? 55 : 40, 2 * WEEK);
         if (disputed) c.later({ day: c.today() + 2 * WEEK - 1, kind: 'claim', key: 'notice.loanDispute' });
       } },
       { id: 'c', resolve: () => {} },
@@ -240,11 +270,40 @@ export const EVENTS: readonly EventDef[] = [
   },
   {
     id: 'bigOrder', kind: 'trader',
-    when: s => s.orders.length === 0,
+    when: s => canOfferQuest(s) && !s.orders.some(o => o.from === 'cook'),
+    setup: s => ({ qty: 10, price: fair(s, 'salt') + 2, days: questDays(s) }),
     options: [
-      { id: 'a', resolve: c => { c.s.orders.push({ good: 'salt', qty: 10, price: 7, due: nextFriday(c.s) + WEEK, written: true }); } },
-      { id: 'b', resolve: c => { c.s.orders.push({ good: 'salt', qty: 10, price: 7, due: nextFriday(c.s) + WEEK, written: false }); } },
+      { id: 'a', resolve: c => { c.order({ from: 'cook', good: 'salt', qty: 10, price: Number(c.vars.price), written: true, amanah: 2 }); } },
+      { id: 'b', resolve: c => { c.order({ from: 'cook', good: 'salt', qty: 10, price: Number(c.vars.price), written: false, amanah: 2 }); } },
       { id: 'c', resolve: () => {} },
+    ],
+  },
+  {
+    id: 'purser', kind: 'trader',
+    when: s => canOfferQuest(s) && !s.orders.some(o => o.from === 'purser'),
+    setup: (s, rng) => rollOrder(s, rng, ['fish', 'salt', 'vinegar', 'beef', 'dates'], 1.35),
+    options: [
+      { id: 'a', resolve: c => { c.order({ from: 'purser', good: c.vars.good as GoodId, qty: Number(c.vars.qty), price: Number(c.vars.price), written: true, amanah: 2 }); } },
+      { id: 'b', resolve: () => {} },
+    ],
+  },
+  {
+    id: 'caravanMaster', kind: 'trader', minSeason: 2,
+    when: s => canOfferQuest(s) && !s.orders.some(o => o.from === 'caravan'),
+    setup: (s, rng) => rollOrder(s, rng, ['vinegar', 'beef', 'cardamom', 'saffron'], 1.3),
+    options: [
+      { id: 'a', resolve: c => { c.order({ from: 'caravan', good: c.vars.good as GoodId, qty: Number(c.vars.qty), price: Number(c.vars.price), written: true, amanah: 2 }); } },
+      { id: 'b', resolve: () => {} },
+    ],
+  },
+
+  {
+    id: 'mosqueKitchen', kind: 'people',
+    when: s => canOfferQuest(s) && !s.orders.some(o => o.from === 'imam'),
+    setup: (s, rng) => ({ qty: rng.int(6, 8), price: fair(s, 'dates'), days: questDays(s) }),
+    options: [
+      { id: 'a', resolve: c => { c.order({ from: 'imam', good: 'dates', qty: Number(c.vars.qty), price: Number(c.vars.price), written: true, amanah: 4, helps: true }); } },
+      { id: 'b', resolve: () => {} },
     ],
   },
 
@@ -361,9 +420,6 @@ function rumourGood(c: EventCtx): GoodId {
   return known[c.trip.flags[key]!]!;
 }
 
-function nextFriday(s: GameState): number {
-  return ((s.season - 1) * 4 + (s.week - 1)) * 7 + 6;
-}
 
 const BY_ID = new Map(EVENTS.map(e => [e.id, e]));
 

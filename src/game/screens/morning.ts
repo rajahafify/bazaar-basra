@@ -4,8 +4,9 @@
 import { L, fmt, money } from '../../i18n';
 import { emit } from '../../platform/bridge';
 import {
-  GOALS, GOOD_IDS, SUPPLY_PRICE, TOWNS, TOWN_IDS, canSetOut, caravanSpace, daysBeforeFriday, goodsInStore,
-  notebookRange, rentDue, setOut, stockOf, suggestedSupplies, supplyCap, tripDays, type TownId,
+  GOOD_IDS, MAIN_QUESTS, SUPPLY_PRICE, TOWNS, TOWN_IDS, canSetOut, caravanSpace, dayIndex, daysBeforeFriday,
+  deliverOrder, goodsInStore, mainQuestDone, notebookRange, rentDue, repayDebt, setOut, sideQuestCount, stockOf,
+  suggestedSupplies, supplyCap, tripDays, type GoodId, type TownId,
 } from '../../sim';
 import type { Draw } from '../../ui/draw';
 import { UI } from '../../world/palette';
@@ -13,7 +14,7 @@ import type { App, Screen } from '../app';
 import { ShopScreen } from './shop';
 import { TripScreen } from './trip';
 
-type Mode = 'home' | 'notebook' | 'goals' | 'setout';
+type Mode = 'home' | 'notebook' | 'quests' | 'setout';
 
 export class MorningScreen implements Screen {
   camera = 'bazaar' as const;
@@ -38,6 +39,8 @@ export class MorningScreen implements Screen {
     const units = GOOD_IDS.reduce((a, g) => a + stockOf(s, g), 0);
     const rent = rentDue(s);
     if (daysBeforeFriday(s) <= 2 && s.cash < rent) return units ? t.nextBroke : fmt(t.nextFriday, { n: rent });
+    const friday = dayIndex(s) + daysBeforeFriday(s);
+    if (s.orders.some(o => o.due <= friday) || s.debts.some(d => d.due <= friday)) return t.nextQuest;
     if (units < 4) return t.nextSetOut;
     if (daysBeforeFriday(s) <= 2) return fmt(t.nextFriday, { n: rent });
     return t.nextShop;
@@ -51,7 +54,7 @@ export class MorningScreen implements Screen {
 
     if (s.notices.length) { this.drawNotice(d); return; }
     if (this.mode === 'notebook') { this.drawNotebook(d); return; }
-    if (this.mode === 'goals') { this.drawGoals(d); return; }
+    if (this.mode === 'quests') { this.drawQuests(d); return; }
     if (this.mode === 'setout') { this.drawSetOut(d); return; }
 
     app.crier(d, this.nextStep(), 116);
@@ -74,7 +77,8 @@ export class MorningScreen implements Screen {
     d.button('open', 16, 548, 160, 48, t.open, { size: 17, fill: anything ? UI.gold : UI.parchDark });
     d.button('setout', 184, 548, 160, 48, t.setOut, { size: 17 });
     d.button('notebook', 16, 602, 104, 26, t.notebook, { size: 12, fill: UI.parchDark });
-    d.button('goals', 128, 602, 104, 26, t.goals, { size: 12, fill: UI.parchDark });
+    const n = sideQuestCount(s);
+    d.button('quests', 128, 602, 104, 26, n ? `${t.goals} · ${n}` : t.goals, { size: 12, fill: n ? UI.gold : UI.parchDark });
   }
 
   private drawNotice(d: Draw) {
@@ -106,22 +110,56 @@ export class MorningScreen implements Screen {
     d.button('close', 120, 570, 120, 40, L().close, { size: 15, fill: UI.parchDark });
   }
 
-  private drawGoals(d: Draw) {
-    const s = this.app.s!, t = L().friday;
+  private drawQuests(d: Draw) {
+    const s = this.app.s!, t = L().quests, f = L().friday;
     d.dim(0.35);
-    d.panel(24, 170, 312, 300);
-    d.text(`${t.goals} · ${L().seasons[s.season - 1]}`, 180, 198, { size: 18, font: 'head', align: 'center' });
-    GOALS[s.season].forEach((g, i) => {
-      const y = 236 + i * 52;
+    d.panel(10, 116, 340, 514);
+    d.text(t.title, 180, 140, { size: 19, font: 'head', align: 'center' });
+    // The main quest: this season's chapter.
+    const main = MAIN_QUESTS[s.season], done = mainQuestDone(s);
+    d.panel(20, 156, 320, 172, done ? '#e3ecd0' : '#f6e3b4', UI.gold);
+    d.text(t.main.toUpperCase(), 32, 172, { size: 10, weight: 800, color: UI.inkSoft });
+    d.text(done ? t.done : fmt(t.reward, { n: main.reward }), 328, 172, { size: 11, align: 'right', weight: 800, color: done ? UI.green : UI.inkSoft });
+    d.text(t.mainTitles[s.season - 1]!, 32, 192, { size: 16, font: 'head' });
+    d.para(t.mainBody[s.season - 1]!, 32, 212, 296, { size: 12, color: UI.inkSoft, align: 'left' }, 15);
+    main.objectives.forEach((g, i) => {
+      const y = 250 + i * 25;
       const have = Math.min(g.target, Math.round(s.counters[g.counter]));
-      const done = have >= g.target;
-      d.text(fmt(t.goalNames[g.counter], { n: g.target }), 44, y, { size: 14, color: done ? UI.green : UI.ink });
-      d.ctx.fillStyle = UI.parchDark; d.rr(44, y + 14, 220, 8, 4); d.ctx.fill();
-      d.ctx.fillStyle = done ? UI.green : UI.gold; d.rr(44, y + 14, 220 * (have / g.target), 8, 4); d.ctx.fill();
-      d.text(`${have}/${g.target}`, 316, y + 18, { size: 12, align: 'right', color: UI.inkSoft });
+      const ok = have >= g.target;
+      d.text(fmt(f.goalNames[g.counter], { n: g.target }), 32, y, { size: 12.5, color: ok ? UI.green : UI.ink });
+      d.ctx.fillStyle = UI.parchDark; d.rr(32, y + 9, 230, 6, 3); d.ctx.fill();
+      d.ctx.fillStyle = ok ? UI.green : UI.gold; d.rr(32, y + 9, 230 * (have / g.target), 6, 3); d.ctx.fill();
+      d.text(`${have}/${g.target}`, 328, y + 6, { size: 11.5, align: 'right', color: UI.inkSoft });
     });
-    d.para(t.goalReward, 180, 398, 270, { size: 12, align: 'center', color: UI.inkSoft }, 16);
-    d.button('close', 120, 420, 120, 40, L().close, { size: 15, fill: UI.parchDark });
+    // Side quests, from the road.
+    d.text(t.side.toUpperCase(), 32, 344, { size: 10, weight: 800, color: UI.inkSoft });
+    const today = dayIndex(s);
+    const cards: Array<{ id: string; text: string; sub: string; ready: boolean; btn: string; good?: GoodId }> = [];
+    s.orders.forEach((o, i) => {
+      const have = stockOf(s, o.good);
+      cards.push({
+        id: `order-${i}`, ready: have >= o.qty, btn: t.deliver, good: o.good,
+        text: fmt(t.order[o.from], { qty: o.qty, good: L().goods[o.good] }),
+        sub: [o.due <= today ? t.dueToday : fmt(t.due, { n: o.due - today }), fmt(t.pays, { n: o.price }), fmt(t.have, { a: Math.min(have, o.qty), b: o.qty }), o.written ? '' : t.handshake].filter(Boolean).join(' · '),
+      });
+    });
+    s.debts.forEach((dbt, i) => cards.push({
+      id: `debt-${i}`, ready: s.cash >= dbt.amount, btn: t.repayBtn,
+      text: fmt(t.repay[dbt.who], { n: dbt.amount }),
+      sub: dbt.due <= today ? t.dueToday : fmt(t.due, { n: dbt.due - today }),
+    }));
+    if (!cards.length) d.para(t.none, 180, 380, 280, { size: 13, align: 'center', color: UI.inkSoft }, 17);
+    cards.forEach((c, i) => {
+      const y = 354 + i * 56;
+      d.panel(20, y, 320, 50);
+      if (c.good) d.goodIcon(c.good, 40, y + 25, 0.5);
+      else d.coin(40, y + 25, 9);
+      d.text(c.text, 60, y + 17, { size: 12.5, font: 'head', maxWidth: 196 });
+      d.text(c.sub, 60, y + 36, { size: 10.5, color: UI.inkSoft, maxWidth: 196 });
+      d.button(c.id, 262, y + 9, 70, 32, c.btn, { size: 13, disabled: !c.ready });
+    });
+    if (cards.length < 4) d.para(t.rule, 180, 354 + Math.max(1, cards.length) * 56 + 22, 290, { size: 11, align: 'center', color: UI.inkSoft }, 14);
+    d.button('close', 120, 584, 120, 36, L().close, { size: 15, fill: UI.parchDark });
   }
 
   private drawSetOut(d: Draw) {
@@ -190,7 +228,19 @@ export class MorningScreen implements Screen {
       return;
     }
     if (id === 'notebook') this.mode = 'notebook';
-    if (id === 'goals') this.mode = 'goals';
+    if (id === 'quests') this.mode = 'quests';
+    if (this.mode === 'quests') {
+      const t = L().quests;
+      if (id.startsWith('order-')) {
+        const o = s.orders[Number(id.slice(6))];
+        const r = o ? deliverOrder(s, Number(id.slice(6))) : null;
+        if (o && r === 'filled') app.toast(fmt(t.delivered, { n: money(o.qty * o.price) }));
+        if (r === 'backedOut') app.toast(t.backedOut);
+        if (r) { app.world.setShelves(s.slots.map(sl => (sl.qty > 0 ? sl.good : null))); app.save(); }
+      }
+      if (id.startsWith('debt-') && repayDebt(s, Number(id.slice(5)))) { app.toast(t.repaid); app.save(); }
+      return;
+    }
     if (id === 'setout') this.openSetOut();
     if (id === 'open') app.go(new ShopScreen(app));
   }

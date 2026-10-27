@@ -1,13 +1,13 @@
 // Friday: the market is closed. The week's ledger, rent and debts, then the carpenter and the
-// caravan master for upgrades. At a season's end the guild pays for goals met. If the rent
+// caravan master for upgrades, and the season's main quest. If the rent
 // can't be paid even after selling stock to the wholesaler, the stall is lost.
 
 import { L, fmt, money } from '../../i18n';
 import { emit } from '../../platform/bridge';
 import { clearGame } from '../../platform/storage';
 import {
-  GOALS, GOAL_REWARD, UPGRADES, buyUpgrade, dayIndex, endFriday, goalsDone, retrySeason, settleFriday,
-  upgradeCost, type FridayResult, type UpgradeId, type WeekEnd,
+  MAIN_QUESTS, UPGRADES, buyUpgrade, dayIndex, endFriday, mainProgress, mainQuestDone, retrySeason, settleFriday,
+  upgradeCost, type Season, type FridayResult, type UpgradeId, type WeekEnd,
 } from '../../sim';
 import type { Draw } from '../../ui/draw';
 import { UI } from '../../world/palette';
@@ -73,7 +73,7 @@ export class FridayScreen implements Screen {
     if (r.wholesale.units) notes.push(fmt(t.wholesale, { n: r.wholesale.units }));
     for (const o of r.ordersFilled) {
       const vars = { qty: o.order.qty, good: L().goods[o.order.good] };
-      notes.push(o.filled ? fmt(t.orderFilled, vars) : o.backedOut ? t.orderBackedOut : fmt(t.orderShort, vars));
+      notes.push(o.result === 'filled' ? fmt(t.orderFilled, vars) : o.result === 'backedOut' ? t.orderBackedOut : fmt(t.orderShort, vars));
     }
     for (const n of notes) y = d.para(n, 180, y + 6, 280, { size: 12.5, align: 'center', color: UI.inkSoft }, 16);
     d.button('next', 90, 566, 180, 48, L().next, { size: 17 });
@@ -92,9 +92,11 @@ export class FridayScreen implements Screen {
       else d.button(`up-${id}`, 254, y + 4, 86, 38, fmt(t.buy, { n: cost }), { size: 15, disabled: s.cash < cost });
     });
     const gy = 456;
-    d.text(t.goals, 30, gy, { size: 13, weight: 800, color: UI.inkSoft });
-    const done = goalsDone(s);
-    GOALS[s.season].forEach((g, i) => {
+    const main = MAIN_QUESTS[s.season];
+    d.text(`${t.goals} · ${L().quests.mainTitles[s.season - 1]}`, 30, gy, { size: 13, weight: 800, color: UI.inkSoft, maxWidth: 220 });
+    d.text(mainQuestDone(s) ? L().quests.done : fmt(L().quests.reward, { n: main.reward }), 330, gy, { size: 11.5, align: 'right', color: mainQuestDone(s) ? UI.green : UI.inkSoft });
+    const done = mainProgress(s);
+    main.objectives.forEach((g, i) => {
       const have = Math.min(g.target, Math.round(s.counters[g.counter]));
       d.text(`${done[i] ? '✓' : '·'} ${fmt(t.goalNames[g.counter], { n: g.target })}`, 30, gy + 22 + i * 20, { size: 12.5, color: done[i] ? UI.green : UI.ink });
       d.text(`${have}/${g.target}`, 330, gy + 22 + i * 20, { size: 12, align: 'right', color: UI.inkSoft });
@@ -110,8 +112,8 @@ export class FridayScreen implements Screen {
     const ended = w.yearEnded ? s.season : s.season - 1;
     d.text(fmt(t.seasonTitle, { season: L().seasons[ended - 1]! }), 180, y + 34, { size: 20, font: 'head', align: 'center' });
     d.coin(180, y + 80, 18);
-    d.para(fmt(t.seasonReward, { n: w.goalReward }), 180, y + 118, 270, { size: 15, align: 'center' }, 20);
-    d.text(fmt(t.goalReward, { n: GOAL_REWARD }), 180, y + 160, { size: 11.5, align: 'center', color: UI.inkSoft, maxWidth: 280 });
+    const text = w.mainDone ? fmt(t.mainDone, { n: MAIN_QUESTS[ended as Season].reward }) : t.mainMissed;
+    d.para(text, 180, y + 118, 270, { size: 15, align: 'center' }, 20);
     d.button('season', 100, y + h - 52, 160, 42, w.yearEnded ? t.yearEnd : L().next, { size: 16 });
   }
 

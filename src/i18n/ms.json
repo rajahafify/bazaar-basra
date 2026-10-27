@@ -54,7 +54,7 @@
     "open": "Buka kedai",
     "setOut": "Bertolak",
     "notebook": "Buku nota",
-    "goals": "Sasaran",
+    "goals": "Misi",
     "store": "Stor",
     "storeEmpty": "Kosong",
     "wanted": "Dicari minggu ini",
@@ -64,7 +64,8 @@
     "nextSetOut": "Rak hampir kosong. Bertolak untuk membeli lagi.",
     "nextFriday": "Jumaat sudah dekat. Simpan {n} dirham untuk sewa.",
     "nextBroke": "Duit sewa belum cukup. Jual apa yang ada.",
-    "rent": "Sewa Jumaat: {n}"
+    "rent": "Sewa Jumaat: {n}",
+    "nextQuest": "Ada misi yang tamat Jumaat ini. Semak misi anda."
   },
   "notices": {
     "badFish": "Seorang pelanggan memulangkan ikan rosak anda. Anda membayar balik {n}.",
@@ -77,7 +78,8 @@
     "debtorPays": "Saudagar yang berhutang dengan anda membayar {n} dirham.",
     "teacher": "Guru itu menghantar murid-muridnya ke gerai anda, dengan {n} dirham tanda terima kasih.",
     "traveller": "Musafir yang anda bantu kembali membawa hadiah {n} dirham.",
-    "brother": "Anda menghantar barang kepada abang musafir itu. Dia menjadi pelanggan tetap."
+    "brother": "Anda menghantar barang kepada abang musafir itu. Dia menjadi pelanggan tetap.",
+    "mainDone": "Persatuan saudagar membayar anda {n} dirham. Anda menamatkan misi utama musim ini."
   },
   "shop": {
     "setupHint": "Ketik slot untuk pilih barang. Tetapkan harga dengan − dan +.",
@@ -366,7 +368,7 @@
     },
     "bigOrder": {
       "title": "Tempahan besar",
-      "body": "Seorang tukang masak mahu 10 karung garam pada harga 7 seunit, dihantar Jumaat depan.",
+      "body": "Seorang tukang masak mahu {qty} karung garam pada harga {price} seunit. Hantar pada mana-mana pagi dalam {days} hari.",
       "a": "Setuju, secara bertulis",
       "b": "Setuju dengan berjabat tangan",
       "c": "Tolak",
@@ -516,6 +518,39 @@
         "b": "Anda menyimpan kesemua {n} dirham."
       },
       "lesson": "Harta karun (rikaz) dikenakan satu perlima serta-merta. Tidak seperti zakat, tiada tempoh setahun."
+    },
+    "purser": {
+      "title": "Pegawai kapal",
+      "body": "Pegawai yang memuatkan kapal ke India perlukan {qty} {good} pada harga {price} seunit, dalam {days} hari.",
+      "a": "Setuju, secara bertulis",
+      "b": "Tolak",
+      "out": {
+        "a": "Dia menulis tempahan itu. Bawa barang ke gerai.",
+        "b": "Dia bertanya kepada kafilah lain."
+      },
+      "lesson": "\"Wahai orang yang beriman, penuhilah akad-akad kamu\" (Al-Ma'idah 5:1)."
+    },
+    "caravanMaster": {
+      "title": "Ketua kafilah",
+      "body": "Sebuah kafilah ke Damsyik perlukan {qty} {good} pada harga {price} seunit, dalam {days} hari.",
+      "a": "Setuju, secara bertulis",
+      "b": "Tolak",
+      "out": {
+        "a": "Perjanjian ditulis dan disaksikan.",
+        "b": "Dia mengangguk dan berlalu."
+      },
+      "lesson": "Anda boleh berjanji membekalkan barang yang belum dimiliki jika jumlah, harga dan tarikhnya jelas. Kemudian tunaikan janji."
+    },
+    "mosqueKitchen": {
+      "title": "Dapur masjid",
+      "body": "Imam memberi makan orang miskin selepas solat Jumaat. Dia meminta {qty} bakul kurma pada harga {price} seunit, dalam {days} hari.",
+      "a": "Berjanji membawanya",
+      "b": "Bukan kali ini",
+      "out": {
+        "a": "Dia berterima kasih dan mencatat nama anda.",
+        "b": "Dia faham."
+      },
+      "lesson": "Memberi makan orang yang lapar antara amalan terbaik. Janji ialah amanah yang mesti ditunaikan."
     }
   },
   "change": {
@@ -523,7 +558,8 @@
     "cash": "{n} dirham",
     "supplies": "{n} bekalan",
     "amanah": "{n} amanah",
-    "good": "{n} {good}"
+    "good": "{n} {good}",
+    "quest": "Misi baharu"
   },
   "friday": {
     "title": "Jumaat",
@@ -538,7 +574,7 @@
     "partner": "Dibayar kepada balu",
     "wholesale": "{n} barang dijual kepada pemborong pada separuh harga",
     "orderFilled": "Tempahan dipenuhi: {qty} {good}",
-    "orderBackedOut": "Tukang masak membatalkan tempahan jabat tangan",
+    "orderBackedOut": "Seorang pembeli menarik diri daripada tempahan jabat tangan",
     "orderShort": "Anda tiada {good} yang dijanjikan",
     "cash": "Wang dalam peti",
     "upgrades": "Tukang kayu dan ketua kafilah",
@@ -558,7 +594,7 @@
     },
     "buy": "{n}",
     "owned": "Ada",
-    "goals": "Sasaran musim",
+    "goals": "Misi utama",
     "goalNames": {
       "sold": "Jual {n} barang",
       "trips": "Buat {n} perjalanan",
@@ -566,11 +602,11 @@
       "helped": "Bantu {n} orang",
       "revenue": "Capai jualan {n} dirham"
     },
-    "goalReward": "{n} dirham daripada persatuan saudagar bagi setiap sasaran dicapai.",
     "next": "Minggu depan",
     "seasonTitle": "Penghujung {season}",
-    "seasonReward": "Persatuan membayar anda {n} dirham untuk sasaran anda.",
-    "yearEnd": "Ke baitulmal"
+    "yearEnd": "Ke baitulmal",
+    "mainDone": "Anda menamatkan misi utama. Persatuan membayar anda {n} dirham.",
+    "mainMissed": "Misi utama tidak selesai musim ini. Misi baharu bermula sekarang."
   },
   "broke": {
     "title": "Gerai sudah hilang",
@@ -650,5 +686,47 @@
     "share": "Kongsi",
     "again": "Main lagi",
     "shareText": "Setahun saya di Pasar Basra: untung {profit} dirham, amanah {amanah}, zakat {zakat} dirham dibayar."
+  },
+  "quests": {
+    "title": "Misi",
+    "main": "Misi utama",
+    "side": "Misi sampingan",
+    "mainTitles": [
+      "Berdiri sendiri",
+      "Nama di Basra",
+      "Jalan ke Mada'in",
+      "Buku kira bapa saudara"
+    ],
+    "mainBody": [
+      "Tunjukkan kepada pasar bahawa gerai bapa saudara anda di tangan yang baik.",
+      "Kembangkan perniagaan dan bantu orang di jalan.",
+      "Jual lebih banyak, besarkan gerai, terus membantu.",
+      "Setahun berniaga dengan jujur. Tamatkan dengan baik, kemudian kira zakat anda."
+    ],
+    "reward": "Ganjaran {n} dirham",
+    "done": "Selesai",
+    "none": "Belum ada misi sampingan. Orang di jalan mungkin meminta barang daripada anda.",
+    "order": {
+      "cook": "Bawa {qty} {good} kepada tukang masak",
+      "imam": "Bawa {qty} {good} ke dapur masjid",
+      "purser": "Bawa {qty} {good} kepada pegawai kapal",
+      "caravan": "Bawa {qty} {good} kepada ketua kafilah"
+    },
+    "repay": {
+      "lender": "Bayar balik {n} dirham kepada ceti",
+      "friend": "Bayar balik {n} dirham kepada kawan bapa saudara anda",
+      "widow": "Bayar balik {n} dirham kepada balu"
+    },
+    "pays": "Bayaran {n} seunit",
+    "handshake": "Jabat tangan sahaja",
+    "have": "Anda ada {a}/{b}",
+    "due": "Tamat Jumaat, dalam {n} hari",
+    "dueToday": "Tamat hari ini",
+    "deliver": "Hantar",
+    "repayBtn": "Bayar",
+    "delivered": "Dihantar. Anda dibayar {n} dirham.",
+    "backedOut": "Pembeli menarik diri. Tiada apa yang ditulis.",
+    "repaid": "Hutang dibayar awal. Nama anda baik di pasar.",
+    "rule": "Setiap misi sampingan memberi sekurang-kurangnya seminggu. Selesaikan awal pada mana-mana pagi, atau ia diselesaikan pada hari Jumaatnya."
   }
 }

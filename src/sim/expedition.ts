@@ -7,7 +7,7 @@ import {
 } from './data';
 import { EVENTS, eventById, type EventCtx, type NodeKind } from './events';
 import {
-  addStock, advanceDay, caravanSpace, changeAmanah, dayIndex, daysBeforeFriday, supplyCap, withRng,
+  LAST_FRIDAY, addStock, advanceDay, caravanSpace, changeAmanah, dayIndex, daysBeforeFriday, questDue, supplyCap, withRng,
   type GameState, type Stock,
 } from './game';
 import type { Rng } from './rng';
@@ -15,7 +15,7 @@ import type { Rng } from './rng';
 export interface MapNode {
   kind: NodeKind;
   event: string;
-  /** Without a guide, one stop in each pair shows only a question mark. */
+  /** Without a guide, one stop at each step shows only a question mark. */
   hidden: boolean;
 }
 
@@ -24,7 +24,8 @@ export type Change =
   | { kind: 'supplies'; delta: number }
   | { kind: 'amanah'; delta: number }
   | { kind: 'time'; delta: number }
-  | { kind: 'good'; good: GoodId; delta: number };
+  | { kind: 'good'; good: GoodId; delta: number }
+  | { kind: 'quest' };
 
 export interface Outcome {
   option: string;
@@ -52,7 +53,7 @@ export interface Trip {
   cargo: Record<GoodId, Stock>;
   /** Space taken by goods carried for someone else. */
   held: number;
-  event: { id: string; outcome: Outcome | null } | null;
+  event: { id: string; outcome: Outcome | null; vars: Record<string, string | number> } | null;
   offers: TownOffer[];
   /** Next stop's double supply cost from an overloaded camel, the caravan pot, a revealed layer. */
   flags: Record<string, number>;
@@ -115,8 +116,11 @@ export function setOut(s: GameState, town: TownId, supplies: number): boolean {
 
 const KIND_WEIGHTS: ReadonlyArray<[NodeKind, number]> = [['road', 1], ['trader', 1.3], ['people', 1.1], ['find', 0.6]];
 
-function pickKind(rng: Rng, not?: NodeKind): NodeKind {
-  const pool = KIND_WEIGHTS.filter(([k]) => k !== not);
+/** Stops to choose from at each step. */
+export const STOPS_PER_STEP = 3;
+
+function pickKind(rng: Rng, not: readonly NodeKind[]): NodeKind {
+  const pool = KIND_WEIGHTS.filter(([k]) => !not.includes(k));
   let r = rng.next() * pool.reduce((a, [, w]) => a + w, 0);
   for (const [k, w] of pool) { r -= w; if (r <= 0) return k; }
   return pool[0]![0];
@@ -136,17 +140,15 @@ function buildLeg(s: GameState, trip: Trip, rng: Rng, stops: number): MapNode[][
   const taken: string[] = [];
   for (let i = 0; i < stops; i++) {
     const layer: MapNode[] = [];
-    let lastKind: NodeKind | undefined;
-    for (let j = 0; j < 2; j++) {
-      let kind = pickKind(rng, lastKind);
+    for (let j = 0; j < STOPS_PER_STEP; j++) {
+      let kind = pickKind(rng, layer.map(n => n.kind));
       let ev = pickEvent(s, trip, rng, kind, taken);
       for (const k of KIND_WEIGHTS.map(([x]) => x)) { if (ev) break; kind = k; ev = pickEvent(s, trip, rng, kind, taken); }
       if (!ev) ev = rng.pick(EVENTS.filter(e => !e.when)).id;
       taken.push(ev);
-      lastKind = kind;
       layer.push({ kind, event: ev, hidden: false });
     }
-    if (!s.upgrades.guide) layer[rng.int(0, 1)]!.hidden = true;
+    if (!s.upgrades.guide) layer[rng.int(0, STOPS_PER_STEP - 1)]!.hidden = true;
     layers.push(layer);
   }
   return layers;
@@ -184,10 +186,11 @@ export function chooseNode(s: GameState, i: number): boolean {
     // A stop picked before its event could happen gets another of the same kind.
     const def = eventById(node.event);
     if (def.when && !def.when(s, trip)) node.event = pickEvent(s, trip, rng, node.kind, []) ?? 'lostPurse';
+    const setup = eventById(node.event).setup;
+    trip.event = { id: node.event, outcome: null, vars: setup ? setup(s, rng) : {} };
   });
   trip.seen.push(node.event);
   s.eventsSeen[node.event] = (s.eventsSeen[node.event] ?? 0) + 1;
-  trip.event = { id: node.event, outcome: null };
   if (trip.flags.reveal) { for (const n of trip.layers[trip.step + 1] ?? []) n.hidden = false; trip.flags.reveal = 0; }
   return true;
 }
@@ -352,6 +355,15 @@ function makeCtx(s: GameState, trip: Trip, rng: Rng, out: Outcome): EventCtx {
     helped() { s.counters.helped += 1; s.flags.helpedTotal = (s.flags.helpedTotal ?? 0) + 1; },
     later(p) { s.pending.push(p); },
     today() { return dayIndex(s); },
+    vars: trip.event?.vars ?? {},
+    order(o) {
+      s.orders.push({ ...o, due: questDue(s) ?? LAST_FRIDAY });
+      out.changes.push({ kind: 'quest' });
+    },
+    debt(who, amount, days) {
+      s.debts.push({ who, amount, due: questDue(s, days) ?? LAST_FRIDAY });
+      out.changes.push({ kind: 'quest' });
+    },
   };
   return ctx;
 }

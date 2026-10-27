@@ -14,9 +14,11 @@ import { house, palm } from './scenes';
 const rnd = sceneryRandom(638);
 const flat = { rot: [-Math.PI / 2, 0, 0] as [number, number, number] };
 
-/** Spacing between stops along the route, and the x of the two stops in a pair. */
-export const STEP_Z = 6;
-export const LANE_X = 2.6;
+/** Spacing between steps along the route, and between the stops of one step. */
+export const STEP_Z = 5;
+export const LANE_X = 2.4;
+/** Stop markers are drawn small, so a step's three stops sit apart. */
+export const MARKER_SCALE = 0.6;
 
 export function buildDesert(): Group {
   const group = new Group();

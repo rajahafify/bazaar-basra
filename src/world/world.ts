@@ -10,7 +10,7 @@ import { Figure, randomLook, type Look, type Prop } from './figures';
 import { C } from './palette';
 import { NODES, buildAlley, buildBazaar, customerSpot, goodsPile, route, shelfX, STALL_Z, type Bazaar, type PlaceId } from './scenes';
 import { Builder, sceneryRandom } from './build';
-import { LANE_X, STEP_Z, buildDesert, camelMesh, stopMarker, townMarker } from './desert';
+import { LANE_X, MARKER_SCALE, STEP_Z, buildDesert, camelMesh, stopMarker, townMarker } from './desert';
 
 export type CameraMode = 'bazaar' | 'alley' | 'orbit' | 'desert';
 
@@ -343,10 +343,11 @@ export class World {
     const end = townMarker(!fromHome);
     end.position.set(0, 0, endZ - 2.2);
     this.route.add(start, end);
-    this.stopPos = layers.map((l, i) => l.map((_, j) => new Vector3(j === 0 ? -LANE_X : LANE_X, 0, -(i + 1) * STEP_Z)));
+    this.stopPos = layers.map((l, i) => l.map((_, j) => new Vector3((j - (l.length - 1) / 2) * LANE_X, 0, -(i + 1) * STEP_Z)));
     layers.forEach((l, i) => l.forEach((n, j) => {
       const m = stopMarker(n.hidden ? 'hidden' : n.kind);
       m.position.copy(this.stopPos[i]![j]!);
+      m.scale.setScalar(MARKER_SCALE);
       m.rotation.y = rnd.range(-0.3, 0.3);
       this.route.add(m);
     }));
@@ -378,11 +379,15 @@ export class World {
     // The caravan: you and your camels.
     this.caravan.clear();
     const walker = new Figure({ robe: 0x8a6a45, cloth: C.offWhite, skin: C.skins[0], height: 1, turban: true, prop: 'staff' });
-    walker.group.position.set(0.7, 0, 0.9);
+    // The caravan group walks towards its local -z; figures and camels are modelled facing +z.
+    walker.group.position.set(0.35, 0, -1.1);
+    walker.group.rotation.y = Math.PI;
     this.caravan.add(walker.group);
     for (let i = 0; i <= camels; i++) {
       const c = camelMesh(true);
-      c.position.set(-0.2 - (i % 2) * 0.5, 0, -0.4 + i * 1.5);
+      c.position.set(-0.15 + (i % 2) * 0.3, 0, 0.2 + i * 1.5);
+      c.rotation.y = Math.PI;
+      c.scale.setScalar(0.8);
       this.caravan.add(c);
     }
     const at = picked.length ? this.stopPos[picked.length - 1]![picked[picked.length - 1]!]! : origin;
@@ -403,7 +408,7 @@ export class World {
   stopScreen(layer: number, i: number): [number, number, number] {
     const p = this.stopPos[layer]?.[i];
     if (!p) return [-100, -100, 1];
-    const v = new Vector3(p.x, 2.4, p.z).project(this.camera);
+    const v = new Vector3(p.x, 1.4, p.z).project(this.camera);
     return [(v.x * 0.5 + 0.5) * 360, (-v.y * 0.5 + 0.5) * 640, v.z];
   }
 

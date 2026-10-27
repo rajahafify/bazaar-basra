@@ -71,15 +71,16 @@ export class TripScreen implements Screen {
       const kind = n.hidden ? 'hidden' : n.kind;
       const [x, y, z] = this.app.world.stopScreen(t.step, i);
       if (z > 1 || y < 150 || y > 560) return;
-      d.stopIcon(kind, x, y - 26, 15);
-      d.area(`node-${i}`, x - 34, y - 50, 68, 70);
+      d.stopIcon(kind, x, y - 18, 11);
+      d.area(`node-${i}`, x - 26, y - 34, 52, 56);
     });
+    const w = (340 - (row.length - 1) * 8) / row.length;
     row.forEach((n, i) => {
       const kind = n.hidden ? 'hidden' : n.kind;
-      const x = 16 + i * 168;
-      d.button(`node-${i}`, x, 572, 160, 52, '', { fill: UI.parch });
-      d.stopIcon(kind, x + 26, 598, 13);
-      d.text(tt.kinds[kind], x + 46, 598, { size: 15, font: 'head', maxWidth: 108 });
+      const x = 10 + i * (w + 8);
+      d.button(`node-${i}`, x, 566, w, 58, '', { fill: UI.parch });
+      d.stopIcon(kind, x + w / 2, 586, 12);
+      d.text(tt.kinds[kind], x + w / 2, 610, { size: 13, font: 'head', align: 'center', maxWidth: w - 8 });
     });
   }
 
@@ -89,8 +90,17 @@ export class TripScreen implements Screen {
     return (L().events as unknown as Record<string, EventText>)[this.trip.event!.id]!;
   }
 
+  /** The event's rolled numbers, with goods named in the current language. */
+  private vars(raw: Record<string, string | number>): Record<string, string | number> {
+    const out: Record<string, string | number> = {};
+    for (const [k, v] of Object.entries(raw)) out[k] = typeof v === 'string' && (GOOD_IDS as readonly string[]).includes(v) ? L().goods[v as GoodId] : v;
+    return out;
+  }
+
   private drawEvent(d: Draw) {
-    const s = this.app.s!, ev = this.text(), opts = eventOptions(s);
+    const s = this.app.s!, raw = this.text(), opts = eventOptions(s);
+    const vars = this.vars(this.trip.event!.vars);
+    const ev = { ...raw, body: fmt(raw.body, vars) };
     const bodyH = d.lines(ev.body, 280, { size: 15 }) * 20;
     const optH = opts.map(o => (o.blocked ? 64 : 50));
     const h = 64 + bodyH + 16 + optH.reduce((a, b) => a + b, 0) + 8;
@@ -115,13 +125,13 @@ export class TripScreen implements Screen {
       case 'amanah': return fmt(t.amanah, { n: sign(c.delta) });
       case 'time': return fmt(t.time, { n: c.delta });
       case 'good': return fmt(t.good, { n: sign(c.delta), good: L().goods[c.good] });
+      case 'quest': return t.quest;
     }
   }
 
   private drawOutcome(d: Draw) {
     const ev = this.text(), o = this.trip.event!.outcome!;
-    const vars: Record<string, string | number> = {};
-    for (const [k, v] of Object.entries(o.vars)) vars[k] = typeof v === 'string' && (GOOD_IDS as readonly string[]).includes(v) ? L().goods[v as GoodId] : v;
+    const vars = this.vars({ ...this.trip.event!.vars, ...o.vars });
     const text = fmt(ev.out[o.text] ?? '', vars);
     const textH = d.lines(text, 280, { size: 15 }) * 20;
     const lessonH = d.lines(ev.lesson, 260, { size: 13 }) * 17 + 30;
@@ -134,8 +144,8 @@ export class TripScreen implements Screen {
     y += 56 + textH + 6;
     o.changes.forEach((c, i) => {
       const x = 36 + (i % 2) * 148, cy = y + Math.floor(i / 2) * 30;
-      const good = c.kind === 'time' ? false : c.delta > 0;
-      d.panel(x, cy, 140, 24, good ? '#d8e6c0' : '#ecc9b8', UI.panelEdge);
+      const good = c.kind === 'quest' || (c.kind !== 'time' && c.delta > 0);
+      d.panel(x, cy, 140, 24, c.kind === 'quest' ? '#f6e3b4' : good ? '#d8e6c0' : '#ecc9b8', c.kind === 'quest' ? UI.gold : UI.panelEdge);
       if (c.kind === 'good') d.goodIcon(c.good, x + 14, cy + 12, 0.36);
       d.text(chips[i]!, x + (c.kind === 'good' ? 80 : 70), cy + 12, { size: 12, align: 'center', weight: 700, maxWidth: 110 });
     });
