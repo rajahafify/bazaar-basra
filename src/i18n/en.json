@@ -110,7 +110,7 @@
   },
   "setout": {
     "title": "Where will you go?",
-    "days": "{n} days there and back",
+    "days": "{n}-day trip, there and back",
     "closed": "Opens in {season}",
     "friday": "Not enough days before Friday",
     "supplies": "Supplies",
@@ -138,7 +138,7 @@
     "continue": "Continue",
     "arriving": "Arriving...",
     "lesson": "Lesson",
-    "day": "Half day {n}"
+    "day": "{n}-day trip"
   },
   "town": {
     "title": "The market at {town}",
@@ -154,7 +154,7 @@
     "title": "Home in Basra",
     "unloaded": "Into the storeroom",
     "nothing": "You came back with nothing to sell.",
-    "days": "{n} days away",
+    "days": "Days away: {n}",
     "unload": "Unload"
   },
   "need": {
@@ -554,7 +554,7 @@
     }
   },
   "change": {
-    "time": "+{n} half day",
+    "time": "+{n} day late",
     "cash": "{n} dirham",
     "supplies": "{n} supplies",
     "amanah": "{n} amanah",

@@ -110,7 +110,7 @@
   },
   "setout": {
     "title": "Ke mana anda mahu pergi?",
-    "days": "{n} hari pergi dan balik",
+    "days": "Perjalanan {n} hari, pergi dan balik",
     "closed": "Dibuka pada {season}",
     "friday": "Tidak cukup hari sebelum Jumaat",
     "supplies": "Bekalan",
@@ -138,7 +138,7 @@
     "continue": "Teruskan",
     "arriving": "Hampir tiba...",
     "lesson": "Pengajaran",
-    "day": "Setengah hari {n}"
+    "day": "Perjalanan {n} hari"
   },
   "town": {
     "title": "Pasar di {town}",
@@ -154,7 +154,7 @@
     "title": "Pulang ke Basra",
     "unloaded": "Masuk ke stor",
     "nothing": "Anda pulang tanpa barang untuk dijual.",
-    "days": "{n} hari di luar",
+    "days": "Hari di luar: {n}",
     "unload": "Punggah"
   },
   "need": {
@@ -554,7 +554,7 @@
     }
   },
   "change": {
-    "time": "+{n} setengah hari",
+    "time": "Lewat +{n} hari",
     "cash": "{n} dirham",
     "supplies": "{n} bekalan",
     "amanah": "{n} amanah",

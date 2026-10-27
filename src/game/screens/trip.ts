@@ -5,7 +5,7 @@ import { L, fmt, money } from '../../i18n';
 import { emit } from '../../platform/bridge';
 import {
   GOOD_IDS, TOWN_SUPPLY_PRICE, arriveHome, caravanSpace, cargoUsed, chooseNode, chooseOption, eventOptions,
-  finishEvent, freeSpace, leaveTown, supplyCap, townBuy, townSupplies, type Change, type GoodId, type Trip,
+  finishEvent, freeSpace, leaveTown, tripLength, supplyCap, townBuy, townSupplies, type Change, type GoodId, type Trip,
 } from '../../sim';
 import type { Draw } from '../../ui/draw';
 import { UI } from '../../world/palette';
@@ -47,7 +47,7 @@ export class TripScreen implements Screen {
   draw(d: Draw) {
     const app = this.app, s = app.s!, t = this.trip, tt = L().trip;
     const title = t.leg === 'back' || t.leg === 'home' ? tt.home : fmt(tt.to, { town: L().towns[t.town] });
-    app.topBar(d, title, `${fmt(tt.day, { n: t.halfDays })} · ${fmt(tt.space, { a: cargoUsed(t), b: caravanSpace(s) })}`);
+    app.topBar(d, title, `${fmt(tt.day, { n: tripLength(t) })} · ${fmt(tt.space, { a: cargoUsed(t), b: caravanSpace(s) })}`);
     app.amanahBar(d);
     app.sidePanel(d, fmt(tt.supplies, { n: s.supplies }));
 
@@ -123,7 +123,7 @@ export class TripScreen implements Screen {
       case 'cash': return fmt(t.cash, { n: sign(c.delta) });
       case 'supplies': return fmt(t.supplies, { n: sign(c.delta) });
       case 'amanah': return fmt(t.amanah, { n: sign(c.delta) });
-      case 'time': return fmt(t.time, { n: c.delta });
+      case 'time': return fmt(t.time, { n: c.delta === 1 ? '½' : String(c.delta / 2) });
       case 'good': return fmt(t.good, { n: sign(c.delta), good: L().goods[c.good] });
       case 'quest': return t.quest;
     }
@@ -198,7 +198,7 @@ export class TripScreen implements Screen {
     const h = 120 + Math.max(1, Math.ceil(goods.length / 3)) * 48 + 60;
     const y = this.app.modal(d, h, 0.3);
     d.text(tt.title, 180, y + 30, { size: 20, font: 'head', align: 'center' });
-    d.text(fmt(tt.days, { n: Math.max(1, Math.ceil(t.halfDays / 2)) }), 180, y + 54, { size: 13, align: 'center', color: UI.inkSoft });
+    d.text(fmt(tt.days, { n: tripLength(t) }), 180, y + 54, { size: 13, align: 'center', color: UI.inkSoft });
     d.text(tt.unloaded, 40, y + 84, { size: 12, weight: 800, color: UI.inkSoft });
     if (!goods.length) d.para(tt.nothing, 180, y + 112, 270, { size: 14, align: 'center' }, 18);
     goods.forEach((g, i) => {

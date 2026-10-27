@@ -4,7 +4,7 @@ import {
   endFriday, endShopDay, eventOptions, finishEvent, finishPrologue, leaveTown, newGame, notebookRange, restockSlot,
   retrySeason, setOut, setPrice, setSlotGood, settleFriday, startShopDay, stockOf, townBuy, yearEndCount,
   MAIN_QUESTS, QUEST_MIN_DAYS, checkMainQuest, dayIndex, deliverOrder, questDue, repayDebt,
-  TUTORIAL_DATES, addStock, inTutorial, tutorialDay,
+  TUTORIAL_DATES, addStock, tripDays, inTutorial, tutorialDay,
   type GameState,
 } from '../index';
 
@@ -95,6 +95,9 @@ describe('expeditions', () => {
     expect(canSetOut(s, 'groves', 0)).toBe('supplies');
     expect(canSetOut(s, 'kufa', 6)).toBe('closed');
     s.dow = 5;
+    expect(canSetOut(s, 'groves', 4)).toBeNull();
+    expect(canSetOut(s, 'ubulla', 4)).toBeNull();
+    s.dow = FRIDAY;
     expect(canSetOut(s, 'groves', 4)).toBe('friday');
   });
 
@@ -103,9 +106,12 @@ describe('expeditions', () => {
     s.cash = 40;
     expect(setOut(s, 'groves', 5)).toBe(true);
     expect(s.trip!.layers).toHaveLength(TOWNS.groves.stops);
+    let halfDays = 0;
+    const t = s.trip!;
     playTrip(s);
+    halfDays = t.halfDays;
     expect(s.trip).toBeNull();
-    expect(s.dow).toBeGreaterThanOrEqual(2);
+    expect(s.dow).toBe(tripDays('groves') + Math.ceil(halfDays / 2));
     expect(stockOf(s, 'dates')).toBeGreaterThan(TUTORIAL_DATES);
     expect(s.counters.trips).toBe(1);
   });

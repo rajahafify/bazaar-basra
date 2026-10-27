@@ -37,8 +37,10 @@ export const TOWN_IDS: readonly TownId[] = ['groves', 'ubulla', 'kufa', 'madain'
 
 export interface Town {
   id: TownId;
-  /** Event stops each way. Each stop takes half a day. */
+  /** Event stops each way. */
   stops: number;
+  /** Days the trip takes, there and back, before any delays on the road. */
+  days: number;
   /** First season the route is open. */
   opens: Season;
   /** What the town sells and for how much, before the week's swing. */
@@ -46,10 +48,10 @@ export interface Town {
 }
 
 export const TOWNS: Readonly<Record<TownId, Town>> = {
-  groves: { id: 'groves', stops: 2, opens: 1, sells: [{ good: 'dates', price: 3 }] },
-  ubulla: { id: 'ubulla', stops: 2, opens: 1, sells: [{ good: 'fish', price: 5 }, { good: 'salt', price: 2 }, { good: 'cardamom', price: 17, rare: true }] },
-  kufa: { id: 'kufa', stops: 3, opens: 2, sells: [{ good: 'beef', price: 9 }, { good: 'vinegar', price: 6 }] },
-  madain: { id: 'madain', stops: 3, opens: 3, sells: [{ good: 'saffron', price: 28 }] },
+  groves: { id: 'groves', stops: 2, days: 1, opens: 1, sells: [{ good: 'dates', price: 3 }] },
+  ubulla: { id: 'ubulla', stops: 2, days: 1, opens: 1, sells: [{ good: 'fish', price: 5 }, { good: 'salt', price: 2 }, { good: 'cardamom', price: 17, rare: true }] },
+  kufa: { id: 'kufa', stops: 3, days: 2, opens: 2, sells: [{ good: 'beef', price: 9 }, { good: 'vinegar', price: 6 }] },
+  madain: { id: 'madain', stops: 3, days: 2, opens: 3, sells: [{ good: 'saffron', price: 28 }] },
 };
 
 /** Chance a rare good is on sale on a given visit. */

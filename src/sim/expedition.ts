@@ -1,5 +1,6 @@
 // Expeditions: a short run across a branching map of stops to one town and back, like a sector
-// in FTL. Each stop takes half a day and one supply, and holds an event with a few choices.
+// in FTL. Each stop takes one supply and holds an event with a few choices. A trip takes a set
+// number of days; delays on the road add half days, and every two half days cost a day more.
 
 import {
   FRIDAY, GOODS, GOOD_IDS, RARE_CHANCE, SUPPLY_PRICE, TOWNS, TOWN_SUPPLY_PRICE,
@@ -49,6 +50,7 @@ export interface Trip {
   step: number;
   /** The pick made at each stop of this leg, for drawing the route. */
   picked: number[];
+  /** Half days of delay from events. */
   halfDays: number;
   cargo: Record<GoodId, Stock>;
   /** Space taken by goods carried for someone else. */
@@ -68,9 +70,14 @@ export function townOpen(s: GameState, town: TownId): boolean {
   return s.season >= TOWNS[town].opens;
 }
 
-/** Days a trip takes with no delays: half a day per stop, both ways. */
+/** Days a trip takes with no delays. */
 export function tripDays(town: TownId): number {
-  return TOWNS[town].stops;
+  return TOWNS[town].days;
+}
+
+/** Days the trip will take so far, delays included: a half day of delay rounds up to a day. */
+export function tripLength(trip: Trip): number {
+  return TOWNS[trip.town].days + Math.ceil(trip.halfDays / 2);
 }
 
 export type SetOutBlock = 'closed' | 'friday' | 'supplies' | null;
@@ -169,7 +176,6 @@ export function chooseNode(s: GameState, i: number): boolean {
   const node = trip.layers[trip.step]?.[i];
   if (!node) return false;
   trip.picked.push(i);
-  trip.halfDays += 1;
   const cost = trip.flags.double ? 2 : 1;
   trip.flags.double = 0;
   const notes: Change[] = [];
@@ -295,7 +301,7 @@ export function arriveHome(s: GameState): Homecoming | null {
   if (trip.flags.carrying) {
     s.pending.push({ day: 0, kind: 'regular', key: 'notice.brother', amanah: 3 });
   }
-  const days = Math.max(1, Math.ceil(trip.halfDays / 2));
+  const days = tripLength(trip);
   s.trip = null;
   let hitFriday = false;
   for (let i = 0; i < days; i++) {

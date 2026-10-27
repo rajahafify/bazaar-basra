@@ -93,7 +93,8 @@ export class ShopScreen implements Screen {
     if (this.mode === 'setup' && this.picking === null) {
       const any = s.slots.some(sl => sl.good && sl.qty > 0);
       if (!inTutorial(s)) d.button('home', 16, 340, 110, 42, t.home, { size: 15, fill: UI.parchDark });
-      d.button('open', 190, 336, 154, 48, t.open, { size: 19, disabled: !any });
+      // An empty stall can still open: nothing sells, but you learn what people ask for.
+      d.button('open', 190, 336, 154, 48, t.open, { size: 19, disabled: !any && inTutorial(s) });
       if (!any) d.text(t.nothing, 180, 320, { size: 12.5, align: 'center', color: UI.parch });
     }
     if (this.picking !== null) this.drawPicker(d);
