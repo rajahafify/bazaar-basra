@@ -179,7 +179,7 @@
     "lameCamel": {
       "title": "A lame camel",
       "body": "One of your camels is limping and groans under its load.",
-      "a": "Rest half a day",
+      "a": "Rest and feed it (1 supply)",
       "b": "Leave some cargo",
       "c": "Load the others more",
       "out": {
@@ -196,7 +196,7 @@
       "b": "Travel at night (1 supply)",
       "c": "Risk it",
       "out": {
-        "a": "You pay your share and travel slowly, but safely.",
+        "a": "You pay your share and travel with them, safely.",
         "b": "You slip past in the dark.",
         "cRobbed": "They take part of what you carry.",
         "cSafe": "They let you pass."
@@ -217,7 +217,7 @@
     "bedouinCamp": {
       "title": "A Bedouin camp",
       "body": "A family invites you to rest, eat and drink with them.",
-      "a": "Accept (half a day)",
+      "a": "Accept",
       "b": "Thank them and ride on",
       "out": {
         "a": "They fill your water skins and tell you what lies ahead.",
@@ -408,7 +408,7 @@
     "zakatCollector": {
       "title": "The zakat collector",
       "body": "An officer of the bayt al-mal is on his rounds. He offers to explain how zakat on trade is counted.",
-      "a": "Listen (half a day)",
+      "a": "Listen",
       "b": "Thank him and move on",
       "out": {
         "a": "Nisab is the minimum. After a full year, pay one fortieth of cash and trade goods.",
@@ -454,7 +454,7 @@
     "teacher": {
       "title": "The travelling teacher",
       "body": "A teacher on his way to teach in a new town has lost his camel.",
-      "a": "Give him a ride (half a day)",
+      "a": "Give him a ride (1 supply)",
       "b": "Pass by",
       "out": {
         "a": "He teaches you a verse on the way.",
@@ -500,7 +500,7 @@
       "title": "A rumour",
       "body": "At the caravanserai, men say {good} prices in Basra will jump next week.",
       "a": "Believe it",
-      "b": "Ask around first (half a day)",
+      "b": "Ask around first (2 dirham)",
       "out": {
         "a": "You'll find out in the bazaar.",
         "bTrue": "It's true. {good} will sell high next week.",
@@ -554,7 +554,6 @@
     }
   },
   "change": {
-    "time": "+{n} day late",
     "cash": "{n} dirham",
     "supplies": "{n} supplies",
     "amanah": "{n} amanah",

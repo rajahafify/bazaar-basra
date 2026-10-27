@@ -1,6 +1,6 @@
 // Expeditions: a short run across a branching map of stops to one town and back, like a sector
 // in FTL. Each stop takes one supply and holds an event with a few choices. A trip takes a set
-// number of days; delays on the road add half days, and every two half days cost a day more.
+// number of days; choices on the road cost money, supplies or goods, never time.
 
 import {
   FRIDAY, GOODS, GOOD_IDS, RARE_CHANCE, SUPPLY_PRICE, TOWNS, TOWN_SUPPLY_PRICE,
@@ -24,7 +24,6 @@ export type Change =
   | { kind: 'cash'; delta: number }
   | { kind: 'supplies'; delta: number }
   | { kind: 'amanah'; delta: number }
-  | { kind: 'time'; delta: number }
   | { kind: 'good'; good: GoodId; delta: number }
   | { kind: 'quest' };
 
@@ -50,8 +49,6 @@ export interface Trip {
   step: number;
   /** The pick made at each stop of this leg, for drawing the route. */
   picked: number[];
-  /** Half days of delay from events. */
-  halfDays: number;
   cargo: Record<GoodId, Stock>;
   /** Space taken by goods carried for someone else. */
   held: number;
@@ -75,9 +72,9 @@ export function tripDays(town: TownId): number {
   return TOWNS[town].days;
 }
 
-/** Days the trip will take so far, delays included: a half day of delay rounds up to a day. */
+/** Days this trip takes. */
 export function tripLength(trip: Trip): number {
-  return TOWNS[trip.town].days + Math.ceil(trip.halfDays / 2);
+  return TOWNS[trip.town].days;
 }
 
 export type SetOutBlock = 'closed' | 'friday' | 'supplies' | null;
@@ -108,7 +105,7 @@ export function setOut(s: GameState, town: TownId, supplies: number): boolean {
   buySupplies(s, supplies);
   if (s.supplies < TOWNS[town].stops * 2) return false;
   const trip: Trip = {
-    town, leg: 'out', layers: [], step: 0, picked: [], halfDays: 0,
+    town, leg: 'out', layers: [], step: 0, picked: [],
     cargo: Object.fromEntries(GOOD_IDS.map(g => [g, { qty: 0, cost: 0 }])) as Record<GoodId, Stock>,
     held: 0, event: null, offers: [], flags: {}, seen: [], log: [],
   };
@@ -338,7 +335,6 @@ function makeCtx(s: GameState, trip: Trip, rng: Rng, out: Outcome): EventCtx {
     cash(n) { s.cash += n; if (n !== 0) out.changes.push({ kind: 'cash', delta: n }); },
     supplies(n) { const before = s.supplies; s.supplies = Math.max(0, s.supplies + n); const d = s.supplies - before; if (d) out.changes.push({ kind: 'supplies', delta: d }); },
     amanah(n) { changeAmanah(s, n); if (n) out.changes.push({ kind: 'amanah', delta: n }); },
-    time(halfDays) { trip.halfDays += halfDays; if (halfDays) out.changes.push({ kind: 'time', delta: halfDays }); },
     addCargo(good, qty, unitCost) {
       const n = Math.max(0, Math.min(qty, Math.floor(freeSpace(s) / GOODS[good].space)));
       if (n > 0) { trip.cargo[good].qty += n; trip.cargo[good].cost += n * unitCost; out.changes.push({ kind: 'good', good, delta: n }); }

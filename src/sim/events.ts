@@ -20,8 +20,6 @@ export interface EventCtx {
   cash(n: number): void;
   supplies(n: number): void;
   amanah(n: number): void;
-  /** Extra half days on the road. */
-  time(halfDays: number): void;
   addCargo(good: GoodId, qty: number, unitCost: number): number;
   removeCargo(good: GoodId, qty: number): number;
   loseRandom(units: number): number;
@@ -113,7 +111,7 @@ export const EVENTS: readonly EventDef[] = [
   {
     id: 'lameCamel', kind: 'road',
     options: [
-      { id: 'a', resolve: c => { c.time(1); } },
+      { id: 'a', need: needSupplies(1), resolve: c => { c.supplies(-1); } },
       { id: 'b', need: (_, t) => (Object.values(t.cargo).some(x => x.qty > 0) ? null : 'needGood'), resolve: c => { c.loseRandom(2); } },
       { id: 'c', resolve: c => { c.trip.flags.double = 1; c.amanah(-2); } },
     ],
@@ -121,7 +119,7 @@ export const EVENTS: readonly EventDef[] = [
   {
     id: 'bandits', kind: 'road',
     options: [
-      { id: 'a', need: needCash(4), resolve: c => { c.cash(-4); c.time(1); } },
+      { id: 'a', need: needCash(4), resolve: c => { c.cash(-4); } },
       { id: 'b', need: needSupplies(1), resolve: c => { c.supplies(-1); } },
       { id: 'c', resolve: c => {
         if (c.rng.chance(0.4)) {
@@ -143,7 +141,7 @@ export const EVENTS: readonly EventDef[] = [
   {
     id: 'bedouinCamp', kind: 'road',
     options: [
-      { id: 'a', resolve: c => { c.time(1); c.supplies(2); c.trip.flags.reveal = 1; c.amanah(1); } },
+      { id: 'a', resolve: c => { c.supplies(2); c.trip.flags.reveal = 1; c.amanah(1); } },
       { id: 'b', resolve: () => {} },
     ],
   },
@@ -152,7 +150,7 @@ export const EVENTS: readonly EventDef[] = [
   {
     id: 'dampSalt', kind: 'trader',
     options: [
-      { id: 'a', need: both(needCash(8), needSpace(4)), resolve: c => { c.time(1); c.cash(-8); c.addCargo('salt', 4, 2); } },
+      { id: 'a', need: both(needCash(8), needSpace(4)), resolve: c => { c.cash(-8); c.addCargo('salt', 4, 2); } },
       { id: 'b', need: both(needCash(6), needSpace(3)), resolve: c => { c.cash(-6); c.addCargo('salt', 3, 2); c.say('b', { n: 3 }); } },
       { id: 'c', resolve: () => {} },
     ],
@@ -327,7 +325,7 @@ export const EVENTS: readonly EventDef[] = [
   {
     id: 'zakatCollector', kind: 'people',
     options: [
-      { id: 'a', resolve: c => { c.time(1); c.amanah(1); c.s.flags.zakatPage = 1; } },
+      { id: 'a', resolve: c => { c.amanah(1); c.s.flags.zakatPage = 1; } },
       { id: 'b', resolve: () => {} },
     ],
   },
@@ -357,7 +355,7 @@ export const EVENTS: readonly EventDef[] = [
   {
     id: 'teacher', kind: 'people',
     options: [
-      { id: 'a', resolve: c => { c.time(1); c.amanah(4); c.helped(); c.later({ day: c.today() + 2 * WEEK, kind: 'regular', key: 'notice.teacher', cash: 10 }); } },
+      { id: 'a', need: needSupplies(1), resolve: c => { c.supplies(-1); c.amanah(4); c.helped(); c.later({ day: c.today() + 2 * WEEK, kind: 'regular', key: 'notice.teacher', cash: 10 }); } },
       { id: 'b', resolve: () => {} },
     ],
   },
@@ -373,7 +371,7 @@ export const EVENTS: readonly EventDef[] = [
   {
     id: 'lostPurse', kind: 'find',
     options: [
-      { id: 'a', resolve: c => { c.time(1); c.amanah(6); if (c.rng.chance(0.5)) { c.cash(5); c.say('aReward'); } } },
+      { id: 'a', resolve: c => { c.amanah(6); if (c.rng.chance(0.5)) { c.cash(5); c.say('aReward'); } } },
       { id: 'b', resolve: c => { c.cash(15); c.amanah(-8); } },
     ],
   },
@@ -394,8 +392,8 @@ export const EVENTS: readonly EventDef[] = [
         if (truth) c.s.flags[`boom_${g}`] = c.today() + WEEK;
         c.say('a', { good: g });
       } },
-      { id: 'b', resolve: c => {
-        c.time(1);
+      { id: 'b', need: needCash(2), resolve: c => {
+        c.cash(-2);
         const g = rumourGood(c);
         const truth = c.rng.chance(0.4);
         if (truth) c.s.flags[`boom_${g}`] = c.today() + WEEK;

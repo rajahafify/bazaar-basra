@@ -123,7 +123,6 @@ export class TripScreen implements Screen {
       case 'cash': return fmt(t.cash, { n: sign(c.delta) });
       case 'supplies': return fmt(t.supplies, { n: sign(c.delta) });
       case 'amanah': return fmt(t.amanah, { n: sign(c.delta) });
-      case 'time': return fmt(t.time, { n: c.delta === 1 ? '½' : String(c.delta / 2) });
       case 'good': return fmt(t.good, { n: sign(c.delta), good: L().goods[c.good] });
       case 'quest': return t.quest;
     }
@@ -144,7 +143,7 @@ export class TripScreen implements Screen {
     y += 56 + textH + 6;
     o.changes.forEach((c, i) => {
       const x = 36 + (i % 2) * 148, cy = y + Math.floor(i / 2) * 30;
-      const good = c.kind === 'quest' || (c.kind !== 'time' && c.delta > 0);
+      const good = c.kind === 'quest' || c.delta > 0;
       d.panel(x, cy, 140, 24, c.kind === 'quest' ? '#f6e3b4' : good ? '#d8e6c0' : '#ecc9b8', c.kind === 'quest' ? UI.gold : UI.panelEdge);
       if (c.kind === 'good') d.goodIcon(c.good, x + 14, cy + 12, 0.36);
       d.text(chips[i]!, x + (c.kind === 'good' ? 80 : 70), cy + 12, { size: 12, align: 'center', weight: 700, maxWidth: 110 });

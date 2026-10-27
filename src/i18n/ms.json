@@ -179,7 +179,7 @@
     "lameCamel": {
       "title": "Unta tempang",
       "body": "Seekor unta anda terhincut-hincut dan mengerang di bawah bebannya.",
-      "a": "Berehat setengah hari",
+      "a": "Rehatkan dan beri makan (1 bekalan)",
       "b": "Tinggalkan sebahagian muatan",
       "c": "Tambah beban unta lain",
       "out": {
@@ -196,7 +196,7 @@
       "b": "Berjalan waktu malam (1 bekalan)",
       "c": "Ambil risiko",
       "out": {
-        "a": "Anda membayar bahagian anda dan berjalan perlahan, tetapi selamat.",
+        "a": "Anda membayar bahagian anda dan berjalan bersama mereka dengan selamat.",
         "b": "Anda menyelinap lalu dalam gelap.",
         "cRobbed": "Mereka merampas sebahagian barang anda.",
         "cSafe": "Mereka membiarkan anda lalu."
@@ -217,7 +217,7 @@
     "bedouinCamp": {
       "title": "Khemah Badwi",
       "body": "Sebuah keluarga menjemput anda berehat, makan dan minum bersama mereka.",
-      "a": "Terima (setengah hari)",
+      "a": "Terima",
       "b": "Berterima kasih dan teruskan",
       "out": {
         "a": "Mereka mengisi kantung air anda dan menceritakan apa yang ada di hadapan.",
@@ -408,7 +408,7 @@
     "zakatCollector": {
       "title": "Amil zakat",
       "body": "Seorang pegawai baitulmal sedang membuat rondaan. Dia menawarkan untuk menerangkan cara zakat perniagaan dikira.",
-      "a": "Dengar (setengah hari)",
+      "a": "Dengar",
       "b": "Berterima kasih dan teruskan",
       "out": {
         "a": "Nisab ialah had minimum. Selepas setahun penuh, bayar satu perempat puluh daripada wang tunai dan barang dagangan.",
@@ -454,7 +454,7 @@
     "teacher": {
       "title": "Guru yang bermusafir",
       "body": "Seorang guru dalam perjalanan untuk mengajar di pekan baharu telah kehilangan untanya.",
-      "a": "Tumpangkan dia (setengah hari)",
+      "a": "Tumpangkan dia (1 bekalan)",
       "b": "Berlalu",
       "out": {
         "a": "Dia mengajar anda sepotong ayat sepanjang jalan.",
@@ -500,7 +500,7 @@
       "title": "Khabar angin",
       "body": "Di rumah tumpangan kafilah, orang berkata harga {good} di Basra akan melonjak minggu depan.",
       "a": "Percaya",
-      "b": "Tanya dahulu (setengah hari)",
+      "b": "Tanya dahulu (2 dirham)",
       "out": {
         "a": "Anda akan tahu di pasar nanti.",
         "bTrue": "Memang benar. {good} akan laku mahal minggu depan.",
@@ -554,7 +554,6 @@
     }
   },
   "change": {
-    "time": "Lewat +{n} hari",
     "cash": "{n} dirham",
     "supplies": "{n} bekalan",
     "amanah": "{n} amanah",

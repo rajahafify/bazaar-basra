@@ -106,12 +106,9 @@ describe('expeditions', () => {
     s.cash = 40;
     expect(setOut(s, 'groves', 5)).toBe(true);
     expect(s.trip!.layers).toHaveLength(TOWNS.groves.stops);
-    let halfDays = 0;
-    const t = s.trip!;
     playTrip(s);
-    halfDays = t.halfDays;
     expect(s.trip).toBeNull();
-    expect(s.dow).toBe(tripDays('groves') + Math.ceil(halfDays / 2));
+    expect(s.dow).toBe(tripDays('groves'));
     expect(stockOf(s, 'dates')).toBeGreaterThan(TUTORIAL_DATES);
     expect(s.counters.trips).toBe(1);
   });
