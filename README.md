@@ -13,7 +13,23 @@ Built by Artifisi Sdn Bhd as a pilot for the ikhlas.com app. Bahasa Malaysia tit
 
 [prototype/mockup.html](prototype/mockup.html) is the first playable mockup: one shop day in the bazaar and a walk through the alleys. It is a single HTML file using three.js r128 from cdnjs, with all UI drawn in canvas. Open it in a browser, ideally in phone portrait size.
 
-The vertical slice will be rebuilt in TypeScript with Vite. See gdd.md section 12.
+The vertical slice is being rebuilt in TypeScript with Vite. See gdd.md section 12.
+
+## Development
+
+Needs Node 22.
+
+```sh
+npm install
+npm run dev        # local server
+npm test           # unit tests
+npm run typecheck
+npm run build
+```
+
+- `src/sim/` is the game's economy: goods, prices by week, landed cost, the cart grid, customer reactions, amanah, the weekly ledger and the zakat count. It has no rendering or browser code and uses a seeded random generator, so it can be tested and balance-run headless. Its tests reproduce every worked example in the design doc; if one fails, the code and the doc have drifted apart.
+- `src/engine/` holds the fixed-step clock and the 360 x 640 stage fit.
+- `src/main.ts` is the entry point. The bazaar scene from the prototype is ported in build week 1.
 
 ## Status
 
