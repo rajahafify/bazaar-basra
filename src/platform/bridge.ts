@@ -13,7 +13,7 @@ declare global {
 }
 
 export type PlayEvent =
-  | 'game_start' | 'day_end' | 'week_end' | 'cart_hire' | 'stall_rent' | 'harith_choice'
+  | 'game_start' | 'day_end' | 'week_end' | 'trip_start' | 'trip_event' | 'trip_end' | 'upgrade_buy' | 'went_broke'
   | 'zakat_paid' | 'sadaqah_given' | 'game_finish' | 'zakat_cta_tap' | 'share_tap';
 
 function send(message: Record<string, unknown>) {

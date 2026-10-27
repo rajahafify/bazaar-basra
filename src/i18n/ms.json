@@ -3,30 +3,38 @@
   "amanah": "Amanah",
   "next": "Seterusnya",
   "back": "Kembali",
+  "close": "Tutup",
   "tapToContinue": "Ketik untuk teruskan",
-  "weekLabel": "Minggu {week} · {season}",
-  "dayLabel": "Hari {day} daripada 5",
   "seasons": [
     "Musim Bunga",
     "Musim Panas",
     "Musim Luruh",
     "Musim Sejuk"
   ],
+  "days": [
+    "Sabtu",
+    "Ahad",
+    "Isnin",
+    "Selasa",
+    "Rabu",
+    "Khamis",
+    "Jumaat"
+  ],
+  "calendar": "{season} · Minggu {week} · {day}",
   "goods": {
     "dates": "Kurma",
-    "pottery": "Tembikar",
-    "straw": "Jerami",
-    "cloth": "Kain",
-    "spices": "Rempah",
-    "leather": "Kulit"
+    "salt": "Garam",
+    "fish": "Ikan masin",
+    "vinegar": "Cuka",
+    "beef": "Daging masin",
+    "cardamom": "Buah pelaga",
+    "saffron": "Kunyit Kashmir"
   },
-  "goodUnits": {
-    "dates": "bakul",
-    "pottery": "tempayan",
-    "straw": "ikat",
-    "cloth": "gulung",
-    "spices": "karung",
-    "leather": "ikat"
+  "towns": {
+    "groves": "Kebun kurma",
+    "ubulla": "Pelabuhan Ubulla",
+    "kufa": "Kufah",
+    "madain": "Al-Mada'in"
   },
   "title": {
     "name": "Pasar Basra",
@@ -37,182 +45,572 @@
   },
   "prologue": [
     "Basra, tahun 638. Kota ini baharu, dibina daripada buluh dan bata lumpur di pertemuan sungai.",
-    "Bapa saudara anda menyerahkan gerai dan buku kiranya, lalu pergi jauh.",
-    "Pesannya: \"Jaga timbangan yang jujur. Catat setiap kos. Di hujung tahun, kira harta anda.\"",
-    "Penyeru membaca surat Umar al-Khattab RA: nilaikan barang dagangan setiap tahun dan bayar zakatnya. (Parafrasa)",
-    "Anda ada 160 dirham, dua bakul kurma dan segulung kain. Setahun hijrah bermula sekarang."
+    "Bapa saudara anda menyerahkan gerainya, sebuah stor dengan sedikit barang, dan buku kiranya.",
+    "Pesannya: \"Setiap pagi, pilih. Buka gerai dan menjual, atau bawa kafilah keluar membeli.\"",
+    "\"Simpan cukup untuk sewa hari Jumaat. Berniaga dengan jujur di jalan. Di hujung tahun, kira harta anda dan bayar zakat.\"",
+    "Empat musim, empat minggu setiap satu. Anda ada 70 dirham. Tahun bermula sekarang."
   ],
-  "stall": {
-    "title": "Sewa gerai untuk minggu ini",
-    "small": "Gerai kecil",
-    "medium": "Gerai sederhana",
-    "big": "Gerai besar",
-    "shelves": "{n} rak",
-    "rent": "Sewa {n}",
-    "customers": "{a} hingga {b} pelanggan sehari",
-    "where": {
-      "small": "Barisan belakang, dekat gerbang",
-      "medium": "Lorong tengah",
-      "big": "Sudut tepi perigi"
-    },
-    "loan": "Duit sewa tak cukup. Kawan bapa saudara anda meminjamkan {n} dirham tanpa faedah (qard hasan)."
+  "morning": {
+    "open": "Buka kedai",
+    "setOut": "Bertolak",
+    "notebook": "Buku nota",
+    "goals": "Sasaran",
+    "store": "Stor",
+    "storeEmpty": "Kosong",
+    "wanted": "Dicari minggu ini",
+    "wantedNone": "Belum ada yang mencari apa-apa.",
+    "supplies": "Bekalan {n}",
+    "nextShop": "Anda ada barang. Buka kedai dan menjual.",
+    "nextSetOut": "Rak hampir kosong. Bertolak untuk membeli lagi.",
+    "nextFriday": "Jumaat sudah dekat. Simpan {n} dirham untuk sewa.",
+    "nextBroke": "Duit sewa belum cukup. Jual apa yang ada.",
+    "rent": "Sewa Jumaat: {n}"
   },
-  "places": {
-    "market": "Pasar",
-    "gate": "Pintu Kota",
-    "bayt": "Baitulmal"
-  },
-  "alley": {
-    "title": "Lorong Basra",
-    "hint": "Pilih tempat untuk dituju.",
-    "walking": "Berjalan...",
-    "arrive": {
-      "market": "Pintu masuk pasar. Gerai anda menunggu.",
-      "gate": "Pintu kota. Kafilah ke kebun kurma dan pelabuhan bertolak dari sini.",
-      "bayt": "Baitulmal. Zakat dikira dan dibayar di sini pada hujung tahun."
-    },
-    "notYet": "Datang semula pada hujung tahun.",
-    "toGate": "Keluar pintu kota",
-    "enterBayt": "Masuk",
-    "enterBazaar": "Masuk pasar"
-  },
-  "source": {
-    "title": "Di mana anda membeli hujung minggu ini?",
-    "groves": "Kebun kurma",
-    "port": "Pelabuhan Ubulla",
-    "bedouin": "Khemah Badwi",
-    "grovesSells": "Kurma, tembikar, jerami",
-    "portSells": "Kain, rempah",
-    "bedouinSells": "Kulit, tunai atau hutang",
-    "crier2": "Penyeru: kapal dari Hindustan berlabuh di Ubulla. Rempah murah minggu ini.",
-    "crier3": "Seorang pedagang Badwi berkhemah di luar pintu kota. Dia menjual kulit secara hutang.",
-    "crier4": "Musim sejuk tiba. Kain laris dalam cuaca sejuk."
-  },
-  "cart": {
-    "title": "Sewa kereta",
-    "handcart": "Kereta tolak",
-    "donkey": "Kereta keldai",
-    "camels": "Dua ekor unta",
-    "grid": "{c} x {r} petak",
-    "hire": "Sewa {n}",
-    "match": "Sesuai untuk {stall}"
-  },
-  "buy": {
-    "title": "Beli dan susun",
-    "hint": "Beli, kemudian ketik barang dan ketik kereta untuk menyusun.",
-    "tray": "Belum disusun",
-    "rotate": "Pusing",
-    "auto": "Susun sendiri",
-    "leave": "Bertolak",
-    "credit": "Secara hutang",
-    "unpacked": "{n} yang belum disusun akan dipulangkan.",
-    "cantFit": "Barang itu tak muat di situ.",
-    "padNote": "Tempayan yang bersentuh kain atau jerami tidak pecah."
-  },
-  "ride": {
-    "title": "Perjalanan pulang",
-    "broken": "{n} tempayan pecah di jalan. Jerami boleh menyelamatkannya.",
-    "brokenMany": "{n} tempayan pecah di jalan. Jerami boleh menyelamatkannya.",
-    "whole": "Semua barang sampai dengan selamat."
-  },
-  "weekendLedger": {
-    "title": "Buku kira hujung minggu",
-    "colGood": "Barang",
-    "colBuy": "Beli",
-    "colHire": "Bahagian sewa",
-    "colLanded": "Kos sampai",
-    "goods": "Barang",
-    "hire": "Sewa kereta",
-    "total": "Jumlah belanja",
-    "wasted": "Sewa untuk {n} petak kosong",
-    "credit": "Dibeli secara hutang, dibayar hujung tahun",
-    "broken": "Pecah di jalan",
-    "note": "Kos sampai ialah harga terendah anda. Jual lebih daripadanya.",
-    "toStall": "Ke gerai"
+  "notices": {
+    "badFish": "Seorang pelanggan memulangkan ikan rosak anda. Anda membayar balik {n}.",
+    "drought": "Keluarga dari pekan kemarau kini membeli di gerai anda.",
+    "corner": "Skim garam itu membayar {n} dirham. Orang di pasar bercakap tentangnya.",
+    "salam": "Petani menghantar {n} bakul kurma, seperti yang dijanjikan.",
+    "loanDispute": "Kawan anda kata anda meminjam 55, bukan 40. Tiada apa yang ditulis.",
+    "potter": "Tukang tembikar menghantar {n} dirham tanda terima kasih, dan pelanggan baharu.",
+    "newMuslim": "Pedagang yang bermusafir bersama anda kini membeli di gerai anda.",
+    "debtorPays": "Saudagar yang berhutang dengan anda membayar {n} dirham.",
+    "teacher": "Guru itu menghantar murid-muridnya ke gerai anda, dengan {n} dirham tanda terima kasih.",
+    "traveller": "Musafir yang anda bantu kembali membawa hadiah {n} dirham.",
+    "brother": "Anda menghantar barang kepada abang musafir itu. Dia menjadi pelanggan tetap."
   },
   "shop": {
-    "setup": "Tetapkan harga, kemudian buka gerai.",
-    "setup2": "Perhatikan pelanggan.",
-    "open": "Buka Gerai",
-    "openFor": "Gerai dibuka · {s}s",
-    "closed": "Gerai ditutup",
-    "cost": "kos {n}",
+    "setupHint": "Ketik slot untuk pilih barang. Tetapkan harga dengan − dan +.",
+    "open": "Buka",
+    "openFor": "Buka · {s}s",
+    "closed": "Menutup",
     "empty": "Kosong",
-    "tapToChange": "Ketik untuk tukar",
-    "spoilSoon": "Rosak esok",
-    "inspector": "Muhtasib memeriksa timbangan anda. Gerai dibuka tengah hari.",
-    "crierCaravan": "Penyeru: kafilah lewat. Kurma berkurangan hari ini.",
-    "crierHarith": "Menyorok makanan untuk menaikkan harga (ihtikar) adalah haram.",
-    "crierEnd": "Penyeru: setahun sudah berlalu. Kira harta anda.",
-    "rest": "Tiada barang untuk dijual. Tutup gerai hari ini"
-  },
-  "scale": {
-    "title": "Pelanggan minta ditimbang",
-    "hint": "Tekan lama untuk mengisi. Lepaskan pada garisan.",
-    "hold": "Tekan",
-    "fair": "Timbangan yang adil.",
-    "short": "Timbangan kurang. Pelanggan perasan.",
-    "over": "Terlebih. Anda memberi stok percuma."
-  },
-  "harith": {
-    "title": "Harith bersandar di gerai anda",
-    "body": "\"Kafilah lewat. Simpan kurma anda sampai esok dan jual mahal.\"",
-    "fair": "Jual pada harga adil",
-    "hold": "Simpan kurma",
-    "fairOutcome": "Anda berjual dengan adil. Berita tersebar, pelanggan tetap datang setiap hari.",
-    "holdOutcome": "Muhtasib nampak rak kosong. Kafilah tiba malam tadi, kini kurma murah."
+    "choose": "Pilih barang",
+    "none": "Biar kosong",
+    "restock": "Isi semula",
+    "inStore": "{n} dalam stor",
+    "cost": "Dibeli {n}",
+    "knownGood": "Laku pada {n}",
+    "knownHigh": "Terlalu mahal pada {n}",
+    "unknown": "Harga belum diketahui",
+    "asked": "Ada orang mencari {good}",
+    "nothing": "Tiada barang untuk dijual. Bertolak dahulu.",
+    "home": "Kembali"
   },
   "night": {
-    "title": "Malam",
-    "sold": "Terjual",
-    "takings": "Hasil",
-    "credit": "Jualan secara hutang",
-    "walked": "Pergi tanpa beli",
-    "spoiled": "Rosak",
-    "soon": "Rosak esok",
-    "inspector": "Muhtasib datang esok pagi.",
-    "next": "Pagi esok",
-    "toLedger": "Buka buku kira"
+    "title": "Petang",
+    "sold": "Barang dijual",
+    "takings": "Kutipan",
+    "walked": "Pergi begitu sahaja",
+    "wanted": "Mencari barang yang tiada",
+    "next": "Hari seterusnya",
+    "friday": "Ke hari Jumaat"
   },
-  "ledger": {
-    "title": "Buku kira minggu {week}",
-    "revenue": "Hasil jualan",
-    "cogs": "Kos barang dijual (kos sampai)",
-    "rent": "Sewa gerai",
-    "written": "Rosak, pecah dan jerami",
-    "wasted": "Sewa petak kosong",
-    "profit": "Untung minggu ini",
+  "setout": {
+    "title": "Ke mana anda mahu pergi?",
+    "days": "{n} hari pergi dan balik",
+    "closed": "Dibuka pada {season}",
+    "friday": "Tidak cukup hari sebelum Jumaat",
+    "supplies": "Bekalan",
+    "suppliesHint": "Satu setiap hentian. Perjalanan ini perlu {n}.",
+    "go": "Bertolak",
+    "back": "Tinggal",
+    "space": "Ruang kafilah {n}",
+    "cost": "Kos {n}"
+  },
+  "trip": {
+    "to": "Ke {town}",
+    "home": "Pulang ke Basra",
+    "pick": "Pilih hentian seterusnya",
+    "kinds": {
+      "road": "Jalan",
+      "trader": "Pedagang",
+      "people": "Orang",
+      "find": "Penemuan",
+      "hidden": "Tidak diketahui"
+    },
+    "supplies": "Bekalan {n}",
+    "space": "Muatan {a}/{b}",
+    "days": "{n} hari di luar",
+    "thirsty": "Bekalan habis. Anda menukar barang dengan air di hentian.",
+    "continue": "Teruskan",
+    "arriving": "Hampir tiba...",
+    "lesson": "Pengajaran",
+    "day": "Setengah hari {n}"
+  },
+  "town": {
+    "title": "Pasar di {town}",
+    "each": "{n} seunit",
+    "left": "Tinggal {n}",
+    "rare": "Jarang ada hari ini",
+    "supplies": "Bekalan {n} seunit",
+    "leave": "Pulang",
+    "full": "Kafilah sudah penuh.",
+    "cargo": "Kafilah anda"
+  },
+  "home": {
+    "title": "Pulang ke Basra",
+    "unloaded": "Masuk ke stor",
+    "nothing": "Anda pulang tanpa barang untuk dijual.",
+    "days": "{n} hari di luar",
+    "unload": "Punggah"
+  },
+  "need": {
+    "needCash": "Duit tidak cukup",
+    "needSupplies": "Tiada bekalan lebih",
+    "needGood": "Anda tidak membawanya",
+    "needSpace": "Tiada ruang dalam kafilah"
+  },
+  "events": {
+    "sandstorm": {
+      "title": "Ribut pasir",
+      "body": "Dinding pasir bergulung ke arah kafilah.",
+      "a": "Tunggu sehingga reda (1 bekalan)",
+      "b": "Teruskan perjalanan",
+      "out": {
+        "a": "Anda berlindung di sebalik unta sehingga ribut berlalu.",
+        "bLost": "Angin merentap sebahagian muatan anda.",
+        "bLucky": "Anda berjaya melepasinya dengan semua barang."
+      },
+      "lesson": "\"Ikat untamu, kemudian bertawakal kepada Allah.\" Berusaha dahulu, kemudian berserah."
+    },
+    "lameCamel": {
+      "title": "Unta tempang",
+      "body": "Seekor unta anda terhincut-hincut dan mengerang di bawah bebannya.",
+      "a": "Berehat setengah hari",
+      "b": "Tinggalkan sebahagian muatan",
+      "c": "Tambah beban unta lain",
+      "out": {
+        "a": "Unta itu berehat dan berjalan semula.",
+        "b": "Anda meninggalkan dua muatan di tepi jalan.",
+        "c": "Unta yang terlebih beban menjadi perlahan. Hentian seterusnya kos dua kali ganda."
+      },
+      "lesson": "Nabi ﷺ menegur seorang lelaki yang untanya dibebani dan kelaparan. Berbuat baik kepada haiwan sebahagian daripada iman."
+    },
+    "bandits": {
+      "title": "Penunggang di atas bukit",
+      "body": "Peninjau sedang memerhati jalan. Mungkin mereka penyamun.",
+      "a": "Sertai kafilah besar (4 dirham)",
+      "b": "Berjalan waktu malam (1 bekalan)",
+      "c": "Ambil risiko",
+      "out": {
+        "a": "Anda membayar bahagian anda dan berjalan perlahan, tetapi selamat.",
+        "b": "Anda menyelinap lalu dalam gelap.",
+        "cRobbed": "Mereka merampas sebahagian barang anda.",
+        "cSafe": "Mereka membiarkan anda lalu."
+      },
+      "lesson": "Timbang risiko dengan kosnya. Ada keselamatan dalam jumlah yang ramai."
+    },
+    "caravanPot": {
+      "title": "Tabung kafilah",
+      "body": "Setiap musafir memasukkan 2 dirham ke dalam tabung. Sesiapa yang kehilangan barang dalam perjalanan ini dibayar balik daripadanya.",
+      "a": "Sertai (2 dirham)",
+      "b": "Tolak",
+      "out": {
+        "a": "Syiling anda masuk bersama syiling orang lain.",
+        "b": "Anda menyimpan syiling anda."
+      },
+      "lesson": "Menanggung kerugian bersama ialah asas takaful. Ia tolong-menolong, bukan pertaruhan."
+    },
+    "bedouinCamp": {
+      "title": "Khemah Badwi",
+      "body": "Sebuah keluarga menjemput anda berehat, makan dan minum bersama mereka.",
+      "a": "Terima (setengah hari)",
+      "b": "Berterima kasih dan teruskan",
+      "out": {
+        "a": "Mereka mengisi kantung air anda dan menceritakan apa yang ada di hadapan.",
+        "b": "Anda meneruskan perjalanan."
+      },
+      "lesson": "Memuliakan tetamu adalah tuntutan dalam Islam. Pengetahuan tempatan lebih bernilai daripada syiling."
+    },
+    "dampSalt": {
+      "title": "Garam murah",
+      "body": "Seorang penjual menawarkan karung garam dengan sangat murah. Bahagian bawah karung kelihatan lembap.",
+      "a": "Periksa dahulu: 4 karung untuk 8",
+      "b": "Beli 6 begitu sahaja untuk 6",
+      "c": "Pergi sahaja",
+      "out": {
+        "a": "Anda memilih empat karung yang elok.",
+        "b": "Separuh karung rosak. {n} boleh digunakan.",
+        "c": "Anda tinggalkan dia."
+      },
+      "lesson": "Penjual mesti menunjukkan kecacatan. Nabi ﷺ bersabda: \"Sesiapa yang menipu bukan daripada kalangan kami.\""
+    },
+    "badFish": {
+      "title": "Ikan yang tidak masin sempurna",
+      "body": "Dua ekor ikan anda tidak diperam dengan baik. Ia tidak akan tahan lama.",
+      "a": "Beritahu pembeli dan jual murah",
+      "b": "Campurkan dengan ikan yang elok",
+      "out": {
+        "a": "Seorang tukang masak membelinya pada harga rendah yang adil.",
+        "b": "Tiada siapa perasan. Buat masa ini."
+      },
+      "lesson": "Peraturan jual beli yang jujur terpakai kepada anda juga. Kecacatan yang disorok akan kembali."
+    },
+    "droughtTown": {
+      "title": "Pekan dilanda kemarau",
+      "body": "Perigi hampir kering dan makanan berkurangan. Orang ramai mengerumuni kafilah anda.",
+      "a": "Jual 3 pada harga adil",
+      "b": "Caj tiga kali ganda",
+      "out": {
+        "a": "Mereka berterima kasih dan mengingati nama anda.",
+        "b": "Mereka membayar, dan mereka akan mengingati ini juga."
+      },
+      "lesson": "Mengambil kesempatan atas orang yang susah adalah salah. Nama baik lebih bernilai daripada satu jualan."
+    },
+    "cornerSalt": {
+      "title": "Skim garam",
+      "body": "Seorang saudagar mencari rakan kongsi untuk membeli semua garam, kemudian menjualnya mahal.",
+      "a": "Labur 20 dirham",
+      "b": "Tolak",
+      "out": {
+        "a": "Anda menyerahkan bahagian anda.",
+        "b": "Dia mengangkat bahu dan mencari orang lain."
+      },
+      "lesson": "Menyorok barang untuk menaikkan harga (ihtikar) adalah haram. Ia menyusahkan semua yang memerlukannya."
+    },
+    "fakeBidder": {
+      "title": "Orang asing yang membantu",
+      "body": "Seorang lelaki menawarkan diri berpura-pura membida barang anda di pasar, supaya pembeli sebenar membayar lebih.",
+      "a": "Bayar dia 3 dirham",
+      "b": "Tolak",
+      "out": {
+        "a": "Harga di pasar naik untuk beberapa hari.",
+        "b": "Anda menyuruhnya pergi."
+      },
+      "lesson": "Bidaan palsu untuk menaikkan harga (najash) adalah haram."
+    },
+    "nextNet": {
+      "title": "Jala nelayan",
+      "body": "Seorang nelayan menawarkan apa sahaja hasil jala seterusnya untuk 10 dirham.",
+      "a": "Beli tangkapan seterusnya",
+      "b": "Beli 3 ikan yang sudah ditangkap (12)",
+      "c": "Teruskan berjalan",
+      "out": {
+        "aGood": "Bertuah: jala menaikkan {n} ekor ikan.",
+        "aBad": "Jala menaikkan {n} ekor sahaja.",
+        "b": "Tiga ekor ikan yang elok, seperti yang anda lihat.",
+        "c": "Anda teruskan berjalan."
+      },
+      "lesson": "Membeli sesuatu yang tidak diketahui (gharar) adalah haram. Belilah apa yang boleh dilihat."
+    },
+    "salam": {
+      "title": "Bayar dahulu",
+      "body": "Seorang petani perlukan duit sekarang. Dia menawarkan 8 bakul kurma ketika menuai dua minggu lagi, untuk 15 dirham hari ini.",
+      "a": "Setuju dan tulis",
+      "b": "Tolak",
+      "out": {
+        "a": "Jumlah, mutu, harga dan tarikh dipersetujui.",
+        "b": "Dia mencari pembeli lain."
+      },
+      "lesson": "Membayar sekarang untuk barang kemudian (salam) dibenarkan jika semuanya ditetapkan lebih awal."
+    },
+    "moneylender": {
+      "title": "Ceti",
+      "body": "Dia akan meminjamkan 50 dirham hari ini. Anda bayar balik 60 dalam dua minggu.",
+      "a": "Ambil pinjaman",
+      "b": "Tolak",
+      "out": {
+        "a": "Anda berhutang 60 dengannya.",
+        "b": "Anda bertahan tanpanya."
+      },
+      "lesson": "Riba adalah haram. Allah menghalalkan jual beli dan mengharamkan riba (Al-Baqarah 2:275)."
+    },
+    "friendlyLoan": {
+      "title": "Pinjaman seorang kawan",
+      "body": "Kawan lama bapa saudara anda menawarkan pinjaman 40 dirham, tanpa faedah, selama dua minggu.",
+      "a": "Pinjam dan tulis",
+      "b": "Pinjam dengan berjabat tangan",
+      "c": "Tidak mengapa",
+      "out": {
+        "a": "Seorang saksi menandatangani. Anda berhutang 40.",
+        "b": "Anda berjabat tangan. Anda berhutang 40.",
+        "c": "Dia mendoakan anda."
+      },
+      "lesson": "Pinjaman tanpa faedah (qard hasan) itu baik. Tulislah hutang, kata Al-Baqarah 2:282."
+    },
+    "widow": {
+      "title": "Modal seorang balu",
+      "body": "Seorang balu yang kaya menawarkan 60 dirham untuk anda berniaga. Dia mengambil separuh untung, atau menanggung rugi.",
+      "a": "Terima untuk seminggu",
+      "b": "Tolak",
+      "out": {
+        "a": "Pada hari Jumaat anda berkira dengannya.",
+        "b": "Dia berterima kasih atas kejujuran anda."
+      },
+      "lesson": "Perkongsian ini ialah mudarabah. Nabi ﷺ berniaga dengan cara ini menggunakan harta Khadijah."
+    },
+    "datesForDates": {
+      "title": "Kurma dengan kurma",
+      "body": "Seorang pedagang menawarkan dua bakul kurmanya yang rendah mutu untuk satu bakul kurma anda yang elok.",
+      "a": "Tukar",
+      "b": "Jual kurma anda, kemudian beli kurmanya",
+      "c": "Tidak jadi",
+      "out": {
+        "a": "Anda bertukar terus.",
+        "b": "Hasilnya sama, dibuat dengan cara yang betul.",
+        "c": "Anda menyimpan kurma anda."
+      },
+      "lesson": "Menukar makanan yang sama dengan jumlah berbeza adalah riba. Nabi ﷺ berpesan kepada Bilal: jual, kemudian beli."
+    },
+    "shortMeasure": {
+      "title": "Sukatan yang kurang",
+      "body": "Seorang pedagang mengisi mangkuk seorang balu kurang daripada sepatutnya, tetapi mengenakan harga penuh.",
+      "a": "Tegur dia",
+      "b": "Jangan masuk campur",
+      "out": {
+        "a": "Dia merungut dan mengisinya dengan betul.",
+        "b": "Anda memandang ke arah lain."
+      },
+      "lesson": "\"Celakalah orang yang mengurangi sukatan\" (Al-Mutaffifin 83:1). Berilah sukatan penuh."
+    },
+    "bigOrder": {
+      "title": "Tempahan besar",
+      "body": "Seorang tukang masak mahu 10 karung garam pada harga 7 seunit, dihantar Jumaat depan.",
+      "a": "Setuju, secara bertulis",
+      "b": "Setuju dengan berjabat tangan",
+      "c": "Tolak",
+      "out": {
+        "a": "Tempahan ditulis. Sediakan garamnya.",
+        "b": "Anda berjabat tangan. Sediakan garamnya.",
+        "c": "Dia mencari penjual lain."
+      },
+      "lesson": "Tunaikan janji, dan tulis kontrak supaya kedua-dua pihak menunaikannya."
+    },
+    "hungryFamily": {
+      "title": "Keluarga yang lapar",
+      "body": "Di oasis, seorang ibu dan anak-anaknya belum makan apa-apa hari ini.",
+      "a": "Beri 2 makanan anda",
+      "b": "Beri 5 dirham",
+      "c": "Teruskan perjalanan",
+      "out": {
+        "a": "Anak-anak itu makan. Ibunya mendoakan anda.",
+        "b": "Dia berterima kasih dan membeli roti.",
+        "c": "Anda meneruskan perjalanan."
+      },
+      "lesson": "Fakir ialah golongan pertama penerima zakat. Sedekah tidak mengurangkan harta."
+    },
+    "potter": {
+      "title": "Tukang tembikar",
+      "body": "Dia bekerja setiap hari, tetapi tembikarnya tidak cukup untuk menyara keluarga.",
+      "a": "Beli tembikar dengan adil (8 dirham)",
+      "b": "Beri dia 4 dirham",
+      "c": "Berlalu",
+      "out": {
+        "a": "Dia tersenyum. Anda membantunya dan mendapat seorang kawan.",
+        "b": "Dia bersyukur.",
+        "c": "Anda berlalu."
+      },
+      "lesson": "Miskin ialah orang yang bekerja tetapi masih tidak cukup. Zakat untuk mereka juga."
+    },
+    "zakatCollector": {
+      "title": "Amil zakat",
+      "body": "Seorang pegawai baitulmal sedang membuat rondaan. Dia menawarkan untuk menerangkan cara zakat perniagaan dikira.",
+      "a": "Dengar (setengah hari)",
+      "b": "Berterima kasih dan teruskan",
+      "out": {
+        "a": "Nisab ialah had minimum. Selepas setahun penuh, bayar satu perempat puluh daripada wang tunai dan barang dagangan.",
+        "b": "Dia mengangguk dan berlalu."
+      },
+      "lesson": "Amil yang memungut zakat dibayar daripadanya. Nisab dan haul menentukan apa yang wajib."
+    },
+    "newMuslim": {
+      "title": "Seorang mualaf",
+      "body": "Seorang pedagang baru memeluk Islam. Dia kurang pasti tentang jalan dan orang di sini.",
+      "a": "Kongsi makanan (1 bekalan)",
+      "b": "Buat hal sendiri",
+      "out": {
+        "a": "Kalian bermusafir bersama dan berbual hingga lewat malam.",
+        "b": "Dia meneruskan perjalanan seorang diri."
+      },
+      "lesson": "Zakat boleh diberi kepada mereka yang hatinya sedang dijinakkan (muallaf)."
+    },
+    "freedom": {
+      "title": "Menebus kebebasan",
+      "body": "Seorang hamba telah berjanji dengan tuannya untuk menebus dirinya. Dia kurang 20 dirham.",
+      "a": "Beri dia 20 dirham",
+      "b": "Tolak",
+      "out": {
+        "a": "Dia pergi kepada tuannya sebagai orang merdeka.",
+        "b": "Dia berlalu, masih tidak cukup."
+      },
+      "lesson": "Membebaskan hamba (riqab) ialah salah satu daripada lapan asnaf zakat."
+    },
+    "debtor": {
+      "title": "Lelaki yang berhutang",
+      "body": "Saudagar yang berhutang 20 dirham dengan bapa saudara anda tidak mampu membayar. Kedainya hampir gulung tikar.",
+      "a": "Beri dia masa",
+      "b": "Halalkan separuh",
+      "c": "Tuntut sekarang",
+      "out": {
+        "a": "Dia berjanji membayar bila mampu.",
+        "b": "Dia menangis kelegaan.",
+        "c": "Dia menjual alatannya untuk membayar anda."
+      },
+      "lesson": "\"Jika orang berhutang itu dalam kesusahan, berilah tempoh\" (Al-Baqarah 2:280). Gharimin boleh menerima zakat."
+    },
+    "teacher": {
+      "title": "Guru yang bermusafir",
+      "body": "Seorang guru dalam perjalanan untuk mengajar di pekan baharu telah kehilangan untanya.",
+      "a": "Tumpangkan dia (setengah hari)",
+      "b": "Berlalu",
+      "out": {
+        "a": "Dia mengajar anda sepotong ayat sepanjang jalan.",
+        "b": "Anda meninggalkannya di jalan."
+      },
+      "lesson": "Zakat boleh diberi untuk kebaikan di jalan Allah (fi sabilillah)."
+    },
+    "traveller": {
+      "title": "Musafir yang terkandas",
+      "body": "Seorang musafir jauh dari rumah telah dirompak dan kehabisan air.",
+      "a": "Kongsi air anda (1 bekalan)",
+      "b": "Teruskan perjalanan",
+      "out": {
+        "a": "Dia minum dan mendoakan anda. Dia bertanyakan nama anda.",
+        "b": "Anda meneruskan perjalanan."
+      },
+      "lesson": "Musafir yang terkandas (ibnu sabil) ialah salah satu daripada lapan asnaf zakat."
+    },
+    "lostPurse": {
+      "title": "Dompet yang hilang",
+      "body": "Sebuah dompet terletak di atas pasir, berat dengan syiling.",
+      "a": "Umumkan dan cari pemiliknya",
+      "b": "Simpan",
+      "out": {
+        "a": "Pemiliknya ditemui dan berterima kasih kepada anda.",
+        "aReward": "Pemiliknya berterima kasih dan memberi anda 5 dirham.",
+        "b": "Anda menyimpan 15 dirham."
+      },
+      "lesson": "Barang tercicir (luqatah) mesti diumumkan supaya pemiliknya boleh menuntut."
+    },
+    "carryForBrother": {
+      "title": "Bawakan untuk abang saya",
+      "body": "Seorang musafir meminta anda membawa tiga bungkusan kepada abangnya di Basra. Ia mengambil ruang.",
+      "a": "Setuju",
+      "b": "Tiada ruang",
+      "out": {
+        "a": "Anda memuatkan bungkusannya dengan cermat.",
+        "b": "Dia meminta kafilah lain."
+      },
+      "lesson": "Barang yang diamanahkan (wadiah) adalah amanah. Serahkan dengan sempurna."
+    },
+    "rumour": {
+      "title": "Khabar angin",
+      "body": "Di rumah tumpangan kafilah, orang berkata harga {good} di Basra akan melonjak minggu depan.",
+      "a": "Percaya",
+      "b": "Tanya dahulu (setengah hari)",
+      "out": {
+        "a": "Anda akan tahu di pasar nanti.",
+        "bTrue": "Memang benar. {good} akan laku mahal minggu depan.",
+        "bFalse": "Palsu. Ada orang yang mereka-reka."
+      },
+      "lesson": "\"Jika datang orang fasik membawa berita, selidikilah\" (Al-Hujurat 49:6). Periksa sebelum bertindak."
+    },
+    "buriedCoins": {
+      "title": "Syiling terpendam",
+      "body": "Di runtuhan, anda menemui sebuah tempayan lama penuh syiling.",
+      "a": "Beri satu perlima kepada baitulmal",
+      "b": "Simpan semuanya",
+      "out": {
+        "a": "{n} dirham ditemui. {fifth} diserahkan kepada baitulmal sekarang.",
+        "b": "Anda menyimpan kesemua {n} dirham."
+      },
+      "lesson": "Harta karun (rikaz) dikenakan satu perlima serta-merta. Tidak seperti zakat, tiada tempoh setahun."
+    }
+  },
+  "change": {
+    "time": "+{n} setengah hari",
+    "cash": "{n} dirham",
+    "supplies": "{n} bekalan",
+    "amanah": "{n} amanah",
+    "good": "{n} {good}"
+  },
+  "friday": {
+    "title": "Jumaat",
+    "sub": "Pasar ditutup untuk solat Jumaat.",
+    "revenue": "Jualan minggu ini",
+    "cost": "Kos barang dijual",
+    "supplies": "Bekalan",
+    "profit": "Untung niaga",
+    "rent": "Sewa dibayar",
+    "debts": "Hutang dibayar",
+    "late": "Hutang yang tidak dapat dibayar",
+    "partner": "Dibayar kepada balu",
+    "wholesale": "{n} barang dijual kepada pemborong pada separuh harga",
+    "orderFilled": "Tempahan dipenuhi: {qty} {good}",
+    "orderBackedOut": "Tukang masak membatalkan tempahan jabat tangan",
+    "orderShort": "Anda tiada {good} yang dijanjikan",
     "cash": "Wang dalam peti",
-    "stock": "Stok dibawa ke depan (kos sampai)",
-    "owedToYou": "Hutang orang kepada anda",
-    "youOwe": "Hutang anda",
+    "upgrades": "Tukang kayu dan ketua kafilah",
+    "upgradeNames": {
+      "shelf": "Tambah rak",
+      "camel": "Tambah unta",
+      "skins": "Kantung air lebih besar",
+      "guide": "Upah penunjuk jalan",
+      "boy": "Upah budak kedai"
+    },
+    "upgradeText": {
+      "shelf": "Satu slot lagi. Dua pelanggan lagi sehari. Sewa naik.",
+      "camel": "8 ruang lagi dalam kafilah.",
+      "skins": "Bawa sehingga 10 bekalan.",
+      "guide": "Lihat setiap hentian di peta.",
+      "boy": "Slot kosong diisi semula sendiri dari stor."
+    },
+    "buy": "{n}",
+    "owned": "Ada",
+    "goals": "Sasaran musim",
+    "goalNames": {
+      "sold": "Jual {n} barang",
+      "trips": "Buat {n} perjalanan",
+      "upgrades": "Beli {n} naik taraf",
+      "helped": "Bantu {n} orang",
+      "revenue": "Capai jualan {n} dirham"
+    },
+    "goalReward": "{n} dirham daripada persatuan saudagar bagi setiap sasaran dicapai.",
     "next": "Minggu depan",
-    "yearEnd": "Setahun sudah berlalu"
+    "seasonTitle": "Penghujung {season}",
+    "seasonReward": "Persatuan membayar anda {n} dirham untuk sasaran anda.",
+    "yearEnd": "Ke baitulmal"
+  },
+  "broke": {
+    "title": "Gerai sudah hilang",
+    "body": "Anda tidak mampu membayar sewa Jumaat, walaupun selepas menjual stok. Tuan tanah memberikan gerai kepada pedagang lain.",
+    "lesson": "Simpan wang tunai yang cukup untuk apa yang anda hutang. Barang dalam stor tidak membayar sewa.",
+    "retry": "Cuba musim ini semula",
+    "restart": "Mula tahun baharu"
+  },
+  "notebook": {
+    "title": "Buku nota",
+    "hint": "Reaksi pelanggan pada setiap harga.",
+    "none": "Belum dijual",
+    "zakat": "Zakat: nisab ialah 200 dirham. Selepas setahun penuh, bayar satu perempat puluh daripada wang tunai, stok dan wang yang orang hutang kepada anda."
   },
   "bayt": {
     "title": "Baitulmal",
     "clerk": "Kerani membuka buku kira anda. \"Mari kita kira harta anda hari ini.\"",
     "valueTitle": "Nilaikan stok anda",
-    "valueHint": "Pilih harga untuk setiap timbunan.",
-    "tagPaid": "Harga beli {n}",
+    "valueHint": "Pilih harga untuk setiap longgok.",
+    "tagPaid": "Dibeli {n}",
     "tagMarket": "Harga pasaran hari ini {n}",
-    "tagHoped": "Harga diharap {n}",
-    "wrongPaid": "Bukan harga beli. Barang dagangan dinilai pada harga pasaran hari ini.",
-    "wrongHoped": "Bukan harga yang diharap. Guna harga yang pasaran bayar hari ini.",
+    "tagHoped": "Harapan {n}",
+    "wrongPaid": "Bukan harga belian. Barang dagangan dinilai pada harga pasaran hari ini.",
+    "wrongHoped": "Bukan harga yang anda harapkan. Gunakan harga yang pasaran bayar hari ini.",
     "noStock": "Stor anda kosong. Tiada apa untuk dinilai.",
     "cash": "Wang dalam peti",
     "stock": "Stok pada harga pasaran hari ini",
     "owed": "Hutang orang kepada anda",
-    "debts": "Hutang yang perlu dibayar sekarang",
-    "total": "Jumlah harta berzakat",
+    "debts": "Hutang yang perlu dibayar",
+    "total": "Jumlah yang dizakatkan",
     "nisab": "Nisab",
-    "due": "Zakat (satu perempat puluh)",
-    "under": "Harta anda di bawah nisab. Tiada zakat tahun ini.",
+    "due": "Zakat wajib (satu perempat puluh)",
+    "fixtures": "Rak, unta dan peralatan anda ({n} dirham) tidak dikira. Zakat perniagaan dikenakan pada wang tunai dan barang untuk dijual.",
+    "rikaz": "Dibayar atas harta karun tahun ini: {n}",
+    "under": "Anda di bawah nisab. Tiada zakat wajib tahun ini.",
     "pay": "Bayar {n} dirham",
     "continue": "Teruskan",
     "paid": "Kerani mencatat zakat anda dalam daftarnya.",
     "sadaqahTitle": "Sedekah",
-    "sadaqahBody": "Zakat sudah dibayar. Mahu bersedekah lagi, secara sukarela?",
+    "sadaqahBody": "Zakat sudah dibayar. Mahu memberi lebih, secara sukarela?",
     "none": "Bukan sekarang",
     "give": "Beri {n}"
   },
@@ -225,20 +623,20 @@
       "Muallaf",
       "Riqab",
       "Gharimin",
-      "Fisabilillah",
-      "Ibnu Sabil"
+      "Fi sabilillah",
+      "Ibnu sabil"
     ],
     "scenes": [
-      "Seorang balu tanpa pendapatan menerima makanan sebulan.",
-      "Seorang buruh yang bekerja tetapi tak cukup untuk sewa dibantu.",
-      "Kerani itu sendiri dibayar untuk kerjanya.",
-      "Seorang tukang Parsi yang baru memeluk Islam dibantu menetap di kota.",
-      "Seorang lelaki membayar untuk menebus kebebasannya.",
-      "Seorang tukang perahu yang perahunya tenggelam dilangsaikan hutangnya.",
-      "Bantuan untuk kerja kebajikan masyarakat.",
-      "Seorang musafir yang dirompak di jalan diberi bekal untuk pulang."
+      "Seperti keluarga lapar di oasis: makanan untuk mereka yang tiada apa-apa.",
+      "Seperti tukang tembikar yang bekerja tetapi masih tidak cukup.",
+      "Kerani dan pemungut dibayar untuk kerja mereka.",
+      "Seperti mualaf yang anda temui di jalan.",
+      "Seperti lelaki yang menebus kebebasannya.",
+      "Seperti saudagar yang tidak mampu membayar hutangnya.",
+      "Seperti guru yang bermusafir untuk mengajar di pekan baharu.",
+      "Seperti musafir yang dirompak di jalan, jauh dari rumah."
     ],
-    "others": "Zakat peniaga lain membuat kebaikan ini tahun ini."
+    "others": "Zakat pedagang lain melakukan kerja ini tahun ini."
   },
   "end": {
     "title": "Tahun anda",
@@ -246,6 +644,7 @@
     "amanah": "Amanah",
     "zakat": "Zakat dibayar",
     "sadaqah": "Sedekah diberi",
+    "helped": "Orang dibantu di jalan",
     "line": "Zakat perniagaan masih wajib hari ini. Kira zakat anda.",
     "cta": "Kira zakat saya",
     "share": "Kongsi",

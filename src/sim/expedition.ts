@@ -349,7 +349,7 @@ function makeCtx(s: GameState, trip: Trip, rng: Rng, out: Outcome): EventCtx {
       if (lost.length && trip.flags.pot) out.changes.push({ kind: 'cash', delta: lost.reduce((a, [, n]) => a + n, 0) * 3 });
       return lost.reduce((a, [, n]) => a + n, 0);
     },
-    helped() { s.counters.helped += 1; },
+    helped() { s.counters.helped += 1; s.flags.helpedTotal = (s.flags.helpedTotal ?? 0) + 1; },
     later(p) { s.pending.push(p); },
     today() { return dayIndex(s); },
   };

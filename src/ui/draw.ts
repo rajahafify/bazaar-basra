@@ -191,29 +191,63 @@ export class Draw {
       c.fillStyle = '#b08d4f'; this.rr(-17, 2, 34, 11, 4); c.fill();
       c.fillStyle = '#5e2f1c';
       for (const [dx, dy] of [[-10, 0], [-3, -2], [4, 0], [11, -1], [-6, -7], [1, -8], [8, -6], [-1, -13]] as const) { c.beginPath(); c.ellipse(dx, dy, 4, 5.5, 0, 0, 7); c.fill(); }
-    } else if (good === 'cloth') {
-      for (const [col, dx, dy] of [['#3d4f7c', -8, 4], ['#a8432f', 8, 4], ['#ece3d0', 0, -7]] as const) {
-        c.fillStyle = col; this.rr(-15 + dx * 0.3, dy - 5, 30, 10, 5); c.fill();
-        c.strokeStyle = 'rgba(0,0,0,.25)'; c.lineWidth = 1; c.stroke();
+    } else if (good === 'salt') {
+      c.fillStyle = '#c9b48a'; this.rr(-14, -4, 18, 18, 6); c.fill();
+      c.fillStyle = '#f4f0e6'; c.beginPath(); c.moveTo(-14, -4); c.lineTo(-5, -14); c.lineTo(4, -4); c.fill();
+      c.beginPath(); c.moveTo(2, 14); c.lineTo(10, -2); c.lineTo(18, 14); c.fill();
+      c.strokeStyle = '#a49c88'; c.lineWidth = 1; c.stroke();
+    } else if (good === 'fish') {
+      c.fillStyle = '#8a7a5e';
+      for (const dy of [-6, 4]) {
+        c.beginPath(); c.ellipse(-2, dy, 13, 4.5, 0, 0, 7); c.fill();
+        c.beginPath(); c.moveTo(10, dy); c.lineTo(18, dy - 5); c.lineTo(18, dy + 5); c.fill();
       }
-    } else if (good === 'spices') {
-      c.fillStyle = '#d8c9a3'; this.rr(-13, -8, 26, 22, 7); c.fill();
-      c.fillStyle = '#d9a431'; c.beginPath(); c.ellipse(0, -8, 12, 6, 0, 0, 7); c.fill();
-      c.strokeStyle = '#8a5a2b'; c.lineWidth = 2; c.beginPath(); c.moveTo(-10, -2); c.lineTo(10, -2); c.stroke();
-    } else if (good === 'pottery') {
+      c.fillStyle = '#f4f0e6'; c.beginPath(); c.arc(-11, -7, 1.3, 0, 7); c.arc(-11, 3, 1.3, 0, 7); c.fill();
+    } else if (good === 'vinegar') {
       c.fillStyle = '#b4643f'; c.beginPath();
-      c.moveTo(-4, -15); c.lineTo(4, -15); c.quadraticCurveTo(15, -4, 9, 10);
-      c.lineTo(-9, 10); c.quadraticCurveTo(-15, -4, -4, -15); c.fill();
-      c.strokeStyle = '#7d3f24'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(-10, -3); c.lineTo(10, -3); c.stroke();
-    } else if (good === 'leather') {
-      c.fillStyle = '#8a5a33';
-      this.rr(-16, -2, 32, 9, 3); c.fill();
-      this.rr(-14, -11, 28, 9, 3); c.fill();
-      c.strokeStyle = '#5b3b22'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(-4, -12); c.lineTo(-4, 8); c.stroke();
+      c.moveTo(-4, -15); c.lineTo(4, -15); c.quadraticCurveTo(15, -4, 9, 12);
+      c.lineTo(-9, 12); c.quadraticCurveTo(-15, -4, -4, -15); c.fill();
+      c.fillStyle = '#6b4a2a'; this.rr(-4, -18, 8, 5, 2); c.fill();
+      c.strokeStyle = '#7d3f24'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(-10, -2); c.lineTo(10, -2); c.stroke();
+    } else if (good === 'beef') {
+      c.fillStyle = '#7a2e24';
+      this.rr(-16, -1, 30, 10, 3); c.fill();
+      this.rr(-12, -11, 28, 10, 3); c.fill();
+      c.strokeStyle = '#e9dcc0'; c.lineWidth = 1.5;
+      c.beginPath(); c.moveTo(-12, 3); c.lineTo(10, 5); c.moveTo(-8, -7); c.lineTo(12, -5); c.stroke();
+    } else if (good === 'cardamom') {
+      c.fillStyle = '#c9b48a'; this.rr(-13, -6, 26, 20, 7); c.fill();
+      c.fillStyle = '#7d9a4a';
+      for (const [dx, dy] of [[-7, -7], [0, -9], [7, -7], [-3, -3], [4, -3]] as const) { c.beginPath(); c.ellipse(dx, dy, 3.2, 4.6, 0.3, 0, 7); c.fill(); }
     } else {
-      c.fillStyle = '#d8c27a'; this.rr(-14, -7, 28, 14, 6); c.fill();
-      c.strokeStyle = '#a88c52'; c.lineWidth = 1.5;
-      for (const k of [-6, 0, 6]) { c.beginPath(); c.moveTo(k, -7); c.lineTo(k, 7); c.stroke(); }
+      // Saffron: red threads in a brass bowl.
+      c.fillStyle = '#b8923a'; c.beginPath(); c.ellipse(0, 4, 15, 8, 0, 0, Math.PI); c.fill();
+      c.fillRect(-15, 2, 30, 3);
+      c.strokeStyle = '#c8401e'; c.lineWidth = 2; c.lineCap = 'round';
+      for (const [x1, y1, x2, y2] of [[-9, 1, -4, -8], [-3, 1, 0, -10], [3, 1, 6, -9], [8, 1, 11, -6], [-6, 0, -9, -6]] as const) { c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke(); }
+    }
+    c.restore();
+  }
+
+  /** The kind of stop on the expedition map. */
+  stopIcon(kind: string, x: number, y: number, r = 11) {
+    const c = this.ctx;
+    c.save();
+    c.fillStyle = UI.parch; c.strokeStyle = UI.panelEdge; c.lineWidth = 1.6;
+    c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); c.stroke();
+    c.fillStyle = UI.panelEdge; c.strokeStyle = UI.panelEdge;
+    if (kind === 'road') {
+      c.beginPath(); c.moveTo(x - r * 0.6, y + r * 0.45); c.quadraticCurveTo(x, y - r * 0.8, x + r * 0.6, y + r * 0.45); c.closePath(); c.fill();
+    } else if (kind === 'trader') {
+      c.fillRect(x - r * 0.55, y - r * 0.1, r * 1.1, r * 0.5);
+      c.beginPath(); c.moveTo(x - r * 0.7, y - r * 0.1); c.lineTo(x, y - r * 0.6); c.lineTo(x + r * 0.7, y - r * 0.1); c.fill();
+    } else if (kind === 'people') {
+      c.beginPath(); c.arc(x - r * 0.25, y - r * 0.25, r * 0.22, 0, 7); c.arc(x + r * 0.28, y - r * 0.2, r * 0.2, 0, 7); c.fill();
+      c.fillRect(x - r * 0.5, y + r * 0.02, r * 0.5, r * 0.45); c.fillRect(x + r * 0.08, y + r * 0.05, r * 0.42, r * 0.42);
+    } else if (kind === 'find') {
+      this.coin(x, y, r * 0.5);
+    } else {
+      this.text('?', x, y + 1, { size: r * 1.3, font: 'head', align: 'center' });
     }
     c.restore();
   }

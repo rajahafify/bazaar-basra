@@ -477,11 +477,13 @@ No names, phone numbers or anything personal.
 | Event | Params |
 | --- | --- |
 | `game_start` | lang |
-| `day_end` | week, day, revenue, amanah |
-| `week_end` | week, profit, stall |
-| `cart_hire` | week, cart |
-| `stall_rent` | week, stall |
-| `harith_choice` | choice |
+| `day_end` | season, week, day, revenue, amanah |
+| `week_end` | season, week, cash |
+| `trip_start` | town, season, week |
+| `trip_event` | event, option |
+| `trip_end` | town, days, units |
+| `upgrade_buy` | upgrade, level |
+| `went_broke` | season, week |
 | `zakat_paid` | amount_dirham, total |
 | `sadaqah_given` | amount_dirham |
 | `game_finish` | minutes_played |

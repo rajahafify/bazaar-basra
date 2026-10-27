@@ -1,10 +1,11 @@
 // Which screen comes next. Continuing a saved game resumes at the screen for its phase.
 
 import type { App } from './app';
-import { AlleyScreen, CartScreen, PrologueScreen, RideScreen, SourceScreen, StallScreen, TitleScreen, WeekendLedgerScreen } from './screens/weekend';
-import { BuyScreen } from './screens/buy';
+import { MorningScreen } from './screens/morning';
 import { ShopScreen } from './screens/shop';
-import { WeekLedgerScreen } from './screens/ledger';
+import { TripScreen } from './screens/trip';
+import { BrokeScreen, FridayScreen } from './screens/friday';
+import { PrologueScreen, TitleScreen } from './screens/title';
 import { BaytScreen, EndScreen } from './screens/yearend';
 
 export function toTitle(app: App) {
@@ -15,20 +16,23 @@ export function resume(app: App) {
   const s = app.s!;
   switch (s.phase) {
     case 'prologue': return app.go(new PrologueScreen(app));
-    case 'stall': return app.go(new StallScreen(app));
-    case 'source': return app.go(new AlleyScreen(app, 'gate'));
-    case 'cart': return app.go(new CartScreen(app));
-    case 'buy': return app.go(new BuyScreen(app));
-    case 'ride': return app.go(new RideScreen(app));
-    case 'weekendLedger': return app.go(new WeekendLedgerScreen(app));
-    case 'shop': return app.go(new ShopScreen(app));
-    case 'weekLedger': return app.go(new WeekLedgerScreen(app));
-    case 'yearEnd': return app.go(new AlleyScreen(app, 'bayt'));
+    case 'morning': return app.go(new MorningScreen(app));
+    // A market day interrupted mid-way starts again from the morning, with the same stock.
+    case 'shop': s.phase = 'morning'; return app.go(new MorningScreen(app));
+    case 'trip': return app.go(new TripScreen(app));
+    case 'friday': return app.go(new FridayScreen(app));
+    case 'broke': return app.go(new BrokeScreen(app));
+    case 'yearEnd': return app.go(new BaytScreen(app));
     case 'done': return app.go(new EndScreen(app));
   }
 }
 
-export const next = {
-  source: (app: App) => app.go(new SourceScreen(app)),
-  bayt: (app: App) => app.go(new BaytScreen(app)),
+/** After a day, a trip or a Friday: the screen for wherever the calendar landed. */
+export function afterDay(app: App) {
+  app.save();
+  resume(app);
+}
+
+export const go = {
+  shop: (app: App) => app.go(new ShopScreen(app)),
 };

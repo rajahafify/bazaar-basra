@@ -126,9 +126,24 @@ export class App {
     d.button('lang', 296, 50, 44, 24, lang() === 'ms' ? 'EN' : 'BM', { fill: UI.parchDark, size: 11 });
   }
 
-  weekTitle(): string {
+  /** "Spring · Week 2 · Monday" */
+  calendar(): string {
     const s = this.s!;
-    return fmt(L().weekLabel, { week: s.week, season: L().seasons[s.week - 1]! });
+    return fmt(L().calendar, { season: L().seasons[s.season - 1]!, week: s.week, day: L().days[s.dow]! });
+  }
+
+  /** A small panel on the right of the amanah bar. */
+  sidePanel(d: Draw, text: string, y = 82) {
+    d.panel(204, y, 146, 28);
+    d.text(text, 277, y + 15, { size: 13, font: 'head', align: 'center', maxWidth: 136 });
+  }
+
+  /** A centred modal panel sized to its content. Returns its top y. */
+  modal(d: Draw, h: number, dim = 0.4): number {
+    d.dim(dim);
+    const y = Math.max(20, 320 - h / 2);
+    d.panel(20, y, 320, h);
+    return y;
   }
 
   amanahBar(d: Draw, y = 82) {
