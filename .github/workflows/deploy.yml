@@ -48,7 +48,7 @@ jobs:
           command: pages deploy dist --project-name=bazaar-basra --branch=${{ github.head_ref || github.ref_name }} --commit-dirty=true
       - name: Note the preview URL
         if: steps.cf.outputs.ok == 'true' && github.event_name == 'pull_request'
-        run: echo "Preview: ${{ steps.deploy.outputs.deployment-url }}" >> "$GITHUB_STEP_SUMMARY"
+        run: echo "Preview at ${{ steps.deploy.outputs.deployment-url }}" >> "$GITHUB_STEP_SUMMARY"
       - name: Skipped
         if: steps.cf.outputs.ok != 'true'
         run: echo "Cloudflare secrets are not set, so nothing was deployed." >> "$GITHUB_STEP_SUMMARY"
