@@ -38,6 +38,15 @@ The whole year is playable: prologue, four weekends (stall, alleys, source, cart
 
 Add `?debug` to the URL to expose test hooks, and `&speed=4` to run the game faster.
 
+## Deploy
+
+Cloudflare Pages, project `bazaar-basra`, served at https://basra.artifisi.com.
+`.github/workflows/deploy.yml` tests, builds and runs `wrangler pages deploy dist`:
+pushes to `main` go to production, same-repo PRs get a preview URL.
+It needs repo secrets `CLOUDFLARE_API_TOKEN` (Cloudflare Pages: Edit) and
+`CLOUDFLARE_ACCOUNT_ID`; without them the deploy step is skipped.
+Cache headers live in `public/_headers`.
+
 ## Status
 
 Vertical slice playable end to end, 27 October 2026. Still needed: sound, the asnaf scenes staged in 3D, ustaz review of all text, balance tuning, and the Flutter package.
