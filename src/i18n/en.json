@@ -742,5 +742,13 @@
     "restock": "The slot is empty. Tap Restock to bring more dates from the storeroom.",
     "night": "Sold out! That money is your capital. The notebook keeps every price you tried, with the face it got.",
     "morning": "Each morning, choose: open the shop, or set out to buy more. Your storeroom is empty, so set out to the date groves."
+  },
+  "caravanTips": {
+    "setout": "Your first caravan! Pick a town. Each stop on the road uses one supply, so bring enough. Your camel carries {n} goods.",
+    "map": "Choose one of the stops ahead. The icon shows what waits there: the road, a trader, people or a find. Unknown stops are a gamble.",
+    "event": "Every stop brings a choice. Options cost money, supplies or goods. A greyed-out option needs something you don't have.",
+    "town": "The town market! Buy with +. Watch your cargo space, and top up supplies here for the road home.",
+    "back": "The road home is a new route with new stops. Keep an eye on your supplies.",
+    "home": "Back in Basra! Your goods go to the storeroom. Open the shop and put them on your slot to sell."
   }
 }

@@ -146,6 +146,15 @@ export class App {
     return y;
   }
 
+  /** A first-time hint card over the screen, dismissed with "Got it". */
+  tip(d: Draw, text: string) {
+    const h = 30 + d.lines(text, 280, { size: 15 }) * 20 + 56;
+    const y = this.modal(d, h, 0.35);
+    d.ctx.strokeStyle = UI.gold; d.ctx.lineWidth = 3; d.rr(20, y, 320, h, 12); d.ctx.stroke();
+    d.para(text, 180, y + 28, 280, { size: 15, align: 'center' }, 20);
+    d.button('tip-ok', 120, y + h - 48, 120, 36, L().tutorial.next, { size: 14 });
+  }
+
   amanahBar(d: Draw, y = 82) {
     if (!this.s) return;
     d.panel(10, y, 186, 28);

@@ -1,11 +1,12 @@
 // An expedition, FTL style: pick one of two stops at each step, live through its event,
-// buy at the town market, and come home by a new road. Each stop is half a day.
+// buy at the town market, and come home by a new road. The first trip shows a hint at each new
+// sight.
 
 import { L, fmt, money } from '../../i18n';
 import { emit } from '../../platform/bridge';
 import {
-  GOOD_IDS, TOWN_SUPPLY_PRICE, arriveHome, caravanSpace, cargoUsed, chooseNode, chooseOption, eventOptions,
-  finishEvent, freeSpace, leaveTown, tripLength, supplyCap, townBuy, townSupplies, type Change, type GoodId, type Trip,
+  GOOD_IDS, TOWN_SUPPLY_PRICE, arriveHome, caravanSpace, caravanTipDue, cargoUsed, chooseNode, chooseOption, eventOptions,
+  finishEvent, freeSpace, leaveTown, seeCaravanTip, tripLength, supplyCap, townBuy, townSupplies, type CaravanTip, type Change, type GoodId, type Trip,
 } from '../../sim';
 import type { Draw } from '../../ui/draw';
 import { UI } from '../../world/palette';
@@ -55,10 +56,20 @@ export class TripScreen implements Screen {
       if (t.leg === 'town' || t.leg === 'home') app.crier(d, tt.arriving, 116);
       return;
     }
-    if (t.event) { t.event.outcome ? this.drawOutcome(d) : this.drawEvent(d); return; }
-    if (t.leg === 'town') { this.drawTown(d); return; }
-    if (t.leg === 'home') { this.drawHome(d); return; }
-    this.drawMap(d);
+    if (t.event) t.event.outcome ? this.drawOutcome(d) : this.drawEvent(d);
+    else if (t.leg === 'town') this.drawTown(d);
+    else if (t.leg === 'home') this.drawHome(d);
+    else this.drawMap(d);
+    const tip = this.tip();
+    if (tip) app.tip(d, L().caravanTips[tip]);
+  }
+
+  /** The first-caravan hint for what is on screen now, if not yet seen. */
+  private tip(): CaravanTip | null {
+    const s = this.app.s!, t = this.trip;
+    const tip: CaravanTip | null = t.event ? (t.event.outcome ? null : 'event')
+      : t.leg === 'town' ? 'town' : t.leg === 'home' ? 'home' : t.leg === 'back' ? 'back' : 'map';
+    return tip && caravanTipDue(s, tip) ? tip : null;
   }
 
   // ---------- the map ----------
@@ -214,6 +225,8 @@ export class TripScreen implements Screen {
   press(id: string) {
     const app = this.app, s = app.s!, t = s.trip;
     if (!t || this.walking || app.world.caravanMoving) return;
+    const tip = this.tip();
+    if (tip) { if (id === 'tip-ok') { seeCaravanTip(s, tip); app.save(); } return; }
     if (id.startsWith('node-') && !t.event && (t.leg === 'out' || t.leg === 'back')) {
       const i = Number(id.slice(5));
       const layer = t.step;

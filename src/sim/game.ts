@@ -353,6 +353,18 @@ export const TUTORIAL_DATES = 10;
 /** Tutorial steps, kept in flags.tut. */
 export const TUT = { slot: 0, price: 1, open: 2, watch: 3, restock: 4, selling: 5, morning: 6, done: 99 } as const;
 
+/** First-caravan hints, each shown once on the first trip and kept in flags. */
+export type CaravanTip = 'setout' | 'map' | 'event' | 'town' | 'back' | 'home';
+
+export function caravanTipDue(s: GameState, tip: CaravanTip): boolean {
+  // setOut counts the trip, so during the first trip the counter is already 1.
+  return s.counters.trips === (s.trip ? 1 : 0) && !s.flags[`tip_${tip}`];
+}
+
+export function seeCaravanTip(s: GameState, tip: CaravanTip) {
+  s.flags[`tip_${tip}`] = 1;
+}
+
 export function inTutorial(s: GameState): boolean {
   return (s.flags.tut ?? TUT.done) < TUT.done;
 }

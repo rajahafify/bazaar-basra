@@ -742,5 +742,13 @@
     "restock": "Slot sudah kosong. Ketik Isi semula untuk membawa lagi kurma dari stor.",
     "night": "Habis dijual! Wang itu modal anda. Buku nota menyimpan setiap harga yang anda cuba, bersama reaksinya.",
     "morning": "Setiap pagi, pilih: buka kedai, atau bertolak untuk membeli lagi. Stor anda kosong, jadi bertolaklah ke kebun kurma."
+  },
+  "caravanTips": {
+    "setout": "Kafilah pertama anda! Pilih sebuah bandar. Setiap hentian di jalan memakan satu bekalan, jadi bawa cukup. Unta anda membawa {n} barang.",
+    "map": "Pilih satu hentian di depan. Ikon menunjukkan apa yang menanti: jalan, pedagang, orang atau penemuan. Hentian tidak diketahui ialah pertaruhan.",
+    "event": "Setiap hentian membawa pilihan. Pilihan berharga wang, bekalan atau barang. Pilihan yang kelabu memerlukan sesuatu yang anda tiada.",
+    "town": "Pasar bandar! Beli dengan +. Jaga ruang muatan, dan tambah bekalan di sini untuk perjalanan pulang.",
+    "back": "Jalan pulang ialah laluan baharu dengan hentian baharu. Perhatikan bekalan anda.",
+    "home": "Kembali ke Basra! Barang anda masuk ke stor. Buka kedai dan letak di slot untuk dijual."
   }
 }

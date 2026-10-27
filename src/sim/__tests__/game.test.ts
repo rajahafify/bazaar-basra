@@ -4,7 +4,7 @@ import {
   endFriday, endShopDay, eventOptions, finishEvent, finishPrologue, leaveTown, newGame, notebookRange, restockSlot,
   retrySeason, setOut, setPrice, setSlotGood, settleFriday, startShopDay, stockOf, townBuy, yearEndCount,
   MAIN_QUESTS, QUEST_MIN_DAYS, checkMainQuest, dayIndex, deliverOrder, questDue, repayDebt,
-  TUTORIAL_DATES, addStock, tripDays, inTutorial, tutorialDay,
+  TUTORIAL_DATES, addStock, tripDays, inTutorial, tutorialDay, caravanTipDue, seeCaravanTip,
   type GameState,
 } from '../index';
 
@@ -111,6 +111,20 @@ describe('expeditions', () => {
     expect(s.dow).toBe(tripDays('groves'));
     expect(stockOf(s, 'dates')).toBeGreaterThan(TUTORIAL_DATES);
     expect(s.counters.trips).toBe(1);
+  });
+
+  it('shows the caravan hints on the first trip only, each once', () => {
+    const s = fresh(3);
+    s.cash = 40;
+    expect(caravanTipDue(s, 'setout')).toBe(true);
+    seeCaravanTip(s, 'setout');
+    expect(caravanTipDue(s, 'setout')).toBe(false);
+    setOut(s, 'groves', 5);
+    expect(caravanTipDue(s, 'map')).toBe(true);
+    playTrip(s);
+    s.dow = 1;
+    setOut(s, 'groves', 5);
+    expect(caravanTipDue(s, 'map')).toBe(false);
   });
 
   it('every event has 2 or 3 choices and one that is always open', () => {

@@ -5,7 +5,7 @@ import { L, fmt, money } from '../../i18n';
 import { emit } from '../../platform/bridge';
 import {
   GOOD_IDS, MAIN_QUESTS, SUPPLY_PRICE, TUT, TOWNS, TOWN_IDS, canSetOut, caravanSpace, dayIndex, daysBeforeFriday,
-  deliverOrder, goodsInStore, mainQuestDone, rentDue, repayDebt, setOut, sideQuestCount, stockOf,
+  caravanTipDue, deliverOrder, goodsInStore, seeCaravanTip, mainQuestDone, rentDue, repayDebt, setOut, sideQuestCount, stockOf,
   suggestedSupplies, supplyCap, tripDays, type GoodId, type TownId,
 } from '../../sim';
 import type { Draw } from '../../ui/draw';
@@ -199,6 +199,7 @@ export class MorningScreen implements Screen {
     const ok = canSetOut(s, this.town, this.supplies) === null && s.cash >= this.supplies * SUPPLY_PRICE;
     d.button('go', 30, 560, 170, 50, t.go, { size: 18, disabled: !ok });
     d.button('stay', 210, 560, 120, 50, t.back, { size: 16, fill: UI.parchDark });
+    if (caravanTipDue(s, 'setout')) this.app.tip(d, fmt(L().caravanTips.setout, { n: caravanSpace(s) }));
   }
 
   private openSetOut() {
@@ -219,6 +220,7 @@ export class MorningScreen implements Screen {
     if (s.notices.length) { if (id === 'notice') s.notices.shift(); app.save(); return; }
     if (id === 'close') { this.mode = 'home'; return; }
     if (this.mode === 'setout') {
+      if (caravanTipDue(s, 'setout')) { if (id === 'tip-ok') { seeCaravanTip(s, 'setout'); app.save(); } return; }
       if (id.startsWith('town-')) this.pickTown(id.slice(5) as TownId);
       if (id === 'sup-minus') this.supplies = Math.max(0, this.supplies - 1);
       if (id === 'sup-plus') this.supplies += 1;
