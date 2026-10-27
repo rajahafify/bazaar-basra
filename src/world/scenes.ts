@@ -4,14 +4,14 @@ import {
   BoxGeometry, CanvasTexture, ConeGeometry, CylinderGeometry, DoubleSide, Group, LatheGeometry, Mesh,
   MeshBasicMaterial, MeshLambertMaterial, PlaneGeometry, SphereGeometry, Vector2, Vector3,
 } from 'three';
-import type { GoodId } from '../sim';
+import { GOOD_IDS, type GoodId } from '../sim';
 import { Builder, sceneryRandom } from './build';
 import { C } from './palette';
 
 const rnd = sceneryRandom(1638);
 const flat = { rot: [-Math.PI / 2, 0, 0] as [number, number, number] };
 
-function house(b: Builder, x: number, z: number, w: number, d: number, h: number, color: number, face: [number, number]) {
+export function house(b: Builder, x: number, z: number, w: number, d: number, h: number, color: number, face: [number, number]) {
   b.withTransform([x, 0, z], 0, () => {
     b.add(new BoxGeometry(w, h, d), color, 0, h / 2, 0);
     b.add(new BoxGeometry(w + 0.12, 0.22, d + 0.12), C.brickB, 0, h + 0.11, 0);
@@ -29,7 +29,7 @@ function house(b: Builder, x: number, z: number, w: number, d: number, h: number
   });
 }
 
-function palm(b: Builder, x: number, z: number, s: number) {
+export function palm(b: Builder, x: number, z: number, s: number) {
   let y = 0;
   const lean = rnd.range(-0.12, 0.12);
   for (let i = 0; i < 6; i++) {
@@ -49,43 +49,53 @@ const jarProfile = [[0, 0], [0.12, 0.02], [0.2, 0.15], [0.21, 0.3], [0.14, 0.48]
 
 /** A pile of one good, built at the origin; used for the player's shelves and the neighbours'. */
 export function goodsPile(b: Builder, good: GoodId, x: number, y: number, z: number, big = false) {
-  const k = big ? 1.2 : 1;
+  const k = big ? 1.15 : 0.9;
   switch (good) {
     case 'dates':
-      b.add(new CylinderGeometry(0.4 * k, 0.3 * k, 0.26, 8), C.reed, x, y + 0.13, z);
-      for (let i = 0; i < 12; i++) b.add(new SphereGeometry(0.085, 5, 4), C.date, x + rnd.range(-0.26, 0.26) * k, y + 0.29 + rnd.range(0, 0.1), z + rnd.range(-0.26, 0.26) * k);
+      b.add(new CylinderGeometry(0.34 * k, 0.26 * k, 0.24, 8), C.reed, x, y + 0.12, z);
+      for (let i = 0; i < 10; i++) b.add(new SphereGeometry(0.075, 5, 4), C.date, x + rnd.range(-0.22, 0.22) * k, y + 0.27 + rnd.range(0, 0.09), z + rnd.range(-0.22, 0.22) * k);
       break;
-    case 'cloth':
-      [[C.indigo, -0.12, 0.13], [C.madder, 0.12, 0.13], [C.offWhite, 0, 0.36]].forEach(([c, dz, dy]) =>
-        b.add(new CylinderGeometry(0.13, 0.13, 0.8 * k, 8), c!, x, y + dy!, z + dz!, { rot: [0, 0, Math.PI / 2] }));
+    case 'salt':
+      b.add(new CylinderGeometry(0.2 * k, 0.26 * k, 0.4, 7), C.sack, x - 0.12, y + 0.2, z);
+      b.add(new ConeGeometry(0.2 * k, 0.16, 7), C.salt, x - 0.12, y + 0.48, z);
+      b.add(new ConeGeometry(0.22 * k, 0.3, 7), C.salt, x + 0.22, y + 0.15, z + 0.05);
       break;
-    case 'spices':
-      ([[-0.22, C.saffron, 0.12], [0.2, 0xb8552c, 0.12], [0, 0x8a5a2b, -0.22]] as const).forEach(([dx, c, dz]) => {
-        b.add(new CylinderGeometry(0.17, 0.2, 0.42, 7), 0xd8c9a3, x + dx, y + 0.21, z + dz);
-        b.add(new ConeGeometry(0.17, 0.12, 7), c, x + dx, y + 0.47, z + dz);
+    case 'fish':
+      b.add(new BoxGeometry(0.7 * k, 0.05, 0.5 * k), C.reed, x, y + 0.03, z);
+      for (let i = 0; i < 4; i++) {
+        b.add(new SphereGeometry(0.09, 6, 4), C.fish, x - 0.2 + i * 0.13, y + 0.1 + (i % 2) * 0.04, z, { scale: [0.6, 0.5, 2.6], rot: [0, 0.2 * (i - 1.5), 0] });
+      }
+      break;
+    case 'vinegar':
+      b.add(new LatheGeometry(jarProfile, 8), C.clay, x - 0.15, y, z, { scale: [0.85, 0.85, 0.85] });
+      b.add(new LatheGeometry(jarProfile, 8), 0xa8572f, x + 0.18, y, z - 0.05, { scale: [0.7, 0.75, 0.7] });
+      b.add(new CylinderGeometry(0.05, 0.05, 0.05, 6), C.cork, x - 0.15, y + 0.55, z);
+      break;
+    case 'beef':
+      [[-0.1, 0.08], [0.12, 0.08], [0, 0.24]].forEach(([dz, dy]) =>
+        b.add(new BoxGeometry(0.5 * k, 0.13, 0.24), C.beef, x, y + dy!, z + dz!, { rot: [0, rnd.range(-0.25, 0.25), 0] }));
+      break;
+    case 'cardamom':
+      ([[-0.18, 0.06], [0.18, -0.04]] as const).forEach(([dx, dz]) => {
+        b.add(new CylinderGeometry(0.15, 0.17, 0.28, 7), C.sack, x + dx, y + 0.14, z + dz);
+        b.add(new SphereGeometry(0.15, 7, 4), C.cardamom, x + dx, y + 0.29, z + dz, { scale: [1, 0.45, 1] });
       });
       break;
-    case 'pottery':
-      b.add(new LatheGeometry(jarProfile, 8), C.clay, x - 0.18, y, z + 0.05);
-      b.add(new LatheGeometry(jarProfile, 8), 0xc9784d, x + 0.2, y, z - 0.08, { scale: [0.8, 0.8, 0.8] });
-      b.add(new CylinderGeometry(0.16, 0.11, 0.18, 8), C.clay, x + 0.05, y + 0.09, z + 0.28);
-      break;
-    case 'leather':
-      [[-0.1, 0.1], [0.12, 0.1], [0, 0.3]].forEach(([dz, dy]) =>
-        b.add(new BoxGeometry(0.75 * k, 0.16, 0.26), C.leather, x, y + dy!, z + dz!, { rot: [0, rnd.range(-0.2, 0.2), 0] }));
-      break;
-    case 'straw':
-      b.add(new CylinderGeometry(0.22, 0.22, 0.5, 7), C.straw, x, y + 0.22, z, { rot: [0, 0, Math.PI / 2] });
+    case 'saffron':
+      b.add(new CylinderGeometry(0.22, 0.16, 0.14, 9), C.brass, x, y + 0.07, z);
+      b.add(new ConeGeometry(0.18, 0.16, 9), C.saffronRed, x, y + 0.21, z);
+      b.add(new CylinderGeometry(0.08, 0.08, 0.2, 7), C.offWhite, x + 0.26, y + 0.1, z + 0.08);
       break;
   }
 }
 
-export const SHELF_GOODS: readonly GoodId[] = ['dates', 'cloth', 'spices', 'pottery', 'leather'];
+export const SHELF_GOODS: readonly GoodId[] = GOOD_IDS;
 
-/** Shelf x positions along the player's counter for 2, 3 or 4 shelves. */
+/** Shelf x positions along the player's counter, for 3 to 6 slots. */
 export function shelfX(count: number, i: number): number {
   if (count <= 1) return 0;
-  return -1.65 + (i * 3.3) / (count - 1);
+  const span = Math.min(3.8, 1.1 * (count - 1));
+  return -span / 2 + (i * span) / (count - 1);
 }
 
 export const STALL_Z = 2.4;
@@ -96,7 +106,7 @@ export function customerSpot(count: number, i: number): Vector3 {
 
 export interface Bazaar {
   group: Group;
-  /** [shelf count][slot][good] -> mesh, shown when that good is on that shelf. */
+  /** "count:slot:good" -> mesh, shown when that good is on that slot. Built on first use. */
   piles: Map<string, Mesh>;
   lamps: MeshBasicMaterial;
   sellers: Group[];
@@ -136,7 +146,7 @@ export function buildBazaar(): Bazaar {
         b.add(new CylinderGeometry(0.05, 0.06, pz < 0 ? 2.5 : 2.2, 5), C.woodDark, px, pz < 0 ? 1.25 : 1.1, pz);
       }
       b.add(new BoxGeometry(3, 0.05, 1.5), rnd.pick(C.canopies), 0, 2.35, 0, { rot: [-0.14, 0, 0] });
-      const kinds = (['dates', 'cloth', 'spices', 'pottery'] as GoodId[]).sort(() => rnd.range(-1, 1)).slice(0, 3);
+      const kinds = (['dates', 'salt', 'fish', 'vinegar', 'beef'] as GoodId[]).sort(() => rnd.range(-1, 1)).slice(0, 3);
       kinds.forEach((k, i) => goodsPile(b, k, -0.8 + i * 0.8, 0.9, 0.05));
     });
     lampB.add(new SphereGeometry(0.09, 6, 4), C.lamp, x + 1.25, 2.0, z + 0.45 * f);
@@ -172,21 +182,8 @@ export function buildBazaar(): Bazaar {
   const lamps = new Mesh(lampB.geometry(), lampMat);
   group.add(lamps);
 
-  // Shelf piles: one small mesh per (shelf count, slot, good), toggled on and off.
+  // Shelf piles are built on demand, one small mesh per (slot count, slot, good).
   const piles = new Map<string, Mesh>();
-  for (const count of [2, 3, 4]) {
-    for (let i = 0; i < count; i++) {
-      for (const good of SHELF_GOODS) {
-        const pb = new Builder();
-        goodsPile(pb, good, 0, 0, 0, count < 4);
-        const m = pb.mesh();
-        m.position.set(shelfX(count, i), 1.0, STALL_Z);
-        m.visible = false;
-        group.add(m);
-        piles.set(`${count}:${i}:${good}`, m);
-      }
-    }
-  }
 
   const sellers = sellerSpots.map(([x, z, ry]) => { const g = new Group(); g.position.set(x, 0, z); g.rotation.y = ry; group.add(g); return g; });
   return { group, piles, lamps: lampMat, sellers };

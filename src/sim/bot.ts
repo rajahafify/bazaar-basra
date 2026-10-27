@@ -1,112 +1,166 @@
-// Scripted players for balance runs (gdd 9.1): a careful trader and a careless one.
+// Scripted players for balance runs: a careful trader who prices fairly and helps people,
+// and a greedy one who overprices and takes every shortcut on the road.
 
-import { CARTS, GOODS, STALLS, type CartId, type GoodId, type SourceId, type StallId, type Week } from './data';
-import { cellsOf } from './costing';
+import { GOODS, GOOD_IDS, TOWNS, TOWN_IDS, UPGRADES, type GoodId, type TownId, type UpgradeId } from './data';
+import { DaySim, tutorialDay } from './day';
+import { eventById } from './events';
 import {
-  autoPack, buyOne, buyPrice, chooseHarith, chooseSource, endDay, endWeek, finishPrologue, goodsAt, harithDue,
-  hireCart, leaveSource, marketToday, newGame, nextDay, payYearEnd, rentStall, rideHome, setPrice, startDay,
-  startWeek, totalProfit, yearEndCount, type GameState,
+  arriveHome, canSetOut, chooseNode, chooseOption, eventOptions, finishEvent, freeSpace, leaveTown, setOut,
+  suggestedSupplies, townBuy, townSupplies,
+} from './expedition';
+import {
+  endFriday, endShopDay, fairToday, finishPrologue, goodsInStore, netWorth, newGame, payYearEnd, rentDue, restockSlot,
+  setPrice, setSlotGood, settleFriday, startShopDay, stockOf, totalProfit, upgradeCost, yearEndCount, buyUpgrade,
+  type GameState,
 } from './game';
-import { DaySim } from './day';
 
 export interface Strategy {
   name: string;
-  stall: (week: Week) => StallId;
-  source: (week: Week) => SourceId;
-  cart: (stall: StallId) => CartId;
-  /** Price as a share of today's market price. */
+  /** Price as a share of today's fair price. */
   markup: number;
-  padJars: boolean;
-  harith: 'fair' | 'hold';
-  /** Share of the cart to fill. */
-  fill: number;
+  /** Which option to take at each event, by preference. */
+  pick: 'honest' | 'greedy';
+  upgrades: readonly UpgradeId[];
 }
 
-const CART_FOR: Record<StallId, CartId> = { small: 'handcart', medium: 'donkey', big: 'camels' };
+export const CAREFUL: Strategy = { name: 'careful', markup: 1.0, pick: 'honest', upgrades: ['camel', 'shelf', 'camel', 'skins', 'shelf', 'guide'] };
+export const CARELESS: Strategy = { name: 'careless', markup: 1.35, pick: 'greedy', upgrades: [] };
 
-export const CAREFUL: Strategy = {
-  name: 'careful',
-  stall: w => (w === 1 ? 'small' : w === 4 ? 'big' : 'medium'),
-  source: w => (w === 1 ? 'groves' : w === 3 ? 'bedouin' : 'port'),
-  cart: st => CART_FOR[st],
-  markup: 1,
-  padJars: true,
-  harith: 'fair',
-  fill: 1,
+/** The option an honest player takes at each event; the greedy player takes the other one. */
+const HONEST: Record<string, string> = {
+  sandstorm: 'a', lameCamel: 'a', bandits: 'b', caravanPot: 'a', bedouinCamp: 'a', dampSalt: 'a', badFish: 'a',
+  droughtTown: 'a', cornerSalt: 'b', fakeBidder: 'b', nextNet: 'b', salam: 'a', moneylender: 'b', friendlyLoan: 'c',
+  widow: 'b', datesForDates: 'b', shortMeasure: 'a', bigOrder: 'c', hungryFamily: 'b', potter: 'b', zakatCollector: 'a',
+  newMuslim: 'a', freedom: 'a', debtor: 'a', teacher: 'a', traveller: 'a', lostPurse: 'a', carryForBrother: 'a',
+  rumour: 'b', buriedCoins: 'a',
+};
+const GREEDY: Record<string, string> = {
+  sandstorm: 'b', lameCamel: 'c', bandits: 'c', caravanPot: 'b', bedouinCamp: 'b', dampSalt: 'b', badFish: 'b',
+  droughtTown: 'b', cornerSalt: 'a', fakeBidder: 'a', nextNet: 'a', salam: 'b', moneylender: 'a', friendlyLoan: 'b',
+  widow: 'b', datesForDates: 'a', shortMeasure: 'b', bigOrder: 'b', hungryFamily: 'c', potter: 'c', zakatCollector: 'b',
+  newMuslim: 'b', freedom: 'b', debtor: 'c', teacher: 'b', traveller: 'b', lostPurse: 'b', carryForBrother: 'b',
+  rumour: 'a', buriedCoins: 'b',
 };
 
-export const CARELESS: Strategy = {
-  name: 'careless',
-  stall: () => 'small',
-  source: w => (w % 2 ? 'groves' : 'port'),
-  cart: () => 'handcart',
-  markup: 1.25,
-  padJars: false,
-  harith: 'hold',
-  fill: 0.75,
-};
+/** Margin per unit of caravan space at a town, by its usual prices. */
+function townValue(s: GameState, town: TownId): number {
+  return Math.max(...TOWNS[town].sells.filter(x => !x.rare).map(x => (fairToday(s, x.good) - x.price) / GOODS[x.good].space));
+}
 
-/** Fills the cart with the goods at the source that earn most per cell, padding jars if asked. */
-function shop(s: GameState, st: Strategy) {
-  const cart = CARTS[s.weekend.cart!];
-  const cells = Math.floor(cart.cols * cart.rows * st.fill);
-  const goods = goodsAt(s, s.weekend.source!).filter(g => GOODS[g].market);
-  const ranked = goods.sort((a, b) => margin(s, b) / cellsOf(b) - margin(s, a) / cellsOf(a));
-  let used = 0;
-  // Spread purchases across goods so several shelves are stocked.
-  for (let round = 0; round < 20 && used < cells; round++) {
-    for (const g of ranked) {
-      const need = cellsOf(g) + (g === 'pottery' && st.padJars ? 1 : 0);
-      if (used + need > cells) continue;
-      if (!buyOne(s, g, GOODS[g].source === 'bedouin')) continue;
-      used += cellsOf(g);
-      if (g === 'pottery' && st.padJars && goodsAt(s, s.weekend.source!).includes('straw')) { buyOne(s, 'straw'); used += 1; }
-    }
+function stockUnits(s: GameState): number {
+  return GOOD_IDS.reduce((a, g) => a + stockOf(s, g), 0);
+}
+
+function morning(s: GameState, st: Strategy) {
+  const shelfUnits = s.slots.length * 5;
+  if (stockUnits(s) < Math.min(10, shelfUnits)) {
+    const towns = TOWN_IDS.filter(t => canSetOut(s, t, suggestedSupplies(s, t)) === null)
+      .sort((a, b) => townValue(s, b) - townValue(s, a));
+    const town = towns[0];
+    if (town && setOut(s, town, suggestedSupplies(s, town))) return runTrip(s, st);
   }
-  autoPack(s);
+  shopDay(s, st);
 }
 
-function margin(s: GameState, g: GoodId): number {
-  return GOODS[g].market![s.week] - buyPrice(s, g);
+function fillSlots(s: GameState) {
+  const goods = goodsInStore(s).sort((a, b) => s.store[b].qty - s.store[a].qty);
+  s.slots.forEach((sl, i) => {
+    if (sl.good && (sl.qty > 0 || s.store[sl.good].qty > 0)) { restockSlot(s, i); return; }
+    const used = new Set(s.slots.map(x => x.good));
+    const next = goods.find(g => !used.has(g) && s.store[g].qty > 0) ?? goods.find(g => s.store[g].qty > 0);
+    setSlotGood(s, i, next ?? null);
+  });
+}
+
+function shopDay(s: GameState, st: Strategy) {
+  startShopDay(s);
+  fillSlots(s);
+  for (const g of GOOD_IDS) setPrice(s, g, fairToday(s, g) * st.markup);
+  new DaySim(s).runToEnd(0.1, slot => { if (!restockSlot(s, slot)) fillSlots(s); });
+  endShopDay(s);
+}
+
+function runTrip(s: GameState, st: Strategy) {
+  const prefs = st.pick === 'honest' ? HONEST : GREEDY;
+  for (let guard = 0; guard < 50 && s.trip; guard++) {
+    const t = s.trip;
+    if (t.leg === 'town') {
+      const offers = [...t.offers].sort((a, b) => (fairToday(s, b.good) - b.price) / GOODS[b.good].space - (fairToday(s, a.good) - a.price) / GOODS[a.good].space);
+      townSupplies(s, Math.max(0, TOWNS[t.town].stops - s.supplies + 1));
+      const reserve = rentDue(s) + 5;
+      for (const o of offers) {
+        if (fairToday(s, o.good) <= o.price) continue;
+        const afford = Math.floor((s.cash - reserve) / o.price);
+        if (afford > 0 && freeSpace(s) > 0) townBuy(s, o.good, afford);
+      }
+      leaveTown(s);
+      continue;
+    }
+    if (t.leg === 'home') { arriveHome(s); return; }
+    if (t.event) {
+      if (!t.event.outcome) {
+        const opts = eventOptions(s).filter(o => !o.blocked);
+        const want = prefs[t.event.id];
+        const o = opts.find(x => x.id === want) ?? opts[opts.length - 1] ?? opts[0];
+        if (o) chooseOption(s, o.id);
+        else chooseOption(s, eventById(t.event.id).options[0]!.id);
+      }
+      finishEvent(s);
+      continue;
+    }
+    chooseNode(s, 0);
+  }
+}
+
+function friday(s: GameState, st: Strategy) {
+  const r = settleFriday(s);
+  if (r.broke) return;
+  for (const id of st.upgrades) {
+    const level = st.upgrades.slice(0, st.upgrades.indexOf(id) + 1).filter(x => x === id).length;
+    if (s.upgrades[id] >= level) continue;
+    const cost = upgradeCost(s, id);
+    if (cost !== null && s.cash - cost > rentDue(s) + 60) buyUpgrade(s, id);
+    break;
+  }
+  endFriday(s);
 }
 
 export interface YearResult {
-  strategy: string;
-  seed: number;
-  weekProfits: number[];
+  broke: boolean;
+  seasonBroke: number | null;
+  netWorth: number;
+  profit: number;
   zakatableTotal: number;
   zakat: number;
   amanah: number;
-  cash: number;
-  profit: number;
+  trips: number;
+  upgrades: number;
+  worthBySeason: number[];
 }
 
 export function playYear(st: Strategy, seed: number): YearResult {
   const s = newGame(seed);
   finishPrologue(s);
-  for (let w = 1; w <= 4; w++) {
-    const week = w as Week;
-    if (week > 1) rentStall(s, STALLS[st.stall(week)].id);
-    chooseSource(s, st.source(week));
-    hireCart(s, st.cart(s.stall));
-    shop(s, st);
-    leaveSource(s);
-    rideHome(s);
-    startWeek(s);
-    for (let d = 1; d <= 5; d++) {
-      if (harithDue(s)) chooseHarith(s, st.harith);
-      s.shelves.forEach((sh, i) => { if (sh.good) setPrice(s, i, marketToday(s, sh.good) * st.markup); });
-      new DaySim(s).runToEnd();
-      endDay(s);
-      nextDay(s);
-      if (s.phase === 'shop') { startDay(s); }
-    }
-    endWeek(s);
+  tutorialDay(s);
+  let trips = 0;
+  const worthBySeason: number[] = [];
+  let lastSeason = s.season;
+  for (let guard = 0; guard < 2000; guard++) {
+    if (s.phase === 'morning') { const before = s.counters.trips; morning(s, st); if (s.counters.trips > before) trips++; }
+    else if (s.phase === 'friday') friday(s, st);
+    else if (s.phase === 'broke') return { broke: true, seasonBroke: s.season, netWorth: netWorth(s), profit: totalProfit(s), zakatableTotal: 0, zakat: 0, amanah: s.amanah, trips, upgrades: totalUpgrades(s), worthBySeason };
+    else if (s.phase === 'yearEnd') break;
+    if (s.season !== lastSeason) { worthBySeason.push(Math.round(netWorth(s))); lastSeason = s.season; }
   }
-  const count = yearEndCount(s);
+  worthBySeason.push(Math.round(netWorth(s)));
+  const r = yearEndCount(s);
+  const profit = totalProfit(s);
   payYearEnd(s, 0);
-  return {
-    strategy: st.name, seed, weekProfits: s.history.map(h => Math.round(h.profit)),
-    zakatableTotal: Math.round(count.zakatableTotal), zakat: count.zakat, amanah: s.amanah, cash: Math.round(s.cash), profit: Math.round(totalProfit(s)),
-  };
+  return { broke: false, seasonBroke: null, netWorth: netWorth(s), profit, zakatableTotal: r.zakatableTotal, zakat: r.zakat, amanah: s.amanah, trips, upgrades: totalUpgrades(s), worthBySeason };
 }
+
+function totalUpgrades(s: GameState): number {
+  return (Object.keys(UPGRADES) as UpgradeId[]).reduce((a, k) => a + s.upgrades[k], 0);
+}
+
+export type { GoodId };

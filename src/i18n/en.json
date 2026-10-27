@@ -3,30 +3,38 @@
   "amanah": "Amanah",
   "next": "Next",
   "back": "Back",
+  "close": "Close",
   "tapToContinue": "Tap to continue",
-  "weekLabel": "Week {week} · {season}",
-  "dayLabel": "Day {day} of 5",
   "seasons": [
     "Spring",
     "Summer",
     "Autumn",
     "Winter"
   ],
+  "days": [
+    "Saturday",
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday"
+  ],
+  "calendar": "{season} · Week {week} · {day}",
   "goods": {
     "dates": "Dates",
-    "pottery": "Pottery",
-    "straw": "Straw",
-    "cloth": "Cloth",
-    "spices": "Spices",
-    "leather": "Leather"
+    "salt": "Salt",
+    "fish": "Salted fish",
+    "vinegar": "Vinegar",
+    "beef": "Salted beef",
+    "cardamom": "Cardamom",
+    "saffron": "Saffron"
   },
-  "goodUnits": {
-    "dates": "basket",
-    "pottery": "jar",
-    "straw": "bundle",
-    "cloth": "roll",
-    "spices": "sack",
-    "leather": "bundle"
+  "towns": {
+    "groves": "Date groves",
+    "ubulla": "Al-Ubulla port",
+    "kufa": "Kufa",
+    "madain": "Al-Mada'in"
   },
   "title": {
     "name": "Bazaar Basra",
@@ -37,157 +45,580 @@
   },
   "prologue": [
     "Basra, in the year 638. The city is new, built of reed and mud brick where the rivers meet.",
-    "Your uncle hands you his market stall and his ledger, then leaves on a long journey.",
-    "His note: \"Keep honest weights. Write down every cost. At the end of the year, count what you own.\"",
-    "The crier reads a letter from Umar ibn al-Khattab (may Allah be pleased with him): value your trade goods each year and pay zakat on them. (Paraphrase)",
-    "You have 160 dirham, two baskets of dates and a roll of cloth. One lunar year starts now."
+    "Your uncle leaves you his market stall, a storeroom with a little stock, and his ledger.",
+    "His note: \"Each morning, choose. Open the stall and sell, or take the caravan out to buy.\"",
+    "\"Keep enough for Friday's rent. Deal honestly on the road. At the year's end, count what you own and pay zakat.\"",
+    "Four seasons of four weeks. You have no money yet, only your uncle's dates. Sell them first."
   ],
-  "stall": {
-    "title": "Rent a stall for the week",
-    "small": "Small stall",
-    "medium": "Medium stall",
-    "big": "Big stall",
-    "shelves": "{n} shelves",
-    "rent": "Rent {n}",
-    "customers": "{a} to {b} customers a day",
-    "where": {
-      "small": "Back row, near the arch",
-      "medium": "Middle aisle",
-      "big": "Corner by the well"
-    },
-    "loan": "Short of rent. Your uncle's friend lends {n} dirham, interest free (qard hasan)."
+  "morning": {
+    "open": "Open the shop",
+    "setOut": "Set out",
+    "notebook": "Notebook",
+    "goals": "Quests",
+    "store": "Storeroom",
+    "storeEmpty": "Empty",
+    "wanted": "Asked for this week",
+    "wantedNone": "Nobody has asked for anything yet.",
+    "supplies": "Supplies {n}",
+    "nextShop": "You have goods. Open the shop and sell.",
+    "nextSetOut": "Your shelves are nearly bare. Set out to buy more.",
+    "nextFriday": "Friday is near. Keep {n} dirham for the rent.",
+    "nextBroke": "Not enough for rent yet. Sell what you have.",
+    "rent": "Rent on Friday: {n}",
+    "nextQuest": "A quest is due this Friday. Check your quests."
   },
-  "places": {
-    "market": "Bazaar",
-    "gate": "City Gate",
-    "bayt": "Bayt al-Mal"
-  },
-  "alley": {
-    "title": "The alleys of Basra",
-    "hint": "Pick a place to go.",
-    "walking": "Walking...",
-    "arrive": {
-      "market": "The bazaar entrance. Your stall is waiting.",
-      "gate": "The city gate. Caravans to the groves and the port leave from here.",
-      "bayt": "The bayt al-mal. Zakat is counted and paid here at the end of the year."
-    },
-    "notYet": "Come back at the end of the year.",
-    "toGate": "Through the gate",
-    "enterBayt": "Go inside",
-    "enterBazaar": "Enter the bazaar"
-  },
-  "source": {
-    "title": "Where will you buy this weekend?",
-    "groves": "Date groves",
-    "port": "Ubulla port",
-    "bedouin": "Bedouin camp",
-    "grovesSells": "Dates, pottery, straw",
-    "portSells": "Cloth, spices",
-    "bedouinSells": "Leather, on cash or credit",
-    "crier2": "The crier: a ship from India has docked at Ubulla. Spices are cheap this week.",
-    "crier3": "A Bedouin trader camps outside the gate. He offers leather on credit.",
-    "crier4": "Winter is coming. Cloth will sell well in the cold."
-  },
-  "cart": {
-    "title": "Hire a cart",
-    "handcart": "Handcart",
-    "donkey": "Donkey cart",
-    "camels": "Two camels",
-    "grid": "{c} x {r} cells",
-    "hire": "Hire {n}",
-    "match": "Suits the {stall}"
-  },
-  "buy": {
-    "title": "Buy and pack",
-    "hint": "Buy, then tap a good and tap the cart to pack it.",
-    "tray": "Not packed",
-    "rotate": "Rotate",
-    "auto": "Auto-pack",
-    "leave": "Leave",
-    "credit": "On credit",
-    "unpacked": "{n} not packed will be refunded.",
-    "cantFit": "That does not fit there.",
-    "padNote": "A jar touching cloth or straw will not break."
-  },
-  "ride": {
-    "title": "The ride home",
-    "broken": "{n} jar cracked on the road. Straw would have saved it.",
-    "brokenMany": "{n} jars cracked on the road. Straw would have saved them.",
-    "whole": "Everything arrived whole."
-  },
-  "weekendLedger": {
-    "title": "Weekend ledger",
-    "colGood": "Good",
-    "colBuy": "Buy",
-    "colHire": "Hire share",
-    "colLanded": "Landed",
-    "goods": "Goods",
-    "hire": "Cart hire",
-    "total": "Total spent",
-    "wasted": "Hire for {n} empty cells",
-    "credit": "Bought on credit, owed at year end",
-    "broken": "Broken on the road",
-    "note": "Landed cost is your floor price. Sell above it.",
-    "toStall": "To the stall"
+  "notices": {
+    "badFish": "A customer came back with your bad fish. You paid {n} back.",
+    "drought": "Families from the drought town now buy from your stall.",
+    "corner": "The salt scheme paid {n} dirham. People in the bazaar talk about it.",
+    "salam": "The farmer delivered {n} baskets of dates, as agreed.",
+    "loanDispute": "Your friend says you borrowed 55, not 40. Nothing was written down.",
+    "potter": "The potter sent {n} dirham of thanks and new customers.",
+    "newMuslim": "The trader you travelled with now buys from your stall.",
+    "debtorPays": "The merchant who owed you paid {n} dirham.",
+    "teacher": "The teacher sends his students to your stall, with {n} dirham of thanks.",
+    "traveller": "The traveller you helped came back with a gift of {n} dirham.",
+    "brother": "You delivered the goods to the traveller's brother. He becomes a regular.",
+    "mainDone": "The merchants' guild pays you {n} dirham. You finished this season's main quest."
   },
   "shop": {
-    "setup": "Set your prices, then open the stall.",
-    "setup2": "Watch the customers.",
-    "open": "Open stall",
-    "openFor": "Stall open · {s}s",
-    "closed": "Stall closed",
-    "cost": "cost {n}",
+    "setupHint": "Tap a slot to choose a good. Set prices with − and +.",
+    "open": "Open",
+    "openFor": "Open · {s}s",
+    "closed": "Closing",
     "empty": "Empty",
-    "tapToChange": "Tap to change",
-    "spoilSoon": "Spoils tomorrow",
-    "inspector": "The market inspector checked your scale. The stall opens at midday.",
-    "crierCaravan": "The crier: a caravan is late. Dates are short today.",
-    "crierHarith": "Hoarding food to raise its price (ihtikar) is forbidden.",
-    "crierEnd": "The crier: the year is over. Count what you own.",
-    "rest": "Nothing to sell today. Close the stall"
-  },
-  "scale": {
-    "title": "A customer asks by weight",
-    "hint": "Hold to fill the pan. Let go at the line.",
-    "hold": "Hold",
-    "fair": "A fair weight.",
-    "short": "Short weight. The customer noticed.",
-    "over": "Too much. You gave stock away."
-  },
-  "harith": {
-    "title": "Harith leans over your stall",
-    "body": "\"The caravan is late. Hold your dates until tomorrow and sell them dear.\"",
-    "fair": "Sell at a fair price",
-    "hold": "Hold the dates",
-    "fairOutcome": "You sold fairly. Word spreads, and a regular comes each day.",
-    "holdOutcome": "The inspector saw the empty shelf. The caravan came in the night, and dates are cheap now."
+    "choose": "Choose a good",
+    "none": "Leave empty",
+    "restock": "Restock",
+    "inStore": "{n} in store",
+    "cost": "Paid {n}",
+    "knownGood": "Sold well at {n}",
+    "knownHigh": "Too high at {n}",
+    "unknown": "Price not known yet",
+    "asked": "Someone asked for {good}",
+    "nothing": "Nothing to sell. Set out first.",
+    "home": "Back"
   },
   "night": {
-    "title": "Night",
-    "sold": "Sold",
+    "title": "Evening",
+    "sold": "Goods sold",
     "takings": "Takings",
-    "credit": "Sold on credit",
-    "walked": "Walked off",
-    "spoiled": "Spoiled",
-    "soon": "Spoils tomorrow",
-    "inspector": "The inspector visits tomorrow morning.",
-    "next": "Next morning",
-    "toLedger": "Open the ledger"
+    "walked": "Walked away",
+    "wanted": "Asked for what you lacked",
+    "next": "Next day",
+    "friday": "To Friday"
   },
-  "ledger": {
-    "title": "Week {week} ledger",
-    "revenue": "Revenue",
-    "cogs": "Cost of goods sold (landed)",
-    "rent": "Stall rent",
-    "written": "Spoiled, broken and straw",
-    "wasted": "Hire for empty cells",
-    "profit": "Profit for the week",
+  "setout": {
+    "title": "Where will you go?",
+    "days": "{n}-day trip, there and back",
+    "closed": "Opens in {season}",
+    "friday": "Not enough days before Friday",
+    "supplies": "Supplies",
+    "suppliesHint": "One a stop. This trip needs {n}.",
+    "go": "Set out",
+    "back": "Stay",
+    "space": "Caravan space {n}",
+    "cost": "Cost {n}"
+  },
+  "trip": {
+    "to": "To {town}",
+    "home": "Home to Basra",
+    "pick": "Choose your next stop",
+    "kinds": {
+      "road": "The road",
+      "trader": "A trader",
+      "people": "People",
+      "find": "A find",
+      "hidden": "Unknown"
+    },
+    "supplies": "Supplies {n}",
+    "space": "Cargo {a}/{b}",
+    "days": "{n} days out",
+    "thirsty": "Out of supplies. You traded goods for water at the stop.",
+    "continue": "Continue",
+    "arriving": "Arriving...",
+    "lesson": "Lesson",
+    "day": "{n}-day trip"
+  },
+  "town": {
+    "title": "The market at {town}",
+    "each": "{n} each",
+    "left": "{n} left",
+    "rare": "Rare today",
+    "supplies": "Supplies {n} each",
+    "leave": "Head home",
+    "full": "The caravan is full.",
+    "cargo": "Your caravan"
+  },
+  "home": {
+    "title": "Home in Basra",
+    "unloaded": "Into the storeroom",
+    "nothing": "You came back with nothing to sell.",
+    "days": "Days away: {n}",
+    "unload": "Unload"
+  },
+  "need": {
+    "needCash": "Not enough money",
+    "needSupplies": "No supplies to spare",
+    "needGood": "You don't carry that",
+    "needSpace": "No room in the caravan"
+  },
+  "events": {
+    "sandstorm": {
+      "title": "Sandstorm",
+      "body": "A wall of sand rolls toward the caravan.",
+      "a": "Wait it out (1 supply)",
+      "b": "Push on",
+      "out": {
+        "a": "You shelter behind the camels until it passes.",
+        "bLost": "The wind tears loose some of your cargo.",
+        "bLucky": "You make it through with everything."
+      },
+      "lesson": "\"Tie your camel, then trust in Allah.\" Take care first, then trust."
+    },
+    "lameCamel": {
+      "title": "A lame camel",
+      "body": "One of your camels is limping and groans under its load.",
+      "a": "Rest and feed it (1 supply)",
+      "b": "Leave some cargo",
+      "c": "Load the others more",
+      "out": {
+        "a": "The camel rests and walks on.",
+        "b": "You leave two loads by the road.",
+        "c": "The overloaded camels slow down. The next stop costs double."
+      },
+      "lesson": "The Prophet ﷺ rebuked a man whose camel was overworked and hungry. Kindness to animals is part of faith."
+    },
+    "bandits": {
+      "title": "Riders on the ridge",
+      "body": "Scouts are watching the road. They may be bandits.",
+      "a": "Join a bigger caravan (4 dirham)",
+      "b": "Travel at night (1 supply)",
+      "c": "Risk it",
+      "out": {
+        "a": "You pay your share and travel with them, safely.",
+        "b": "You slip past in the dark.",
+        "cRobbed": "They take part of what you carry.",
+        "cSafe": "They let you pass."
+      },
+      "lesson": "Weigh a risk against its cost. There is safety in numbers."
+    },
+    "caravanPot": {
+      "title": "The caravan pot",
+      "body": "The travellers each put 2 dirham into a pot. Whoever loses goods on this trip is paid back from it.",
+      "a": "Join (2 dirham)",
+      "b": "Decline",
+      "out": {
+        "a": "Your coins go in with everyone's.",
+        "b": "You keep your coins."
+      },
+      "lesson": "Sharing a loss together is the idea behind takaful. It is mutual help, not a bet."
+    },
+    "bedouinCamp": {
+      "title": "A Bedouin camp",
+      "body": "A family invites you to rest, eat and drink with them.",
+      "a": "Accept",
+      "b": "Thank them and ride on",
+      "out": {
+        "a": "They fill your water skins and tell you what lies ahead.",
+        "b": "You ride on."
+      },
+      "lesson": "Hospitality to guests is a duty in Islam. Local knowledge is worth more than coins."
+    },
+    "dampSalt": {
+      "title": "Cheap salt",
+      "body": "A seller offers salt sacks very cheaply. The bottoms of the sacks look damp.",
+      "a": "Check them first: 4 sacks for 8",
+      "b": "Buy 6 as they are for 6",
+      "c": "Walk away",
+      "out": {
+        "a": "You pick out four good sacks.",
+        "b": "Half the sacks are ruined. {n} are usable.",
+        "c": "You leave him to it."
+      },
+      "lesson": "A seller must show any defect. The Prophet ﷺ said: \"Whoever cheats is not one of us.\""
+    },
+    "badFish": {
+      "title": "Badly salted fish",
+      "body": "Two of your fish were cured badly. They will not keep long.",
+      "a": "Tell buyers and sell them cheap",
+      "b": "Mix them in with the good ones",
+      "out": {
+        "a": "A cook buys them at a fair low price.",
+        "b": "No one notices. For now."
+      },
+      "lesson": "The rule of honest selling applies to you too. Hidden faults come back."
+    },
+    "droughtTown": {
+      "title": "A town in drought",
+      "body": "The wells are low and food is short. People crowd around your caravan.",
+      "a": "Sell 3 at the fair price",
+      "b": "Charge three times as much",
+      "out": {
+        "a": "They thank you and remember your name.",
+        "b": "They pay, and they will remember this too."
+      },
+      "lesson": "Taking advantage of people in need is wrong. A good name is worth more than one sale."
+    },
+    "cornerSalt": {
+      "title": "A salt scheme",
+      "body": "A merchant wants partners to buy up all the salt, then sell it dear.",
+      "a": "Put in 20 dirham",
+      "b": "Refuse",
+      "out": {
+        "a": "You hand him your share.",
+        "b": "He shrugs and finds someone else."
+      },
+      "lesson": "Hoarding goods to push prices up (ihtikar) is forbidden. It hurts everyone who needs them."
+    },
+    "fakeBidder": {
+      "title": "A helpful stranger",
+      "body": "A man offers to pretend to bid for your goods in the market, so real buyers pay more.",
+      "a": "Pay him 3 dirham",
+      "b": "Refuse",
+      "out": {
+        "a": "Prices rise in the bazaar for a few days.",
+        "b": "You send him away."
+      },
+      "lesson": "Fake bidding to raise a price (najash) is forbidden."
+    },
+    "nextNet": {
+      "title": "The fisherman's net",
+      "body": "A fisherman offers whatever his next net brings up for 10 dirham.",
+      "a": "Buy the next catch",
+      "b": "Buy 3 fish he has caught (12)",
+      "c": "Walk on",
+      "out": {
+        "aGood": "Lucky: the net brings up {n} fish.",
+        "aBad": "The net brings up only {n}.",
+        "b": "Three good fish, as you saw them.",
+        "c": "You walk on."
+      },
+      "lesson": "Buying something unknown (gharar) is forbidden. Buy what you can see."
+    },
+    "salam": {
+      "title": "Paying ahead",
+      "body": "A farmer needs money now. He offers 8 baskets of dates at harvest in two weeks, for 15 dirham today.",
+      "a": "Agree and write it down",
+      "b": "Decline",
+      "out": {
+        "a": "The amount, quality, price and date are agreed.",
+        "b": "He looks for another buyer."
+      },
+      "lesson": "Paying now for later goods (salam) is allowed when everything is fixed in advance."
+    },
+    "moneylender": {
+      "title": "The moneylender",
+      "body": "He will lend you 50 dirham today. You pay back 60 in two weeks.",
+      "a": "Take the loan",
+      "b": "Refuse",
+      "out": {
+        "a": "You owe him 60.",
+        "b": "You manage without it."
+      },
+      "lesson": "Interest (riba) is forbidden. Allah permits trade and forbids riba (Al-Baqarah 2:275)."
+    },
+    "friendlyLoan": {
+      "title": "A friend's loan",
+      "body": "An old friend of your uncle offers to lend you 40 dirham, with no interest, for two weeks.",
+      "a": "Borrow and write it down",
+      "b": "Borrow on a handshake",
+      "c": "No thanks",
+      "out": {
+        "a": "A witness signs. You owe 40.",
+        "b": "You shake hands. You owe 40.",
+        "c": "He wishes you well."
+      },
+      "lesson": "A loan without interest (qard hasan) is good. Write debts down, says Al-Baqarah 2:282."
+    },
+    "widow": {
+      "title": "The widow's capital",
+      "body": "A wealthy widow offers you 60 dirham to trade with. She takes half the profit, or bears the loss.",
+      "a": "Accept for a week",
+      "b": "Decline",
+      "out": {
+        "a": "On Friday you settle with her.",
+        "b": "She thanks you for your honesty."
+      },
+      "lesson": "This partnership is mudarabah. The Prophet ﷺ traded this way with Khadijah's money."
+    },
+    "datesForDates": {
+      "title": "Dates for dates",
+      "body": "A trader offers two baskets of his poor dates for one of your good ones.",
+      "a": "Swap them",
+      "b": "Sell yours for coin, then buy his",
+      "c": "No deal",
+      "out": {
+        "a": "You swap directly.",
+        "b": "Same result, done the right way.",
+        "c": "You keep your dates."
+      },
+      "lesson": "Swapping unequal amounts of the same food is riba. The Prophet ﷺ told Bilal: sell, then buy."
+    },
+    "shortMeasure": {
+      "title": "The short measure",
+      "body": "A trader is filling a widow's bowl short, and still charging her full price.",
+      "a": "Speak up",
+      "b": "Stay out of it",
+      "out": {
+        "a": "He grumbles and fills it properly.",
+        "b": "You look away."
+      },
+      "lesson": "\"Woe to those who give less than due\" (Al-Mutaffifin 83:1). Give full measure."
+    },
+    "bigOrder": {
+      "title": "A big order",
+      "body": "A cook wants {qty} sacks of salt at {price} each. Bring them any morning within {days} days.",
+      "a": "Agree, in writing",
+      "b": "Agree on a handshake",
+      "c": "Decline",
+      "out": {
+        "a": "The order is written down. Have the salt ready.",
+        "b": "You shake on it. Have the salt ready.",
+        "c": "He finds another seller."
+      },
+      "lesson": "Keep your word, and write contracts down so both sides keep theirs."
+    },
+    "hungryFamily": {
+      "title": "A hungry family",
+      "body": "At the oasis, a mother and her children have had nothing to eat today.",
+      "a": "Give them 2 of your food",
+      "b": "Give 5 dirham",
+      "c": "Ride on",
+      "out": {
+        "a": "The children eat. The mother prays for you.",
+        "b": "She thanks you and buys bread.",
+        "c": "You ride on."
+      },
+      "lesson": "The poor (fuqara) are the first group zakat is for. Charity does not reduce wealth."
+    },
+    "potter": {
+      "title": "The potter",
+      "body": "He works every day, but his pots don't earn enough to feed his family.",
+      "a": "Buy pots fairly (8 dirham)",
+      "b": "Give him 4 dirham",
+      "c": "Pass by",
+      "out": {
+        "a": "He smiles. You've helped him and made a friend.",
+        "b": "He is grateful.",
+        "c": "You pass by."
+      },
+      "lesson": "The needy (masakin) are people who work and still fall short. Zakat is for them too."
+    },
+    "zakatCollector": {
+      "title": "The zakat collector",
+      "body": "An officer of the bayt al-mal is on his rounds. He offers to explain how zakat on trade is counted.",
+      "a": "Listen",
+      "b": "Thank him and move on",
+      "out": {
+        "a": "Nisab is the minimum. After a full year, pay one fortieth of cash and trade goods.",
+        "b": "He nods and rides on."
+      },
+      "lesson": "Those who collect zakat (amil) are paid from it. Nisab and a full year (hawl) decide what's due."
+    },
+    "newMuslim": {
+      "title": "A new Muslim",
+      "body": "A trader has just embraced Islam. He's unsure of the road and the people.",
+      "a": "Share your meal (1 supply)",
+      "b": "Keep to yourself",
+      "out": {
+        "a": "You travel together and talk late into the night.",
+        "b": "He rides alone."
+      },
+      "lesson": "Zakat may go to those whose hearts are being brought close (muallaf)."
+    },
+    "freedom": {
+      "title": "Buying freedom",
+      "body": "An enslaved man has agreed with his master to buy his freedom. He is 20 dirham short.",
+      "a": "Give him 20 dirham",
+      "b": "Decline",
+      "out": {
+        "a": "He goes to his master a free man.",
+        "b": "He walks on, still short."
+      },
+      "lesson": "Freeing people from slavery (riqab) is one of the eight uses of zakat."
+    },
+    "debtor": {
+      "title": "The man in debt",
+      "body": "The merchant who owed your uncle 20 dirham can't pay. His shop is failing.",
+      "a": "Give him more time",
+      "b": "Forgive half",
+      "c": "Demand it now",
+      "out": {
+        "a": "He promises to pay when he can.",
+        "b": "He weeps with relief.",
+        "c": "He sells his tools to pay you."
+      },
+      "lesson": "\"If the debtor is in hardship, give him time\" (Al-Baqarah 2:280). Debtors (gharimin) may receive zakat."
+    },
+    "teacher": {
+      "title": "The travelling teacher",
+      "body": "A teacher on his way to teach in a new town has lost his camel.",
+      "a": "Give him a ride (1 supply)",
+      "b": "Pass by",
+      "out": {
+        "a": "He teaches you a verse on the way.",
+        "b": "You leave him on the road."
+      },
+      "lesson": "Zakat may go to good causes in the way of Allah (fi sabilillah)."
+    },
+    "traveller": {
+      "title": "A stranded traveller",
+      "body": "A traveller far from home has been robbed and has no water left.",
+      "a": "Share your water (1 supply)",
+      "b": "Ride on",
+      "out": {
+        "a": "He drinks and blesses you. He asks your name.",
+        "b": "You ride on."
+      },
+      "lesson": "The stranded traveller (ibn as-sabil) is one of the eight groups zakat is for."
+    },
+    "lostPurse": {
+      "title": "A lost purse",
+      "body": "A purse lies in the sand, heavy with coins.",
+      "a": "Announce it and find the owner",
+      "b": "Keep it",
+      "out": {
+        "a": "The owner is found and thanks you.",
+        "aReward": "The owner thanks you and gives you 5 dirham.",
+        "b": "You pocket 15 dirham."
+      },
+      "lesson": "Found property (luqatah) must be announced so the owner can claim it."
+    },
+    "carryForBrother": {
+      "title": "Carry this for my brother",
+      "body": "A traveller asks you to carry two bundles to his brother in Basra. They take space.",
+      "a": "Agree",
+      "b": "No room",
+      "out": {
+        "a": "You load his bundles with care.",
+        "b": "He asks another caravan."
+      },
+      "lesson": "Goods left in your care (wadiah) are a trust. Deliver them whole."
+    },
+    "rumour": {
+      "title": "A rumour",
+      "body": "At the caravanserai, men say {good} prices in Basra will jump next week.",
+      "a": "Believe it",
+      "b": "Ask around first (2 dirham)",
+      "out": {
+        "a": "You'll find out in the bazaar.",
+        "bTrue": "It's true. {good} will sell high next week.",
+        "bFalse": "It's false. Someone made it up."
+      },
+      "lesson": "\"If a sinner brings you news, verify it\" (Al-Hujurat 49:6). Check before you act."
+    },
+    "buriedCoins": {
+      "title": "Buried coins",
+      "body": "In the ruins you find an old pot full of coins.",
+      "a": "Give one fifth to the bayt al-mal",
+      "b": "Keep it all",
+      "out": {
+        "a": "{n} dirham found. {fifth} goes to the bayt al-mal now.",
+        "b": "You keep all {n} dirham."
+      },
+      "lesson": "Buried treasure (rikaz) owes one fifth at once. Unlike zakat, there is no year to wait."
+    },
+    "purser": {
+      "title": "The ship's purser",
+      "body": "A purser loading a ship for India needs {qty} {good} at {price} each, within {days} days.",
+      "a": "Agree, in writing",
+      "b": "Decline",
+      "out": {
+        "a": "He writes the order down. Bring the goods to the stall.",
+        "b": "He asks the next caravan."
+      },
+      "lesson": "\"O you who believe, fulfil your contracts\" (Al-Ma'idah 5:1)."
+    },
+    "caravanMaster": {
+      "title": "The caravan master",
+      "body": "A caravan leaving for Damascus needs {qty} {good} at {price} each, within {days} days.",
+      "a": "Agree, in writing",
+      "b": "Decline",
+      "out": {
+        "a": "The deal is written and witnessed.",
+        "b": "He nods and moves on."
+      },
+      "lesson": "You may promise goods you don't have yet if the amount, price and date are clear. Then keep your word."
+    },
+    "mosqueKitchen": {
+      "title": "The mosque kitchen",
+      "body": "The imam feeds the poor after Jumu'ah. He asks for {qty} baskets of dates at {price} each, within {days} days.",
+      "a": "Promise to bring them",
+      "b": "Not this time",
+      "out": {
+        "a": "He thanks you and writes your name down.",
+        "b": "He understands."
+      },
+      "lesson": "Feeding the hungry is among the best of deeds. A promise is a trust to keep."
+    }
+  },
+  "change": {
+    "cash": "{n} dirham",
+    "supplies": "{n} supplies",
+    "amanah": "{n} amanah",
+    "good": "{n} {good}",
+    "quest": "New quest"
+  },
+  "friday": {
+    "title": "Friday",
+    "sub": "The market is closed for Jumu'ah.",
+    "revenue": "Sales this week",
+    "cost": "Cost of goods sold",
+    "supplies": "Supplies",
+    "profit": "Trading profit",
+    "rent": "Rent paid",
+    "debts": "Debts repaid",
+    "late": "Debts you could not pay",
+    "partner": "Paid to the widow",
+    "wholesale": "Sold {n} goods to the wholesaler at half price",
+    "orderFilled": "Order filled: {qty} {good}",
+    "orderBackedOut": "A buyer backed out of a handshake order",
+    "orderShort": "You did not have the {good} you promised",
     "cash": "Cash in the chest",
-    "stock": "Stock carried forward (landed)",
-    "owedToYou": "Owed to you",
-    "youOwe": "You owe",
+    "upgrades": "The carpenter and the caravan master",
+    "upgradeNames": {
+      "shelf": "Another shelf",
+      "camel": "Another camel",
+      "skins": "Bigger water skins",
+      "guide": "Hire a guide",
+      "boy": "Hire a shop boy"
+    },
+    "upgradeText": {
+      "shelf": "One more slot. Two more customers a day. Rent goes up.",
+      "camel": "Carry 5 more goods on each trip.",
+      "skins": "Carry up to 10 supplies.",
+      "guide": "See every stop on the map.",
+      "boy": "Empty slots refill themselves from the storeroom."
+    },
+    "buy": "{n}",
+    "owned": "Done",
+    "goals": "Main quest",
+    "goalNames": {
+      "sold": "Sell {n} goods",
+      "trips": "Make {n} trips",
+      "upgrades": "Buy {n} upgrades",
+      "helped": "Help {n} people",
+      "revenue": "Take {n} dirham in sales"
+    },
     "next": "Next week",
-    "yearEnd": "The year is over"
+    "seasonTitle": "The end of {season}",
+    "yearEnd": "To the bayt al-mal",
+    "mainDone": "You finished the main quest. The guild paid you {n} dirham.",
+    "mainMissed": "The main quest wasn't finished this season. A new one starts now."
+  },
+  "broke": {
+    "title": "The stall is lost",
+    "body": "You couldn't pay Friday's rent, even after selling your stock. The landlord gives the stall to another trader.",
+    "lesson": "Keep enough cash for what you owe. Goods in the storeroom don't pay the rent.",
+    "retry": "Try this season again",
+    "restart": "Start a new year"
+  },
+  "notebook": {
+    "title": "Notebook",
+    "hint": "What customers did at each price.",
+    "none": "Not sold yet",
+    "zakat": "Zakat: nisab is 200 dirham. After a full year, pay one fortieth of cash, stock and money owed to you."
   },
   "bayt": {
     "title": "The bayt al-mal",
@@ -207,6 +638,8 @@
     "total": "Zakatable total",
     "nisab": "Nisab",
     "due": "Zakat due (one fortieth)",
+    "fixtures": "Your shelves, camels and tools ({n} dirham) are not counted. Zakat on trade is on cash and goods for sale.",
+    "rikaz": "Paid on buried treasure this year: {n}",
     "under": "You are under the nisab. No zakat is due this year.",
     "pay": "Pay {n} dirham",
     "continue": "Continue",
@@ -229,14 +662,14 @@
       "The stranded traveller"
     ],
     "scenes": [
-      "A widow with no income receives food for the month.",
-      "A labourer who works but cannot cover his rent gets help.",
-      "The clerk himself is paid for his work.",
-      "A Persian craftsman, new to Islam, is helped to settle in the city.",
-      "A man pays to buy back his freedom.",
-      "A boatman whose boat sank has his debt cleared.",
-      "Support for good works for the community.",
-      "A traveller robbed on the road gets enough to reach home."
+      "Like the hungry family at the oasis: food for those with nothing.",
+      "Like the potter who works and still falls short.",
+      "The clerk and the collector are paid for their work.",
+      "Like the new Muslim you met on the road.",
+      "Like the man buying his freedom.",
+      "Like the merchant who could not pay his debt.",
+      "Like the teacher travelling to teach a new town.",
+      "Like the traveller robbed on the road, far from home."
     ],
     "others": "Other traders' zakat did this work this year."
   },
@@ -246,10 +679,76 @@
     "amanah": "Amanah",
     "zakat": "Zakat paid",
     "sadaqah": "Sadaqah given",
+    "helped": "People helped on the road",
     "line": "Zakat on trade goods is still due today. Count yours.",
     "cta": "Count my zakat",
     "share": "Share",
     "again": "Play again",
     "shareText": "My year at the Basra bazaar: {profit} dirham profit, amanah {amanah}, {zakat} dirham zakat paid."
+  },
+  "quests": {
+    "title": "Quests",
+    "main": "Main quest",
+    "side": "Side quests",
+    "mainTitles": [
+      "Stand on your own",
+      "A name in Basra",
+      "The road to Mada'in",
+      "Your uncle's ledger"
+    ],
+    "mainBody": [
+      "Show the bazaar your uncle's stall is in good hands.",
+      "Grow your trade and help people on the road.",
+      "Sell more, build up the stall, keep helping.",
+      "A full year of honest trade. Finish strong, then count your zakat."
+    ],
+    "reward": "Reward {n} dirham",
+    "done": "Complete",
+    "none": "No side quests yet. People on the road may ask you for goods.",
+    "order": {
+      "cook": "Bring {qty} {good} to the cook",
+      "imam": "Bring {qty} {good} to the mosque kitchen",
+      "purser": "Bring {qty} {good} to the ship's purser",
+      "caravan": "Bring {qty} {good} to the caravan master"
+    },
+    "repay": {
+      "lender": "Repay {n} dirham to the moneylender",
+      "friend": "Repay {n} dirham to your uncle's friend",
+      "widow": "Repay {n} dirham to the widow"
+    },
+    "pays": "Pays {n} each",
+    "handshake": "Handshake only",
+    "have": "You have {a}/{b}",
+    "due": "Due Friday, in {n} days",
+    "dueToday": "Due today",
+    "deliver": "Deliver",
+    "repayBtn": "Repay",
+    "delivered": "Delivered. You were paid {n} dirham.",
+    "backedOut": "The buyer backed out. Nothing was written down.",
+    "repaid": "Debt repaid early. Your name is good in the bazaar.",
+    "rule": "Each side quest gives at least a week. Finish it early any morning, or it is settled on its Friday."
+  },
+  "tutorial": {
+    "slot": "Your uncle left 10 baskets of dates. Tap your slot and put the dates on it.",
+    "price": "Set your price with − and +. Dates are worth about {n} today.",
+    "next": "Got it",
+    "open": "Open the shop and watch your customers.",
+    "tooHigh": "That is too dear for a first day. Try a lower price.",
+    "watch": "Each customer shows how they feel about your price:",
+    "delighted": "a bargain",
+    "happy": "a fair price",
+    "unsure": "dear, but they buy",
+    "angry": "too dear, they leave",
+    "restock": "The slot is empty. Tap Restock to bring more dates from the storeroom.",
+    "night": "Sold out! That money is your capital. The notebook keeps every price you tried, with the face it got.",
+    "morning": "Each morning, choose: open the shop, or set out to buy more. Your storeroom is empty, so set out to the date groves."
+  },
+  "caravanTips": {
+    "setout": "Your first caravan! Pick a town. Each stop on the road uses one supply, so bring enough. Your camel carries {n} goods.",
+    "map": "Choose one of the stops ahead. The icon shows what waits there: the road, a trader, people or a find. Unknown stops are a gamble.",
+    "event": "Every stop brings a choice. Options cost money, supplies or goods. A greyed-out option needs something you don't have.",
+    "town": "The town market! Buy with +. Watch your cargo space, and top up supplies here for the road home.",
+    "back": "The road home is a new route with new stops. Keep an eye on your supplies.",
+    "home": "Back in Basra! Your goods go to the storeroom. Open the shop and put them on your slot to sell."
   }
 }

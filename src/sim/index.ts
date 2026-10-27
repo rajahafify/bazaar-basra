@@ -2,9 +2,9 @@
 
 export * from './data';
 export * from './rng';
-export * from './costing';
-export * from './packing';
 export * from './customers';
 export * from './ledger';
 export * from './game';
 export * from './day';
+export * from './events';
+export * from './expedition';

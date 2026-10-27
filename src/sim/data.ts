@@ -1,120 +1,113 @@
-// Game data from docs/gdd.md. Every number here has a section reference so balance
-// changes stay traceable to the design doc. Money is in dirham.
+// Game data for the sell-or-explore loop (docs: "Pasar Basra: loop redesign plan").
+// Money is in dirham. Balance numbers live here so tuning stays in one place.
 
-export type Week = 1 | 2 | 3 | 4;
-export const WEEKS: readonly Week[] = [1, 2, 3, 4];
+export type Season = 1 | 2 | 3 | 4;
+export const SEASONS: readonly Season[] = [1, 2, 3, 4];
+export const WEEKS_PER_SEASON = 4;
+/** Days of the week from Saturday (0) to Friday (6). Friday the market is closed. */
+export const FRIDAY = 6;
 
-export type GoodId = 'dates' | 'pottery' | 'straw' | 'cloth' | 'spices' | 'leather';
-export type SourceId = 'groves' | 'port' | 'bedouin';
-export type CartId = 'handcart' | 'donkey' | 'camels';
-export type StallId = 'small' | 'medium' | 'big';
+export type GoodId = 'dates' | 'salt' | 'fish' | 'vinegar' | 'beef' | 'cardamom' | 'saffron';
+export const GOOD_IDS: readonly GoodId[] = ['dates', 'salt', 'fish', 'vinegar', 'beef', 'cardamom', 'saffron'];
 
 export interface Good {
   id: GoodId;
-  /** Footprint in cells, width x height, before rotation (gdd 3.4). */
-  shape: readonly [number, number];
-  source: SourceId;
-  /** Buy price at the source by week (gdd 3.4, 7). */
-  buy: Readonly<Record<Week, number>>;
-  /** Market (base sell) price by week, or null for goods never sold at the stall (gdd 9.2). */
-  market: Readonly<Record<Week, number>> | null;
-  /** Protects a touching jar from breaking (gdd 3.4 packing rules). */
-  padding: boolean;
-  /** Shop days after purchase before it spoils, or null if it keeps (gdd 4.7). */
-  spoilsAfterDays: number | null;
-  /** First week the good can be bought (leather is week 3 only, gdd 3.2). */
-  availableWeeks: readonly Week[];
+  /** The fair price in Basra before season and demand changes. Customers judge against this. */
+  fair: number;
+  /** Caravan space one unit takes. */
+  space: number;
+  /** Demand by season, as a multiplier on the fair price. */
+  season: Readonly<Record<Season, number>>;
 }
 
-const every = (n: number): Record<Week, number> => ({ 1: n, 2: n, 3: n, 4: n });
+const flat: Record<Season, number> = { 1: 1, 2: 1, 3: 1, 4: 1 };
 
 export const GOODS: Readonly<Record<GoodId, Good>> = {
-  dates: {
-    id: 'dates', shape: [1, 2], source: 'groves', buy: every(6),
-    market: { 1: 10, 2: 10, 3: 10, 4: 11 }, padding: false, spoilsAfterDays: 5, availableWeeks: WEEKS,
-  },
-  pottery: {
-    id: 'pottery', shape: [2, 2], source: 'groves', buy: every(8),
-    market: { 1: 15, 2: 15, 3: 16, 4: 15 }, padding: false, spoilsAfterDays: null, availableWeeks: WEEKS,
-  },
-  straw: {
-    id: 'straw', shape: [1, 1], source: 'groves', buy: every(1),
-    market: null, padding: true, spoilsAfterDays: null, availableWeeks: WEEKS,
-  },
-  cloth: {
-    id: 'cloth', shape: [1, 3], source: 'port', buy: every(20),
-    market: { 1: 32, 2: 30, 3: 32, 4: 40 }, padding: true, spoilsAfterDays: null, availableWeeks: WEEKS,
-  },
-  spices: {
-    id: 'spices', shape: [1, 1], source: 'port', buy: { 1: 30, 2: 21, 3: 30, 4: 30 },
-    market: { 1: 50, 2: 42, 3: 50, 4: 50 }, padding: false, spoilsAfterDays: null, availableWeeks: WEEKS,
-  },
-  leather: {
-    // Week 3 only at the camp; still sells in week 4 (gdd 9.2).
-    id: 'leather', shape: [2, 1], source: 'bedouin', buy: every(12),
-    market: { 1: 20, 2: 20, 3: 20, 4: 20 }, padding: false, spoilsAfterDays: null, availableWeeks: [3],
-  },
+  dates: { id: 'dates', fair: 6, space: 1, season: { 1: 1, 2: 1, 3: 0.85, 4: 1.15 } },
+  salt: { id: 'salt', fair: 5, space: 1, season: { 1: 1, 2: 1.2, 3: 1, 4: 0.9 } },
+  fish: { id: 'fish', fair: 9, space: 1, season: { 1: 1, 2: 0.9, 3: 1, 4: 1.15 } },
+  vinegar: { id: 'vinegar', fair: 11, space: 1, season: { 1: 1.1, 2: 1, 3: 1, 4: 0.95 } },
+  beef: { id: 'beef', fair: 16, space: 1, season: { 1: 0.95, 2: 1, 3: 1.05, 4: 1.2 } },
+  cardamom: { id: 'cardamom', fair: 30, space: 1, season: flat },
+  saffron: { id: 'saffron', fair: 48, space: 1, season: { 1: 1, 2: 1, 3: 1.1, 4: 1.15 } },
 };
 
-/** Chance an unpadded jar breaks on the ride home (gdd 3.4). */
-export const JAR_BREAK_CHANCE = 0.25;
+export type TownId = 'groves' | 'ubulla' | 'kufa' | 'madain';
+export const TOWN_IDS: readonly TownId[] = ['groves', 'ubulla', 'kufa', 'madain'];
 
-/** Dates market price on week 3 day 2, when the caravan is late (gdd 7, 9.2). */
-export const CARAVAN_LATE_DATES_PRICE = 16;
-
-export interface Source {
-  id: SourceId;
-  openWeeks: readonly Week[];
+export interface Town {
+  id: TownId;
+  /** Event stops each way. */
+  stops: number;
+  /** Days the trip takes, there and back, before any delays on the road. */
+  days: number;
+  /** First season the route is open. */
+  opens: Season;
+  /** What the town sells and for how much, before the week's swing. */
+  sells: ReadonlyArray<{ good: GoodId; price: number; rare?: boolean }>;
 }
 
-export const SOURCES: Readonly<Record<SourceId, Source>> = {
-  groves: { id: 'groves', openWeeks: WEEKS },
-  port: { id: 'port', openWeeks: WEEKS },
-  bedouin: { id: 'bedouin', openWeeks: [3] },
+export const TOWNS: Readonly<Record<TownId, Town>> = {
+  groves: { id: 'groves', stops: 2, days: 1, opens: 1, sells: [{ good: 'dates', price: 3 }] },
+  ubulla: { id: 'ubulla', stops: 2, days: 1, opens: 1, sells: [{ good: 'fish', price: 5 }, { good: 'salt', price: 2 }, { good: 'cardamom', price: 17, rare: true }] },
+  kufa: { id: 'kufa', stops: 3, days: 2, opens: 2, sells: [{ good: 'beef', price: 9 }, { good: 'vinegar', price: 6 }] },
+  madain: { id: 'madain', stops: 3, days: 2, opens: 3, sells: [{ good: 'saffron', price: 28 }] },
 };
 
-export interface Cart {
-  id: CartId;
-  cols: number;
-  rows: number;
-  hire: number;
+/** Chance a rare good is on sale on a given visit. */
+export const RARE_CHANCE = 0.5;
+
+export const SUPPLY_PRICE = 1;
+export const TOWN_SUPPLY_PRICE = 2;
+
+// ---------- the stall and the caravan ----------
+
+export type UpgradeId = 'shelf' | 'camel' | 'skins' | 'guide' | 'boy';
+
+export interface Upgrade {
+  id: UpgradeId;
+  /** Price of each level in turn. */
+  costs: readonly number[];
 }
 
-// gdd 3.3
-export const CARTS: Readonly<Record<CartId, Cart>> = {
-  handcart: { id: 'handcart', cols: 4, rows: 3, hire: 6 },
-  donkey: { id: 'donkey', cols: 5, rows: 4, hire: 12 },
-  camels: { id: 'camels', cols: 6, rows: 5, hire: 20 },
+export const UPGRADES: Readonly<Record<UpgradeId, Upgrade>> = {
+  shelf: { id: 'shelf', costs: [15, 35, 60, 100, 150] },
+  camel: { id: 'camel', costs: [25, 50, 90] },
+  skins: { id: 'skins', costs: [15] },
+  guide: { id: 'guide', costs: [40] },
+  boy: { id: 'boy', costs: [60] },
 };
 
-export interface Stall {
-  id: StallId;
-  shelves: number;
-  rent: number;
-  /** Customers per day before the amanah modifier, inclusive range. */
-  customers: readonly [number, number];
-  fromWeek: Week;
-}
+/** The stall starts small: one slot, and a caravan that carries five units. */
+export const BASE_SLOTS = 1;
+export const BASE_SPACE = 5;
+export const SPACE_PER_CAMEL = 5;
+export const BASE_SUPPLY_CAP = 6;
+export const SKINS_SUPPLY_CAP = 10;
+/** Most units one shelf slot holds at a time. */
+export const SLOT_STACK = 5;
 
-// gdd 4.1
-export const STALLS: Readonly<Record<StallId, Stall>> = {
-  small: { id: 'small', shelves: 2, rent: 10, customers: [6, 8], fromWeek: 1 },
-  medium: { id: 'medium', shelves: 3, rent: 25, customers: [8, 10], fromWeek: 2 },
-  big: { id: 'big', shelves: 4, rent: 45, customers: [10, 13], fromWeek: 4 },
-};
+/** Weekly rent, by how many extra shelves the stall has. */
+export const RENT = [5, 7, 10, 14, 19, 25] as const;
 
-// gdd 2.3, 4.6, 6.2
-export const NISAB = 200;
-export const ZAKAT_RATE = 1 / 40;
-export const OPENING_CASH = 160;
-export const OPENING_AMANAH = 60;
+// ---------- customers ----------
+
+export const DAY_SECONDS = 40;
+export const BASE_CUSTOMERS = 7;
+export const CUSTOMERS_PER_SHELF = 2;
+
+// ---------- the year ----------
+
+export const OPENING_CASH = 0;
+export const OPENING_AMANAH = 50;
 export const AMANAH_MIN = 0;
 export const AMANAH_MAX = 100;
-export const SHOP_DAYS_PER_WEEK = 5;
-export const DAY_SECONDS = 45;
+export const NISAB = 200;
+export const ZAKAT_RATE = 1 / 40;
+/** One fifth of buried treasure is due at once (rikaz). */
+export const RIKAZ_RATE = 1 / 5;
 
-export function marketPrice(good: GoodId, week: Week): number {
-  const m = GOODS[good].market;
-  if (!m) throw new Error(`${good} is not sold at the stall`);
-  return m[week];
+/** Fair price of a good this season, before the week's demand. */
+export function seasonPrice(good: GoodId, season: Season): number {
+  return GOODS[good].fair * GOODS[good].season[season];
 }

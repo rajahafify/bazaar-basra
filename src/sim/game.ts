@@ -2,183 +2,226 @@
 // Screens call these actions; nothing here touches the browser or three.js.
 
 import {
-  CARTS, GOODS, OPENING_AMANAH, OPENING_CASH, SHOP_DAYS_PER_WEEK, SOURCES, STALLS,
-  CARAVAN_LATE_DATES_PRICE, marketPrice, type CartId, type GoodId, type SourceId, type StallId, type Week,
+  BASE_CUSTOMERS, BASE_SLOTS, BASE_SPACE, BASE_SUPPLY_CAP, CUSTOMERS_PER_SHELF, FRIDAY, GOODS, GOOD_IDS, NISAB,
+  OPENING_AMANAH, OPENING_CASH, RENT, SKINS_SUPPLY_CAP, SLOT_STACK, SPACE_PER_CAMEL, UPGRADES, WEEKS_PER_SEASON,
+  seasonPrice, type GoodId, type Season, type UpgradeId,
 } from './data';
-import { cellsOf } from './costing';
-import { clampAmanah } from './customers';
-import { weekLedger, zakatCount, type WeekLedger, type ZakatResult } from './ledger';
-import { CartGrid, type Placement } from './packing';
+import { amanahCustomers, clampAmanah, type Reaction } from './customers';
+import { zakatCount, type ZakatResult } from './ledger';
 import { createRng, type Rng } from './rng';
+import type { Trip } from './expedition';
 
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 4;
 
 export type Phase =
   | 'prologue'
-  | 'stall'      // weekend: choose and rent a stall (weeks 2 to 4)
-  | 'source'     // weekend: pick where to buy
-  | 'cart'       // weekend: hire a cart
-  | 'buy'        // weekend: buy and pack
-  | 'ride'       // weekend: ride home
-  | 'weekendLedger'
-  | 'shop'       // weekdays
-  | 'weekLedger'
-  | 'yearEnd'
+  | 'morning'   // at the stall: open the shop or set out
+  | 'shop'      // a market day
+  | 'trip'      // on an expedition
+  | 'friday'    // rest day: ledger, rent, upgrades
+  | 'broke'     // could not pay rent
+  | 'yearEnd'   // the bayt al-mal
   | 'done';
 
-export interface Lot {
-  id: number;
-  good: GoodId;
+export interface Stock {
   qty: number;
-  landedEach: number;
-  /** Absolute shop-day index the lot was bought before. Dates spoil 5 shop days after. */
-  boughtDay: number;
+  /** Total cost paid for these units, so the average cost is cost / qty. */
+  cost: number;
+}
+
+export interface Slot {
+  good: GoodId | null;
+  qty: number;
+  /** Cost of the units on the slot. */
+  cost: number;
 }
 
 export interface Debt {
-  who: 'bedouin' | 'qardHasan';
+  who: 'lender' | 'friend' | 'widow';
+  amount: number;
+  /** Day index it is due on (paid on that week's Friday). */
+  due: number;
+}
+
+export interface Owed {
+  who: 'merchant';
   amount: number;
 }
 
-export interface Receivable {
-  who: 'scholar';
-  amount: number;
-}
+/** Who placed a delivery order: a side quest from an event on the road. */
+export type OrderFrom = 'cook' | 'imam' | 'purser' | 'caravan';
 
-export interface Shelf {
-  good: GoodId | null;
-  price: number;
-}
-
-export interface TrayItem {
-  id: number;
+export interface Order {
+  from: OrderFrom;
   good: GoodId;
-  /** Paid with cash, or on credit from the Bedouin trader. */
-  credit: boolean;
-  placement: Placement | null;
+  qty: number;
+  /** Paid per unit on delivery. */
+  price: number;
+  /** Day index of the Friday it is due. It can be delivered any morning before. */
+  due: number;
+  written: boolean;
+  /** Amanah gained when delivered, and lost when missed. */
+  amanah: number;
+  /** Delivering it counts as helping someone. */
+  helps?: boolean;
 }
 
-export interface Weekend {
-  source: SourceId | null;
-  cart: CartId | null;
-  tray: TrayItem[];
-  broken: GoodId[];
-  /** Filled when the player leaves the source. */
-  ledger: WeekendSummary | null;
+/** Something that happens on a later morning because of a choice on the road. */
+export interface Pending {
+  day: number;
+  kind: 'gift' | 'salam' | 'regular' | 'claim';
+  key: string;
+  cash?: number;
+  good?: GoodId;
+  qty?: number;
+  amanah?: number;
 }
 
-export interface WeekendSummary {
-  lines: Array<{ good: GoodId; qty: number; buyEach: number; landedEach: number }>;
-  goodsCost: number;
-  hire: number;
-  cellsUsed: number;
-  cellsTotal: number;
-  wastedHire: number;
-  refunded: number;
-  boughtOnCredit: number;
-  broken: Array<{ good: GoodId; landed: number }>;
+export interface Mudarabah {
+  capital: number;
+  worthAtStart: number;
+  due: number;
+}
+
+export interface Counters {
+  sold: number;
+  trips: number;
+  upgrades: number;
+  helped: number;
+  revenue: number;
 }
 
 export interface WeekStats {
-  cashStart: number;
-  amanahStart: number;
   revenue: number;
-  cogs: number;
-  rent: number;
-  stockBought: number;
-  writtenOff: number;
-  wastedHire: number;
-  spoiled: number;
-  shortWeights: number;
+  costOfSold: number;
+  goodsBought: number;
+  supplies: number;
+  other: number;
+  amanahStart: number;
 }
 
 export interface DayStats {
   sold: number;
   revenue: number;
   walked: number;
+  wanted: number;
   amanahStart: number;
-  creditSales: number;
 }
 
-export interface WeekRecord extends WeekLedger {
-  week: Week;
-  stall: StallId;
-  amanah: number;
+export interface Notice {
+  key: string;
+  vars?: Record<string, string | number>;
 }
 
 export interface GameState {
   version: number;
   rng: number;
   phase: Phase;
-  week: Week;
-  /** Shop day within the week, 1 to 5. 0 during the weekend. */
-  day: number;
+  season: Season;
+  week: number;
+  /** Saturday 0 to Friday 6. */
+  dow: number;
   cash: number;
   amanah: number;
-  stall: StallId;
-  lots: Lot[];
-  shelves: Shelf[];
+  store: Record<GoodId, Stock>;
+  slots: Slot[];
+  prices: Record<GoodId, number>;
+  /** Price to the reaction last seen at that price, per good. */
+  notebook: Record<GoodId, Record<string, Reaction>>;
+  /** Demand multiplier per good, drifts back to 1. */
+  demand: Record<GoodId, number>;
+  /** Customers who asked for a good you did not have, this week. */
+  wanted: Record<GoodId, number>;
+  upgrades: Record<UpgradeId, number>;
+  upgradesSpent: number;
+  supplies: number;
+  trip: Trip | null;
   debts: Debt[];
-  receivables: Receivable[];
-  weekend: Weekend;
-  weekStats: WeekStats;
-  dayStats: DayStats;
-  history: WeekRecord[];
-  flags: {
-    harith: 'fair' | 'hold' | null;
-    inspectorTomorrow: boolean;
-    inspectorToday: boolean;
-    nextLotId: number;
-  };
-  yearEnd: { result: ZakatResult; paid: number; sadaqah: number; debtsSettled: number } | null;
+  owed: Owed[];
+  orders: Order[];
+  pending: Pending[];
+  mudarabah: Mudarabah | null;
+  regulars: number;
+  counters: Counters;
+  week_: WeekStats;
+  day: DayStats;
+  /** What happened overnight or on the road, shown on the next morning. */
+  notices: Notice[];
+  eventsSeen: Record<string, number>;
+  flags: Record<string, number>;
+  /** The state at the start of this season, to try again after going broke. */
+  seasonSave: string | null;
+  yearEnd: { result: ZakatResult; paid: number; sadaqah: number; rikaz: number } | null;
+  rikazPaid: number;
+  openingWorth: number;
   minutesStart: number;
 }
 
 // ---------- setup ----------
+
+function goodsRecord<T>(f: (g: GoodId) => T): Record<GoodId, T> {
+  return Object.fromEntries(GOOD_IDS.map(g => [g, f(g)])) as Record<GoodId, T>;
+}
 
 export function newGame(seed: number, nowMs = 0): GameState {
   const s: GameState = {
     version: SAVE_VERSION,
     rng: seed >>> 0,
     phase: 'prologue',
+    season: 1,
     week: 1,
-    day: 0,
+    dow: 0,
     cash: OPENING_CASH,
     amanah: OPENING_AMANAH,
-    stall: 'small',
-    lots: [],
-    shelves: [],
+    store: goodsRecord(() => ({ qty: 0, cost: 0 })),
+    slots: [],
+    prices: goodsRecord(g => Math.round(GOODS[g].fair * 1.15)),
+    notebook: goodsRecord(() => ({})),
+    demand: goodsRecord(() => 1),
+    wanted: goodsRecord(() => 0),
+    upgrades: { shelf: 0, camel: 0, skins: 0, guide: 0, boy: 0 },
+    upgradesSpent: 0,
+    supplies: 0,
+    trip: null,
     debts: [],
-    receivables: [],
-    weekend: emptyWeekend(),
-    weekStats: emptyWeekStats(OPENING_CASH, OPENING_AMANAH),
-    dayStats: emptyDayStats(OPENING_AMANAH),
-    history: [],
-    flags: { harith: null, inspectorTomorrow: false, inspectorToday: false, nextLotId: 1 },
+    owed: [],
+    orders: [],
+    pending: [],
+    mudarabah: null,
+    regulars: 0,
+    counters: emptyCounters(),
+    week_: emptyWeek(OPENING_AMANAH),
+    day: emptyDay(OPENING_AMANAH),
+    notices: [],
+    eventsSeen: {},
+    flags: {},
+    seasonSave: null,
     yearEnd: null,
+    rikazPaid: 0,
+    openingWorth: 0,
     minutesStart: nowMs,
   };
-  // Stock left by the uncle (gdd 2.3), costed at what he paid.
-  addLot(s, 'dates', 2, GOODS.dates.buy[1] + 1, 0);
-  addLot(s, 'cloth', 1, GOODS.cloth.buy[1] + 2, 0);
-  s.shelves = makeShelves(s.stall, []);
+  // No money, only the uncle's dates: the tutorial day sells them for the first capital.
+  addStock(s, 'dates', TUTORIAL_DATES, 3);
+  // A merchant still owes the uncle money.
+  s.owed.push({ who: 'merchant', amount: 20 });
+  // The slot starts empty: the shop tutorial has the player stock it.
+  s.slots = Array.from({ length: BASE_SLOTS }, () => ({ good: null, qty: 0, cost: 0 }));
+  s.flags.tut = 0;
+  s.openingWorth = netWorth(s);
   return s;
 }
 
-function emptyWeekend(): Weekend {
-  return { source: null, cart: null, tray: [], broken: [], ledger: null };
+function emptyCounters(): Counters {
+  return { sold: 0, trips: 0, upgrades: 0, helped: 0, revenue: 0 };
 }
 
-function emptyWeekStats(cash: number, amanah: number): WeekStats {
-  return { cashStart: cash, amanahStart: amanah, revenue: 0, cogs: 0, rent: 0, stockBought: 0, writtenOff: 0, wastedHire: 0, spoiled: 0, shortWeights: 0 };
+function emptyWeek(amanah: number): WeekStats {
+  return { revenue: 0, costOfSold: 0, goodsBought: 0, supplies: 0, other: 0, amanahStart: amanah };
 }
 
-function emptyDayStats(amanah: number): DayStats {
-  return { sold: 0, revenue: 0, walked: 0, amanahStart: amanah, creditSales: 0 };
-}
-
-function addLot(s: GameState, good: GoodId, qty: number, landedEach: number, boughtDay: number) {
-  s.lots.push({ id: s.flags.nextLotId++, good, qty, landedEach, boughtDay });
+function emptyDay(amanah: number): DayStats {
+  return { sold: 0, revenue: 0, walked: 0, wanted: 0, amanahStart: amanah };
 }
 
 export function withRng<T>(s: GameState, f: (rng: Rng) => T): T {
@@ -188,411 +231,493 @@ export function withRng<T>(s: GameState, f: (rng: Rng) => T): T {
   return out;
 }
 
-export function absDay(week: Week, day: number): number {
-  return (week - 1) * SHOP_DAYS_PER_WEEK + day;
-}
-
-// ---------- prices ----------
-
-/** Market price of a good on a given shop day, with the week's events (gdd 7, 9.2). */
-export function marketToday(s: GameState, good: GoodId, day = s.day): number {
-  const base = marketPrice(good, s.week);
-  if (good === 'dates' && s.week === 3) {
-    if (day === 2) return CARAVAN_LATE_DATES_PRICE;
-    if (day > 2 && s.flags.harith === 'hold') return Math.round(base * 0.8);
-  }
-  return base;
-}
-
-export function buyPrice(s: GameState, good: GoodId): number {
-  return GOODS[good].buy[s.week];
-}
-
-// ---------- prologue and weekend ----------
-
 export function finishPrologue(s: GameState) {
-  s.phase = 'source';
-  // Week 1: the uncle's stall is already rented; the rent is charged in the week 1 ledger (gdd 5).
-  payRent(s);
+  s.phase = 'morning';
+  saveSeason(s);
 }
 
-export function stallChoices(s: GameState): StallId[] {
-  return (Object.keys(STALLS) as StallId[]).filter(id => STALLS[id].fromWeek <= s.week);
+// ---------- calendar ----------
+
+export function dayIndex(s: GameState): number {
+  return ((s.season - 1) * WEEKS_PER_SEASON + (s.week - 1)) * 7 + s.dow;
 }
 
-/** Rents a stall for the week. Short of cash, a qard hasan loan covers the gap (gdd 8). */
-export function rentStall(s: GameState, stall: StallId) {
-  s.stall = stall;
-  payRent(s);
-  s.shelves = makeShelves(stall, s.shelves);
-  s.phase = 'source';
+/** Market days left before Friday, counting today. */
+export function daysBeforeFriday(s: GameState): number {
+  return FRIDAY - s.dow;
 }
 
-function payRent(s: GameState) {
-  const rent = STALLS[s.stall].rent;
-  borrowIfShort(s, rent);
-  s.cash -= rent;
-  s.weekStats.rent += rent;
+/** Moves to the next day. Market days lead to the morning, Friday to the rest day. */
+export function advanceDay(s: GameState) {
+  checkMainQuest(s);
+  s.dow += 1;
+  overnight(s);
+  s.phase = s.dow === FRIDAY ? 'friday' : 'morning';
 }
 
-function borrowIfShort(s: GameState, amount: number) {
-  if (s.cash >= amount) return 0;
-  const loan = Math.ceil(amount - s.cash);
-  s.cash += loan;
-  const d = s.debts.find(x => x.who === 'qardHasan');
-  if (d) d.amount += loan; else s.debts.push({ who: 'qardHasan', amount: loan });
-  return loan;
-}
-
-export function sourceChoices(s: GameState): SourceId[] {
-  return (Object.keys(SOURCES) as SourceId[]).filter(id => SOURCES[id].openWeeks.includes(s.week));
-}
-
-export function goodsAt(s: GameState, source: SourceId): GoodId[] {
-  return (Object.keys(GOODS) as GoodId[]).filter(g => GOODS[g].source === source && GOODS[g].availableWeeks.includes(s.week));
-}
-
-export function chooseSource(s: GameState, source: SourceId) {
-  s.weekend.source = source;
-  s.phase = 'cart';
-}
-
-export function hireCart(s: GameState, cart: CartId) {
-  const hire = CARTS[cart].hire;
-  borrowIfShort(s, hire);
-  s.cash -= hire;
-  s.weekend.cart = cart;
-  s.weekStats.stockBought += hire;
-  s.phase = 'buy';
-}
-
-/** Buys one unit into the tray. Credit is only offered by the Bedouin trader (gdd 7). */
-export function buyOne(s: GameState, good: GoodId, credit = false): TrayItem | null {
-  const price = buyPrice(s, good);
-  if (credit && GOODS[good].source !== 'bedouin') return null;
-  if (!credit && s.cash < price) return null;
-  if (!credit) s.cash -= price;
-  const item: TrayItem = { id: s.flags.nextLotId++, good, credit, placement: null };
-  s.weekend.tray.push(item);
-  return item;
-}
-
-/** Returns an unpacked item from the tray for a full refund. */
-export function returnOne(s: GameState, itemId: number) {
-  const i = s.weekend.tray.findIndex(t => t.id === itemId);
-  const item = s.weekend.tray[i];
-  if (!item) return;
-  if (!item.credit) s.cash += buyPrice(s, item.good);
-  s.weekend.tray.splice(i, 1);
-}
-
-export function gridFor(s: GameState, exceptId?: number): CartGrid {
-  const g = new CartGrid(s.weekend.cart ?? 'handcart');
-  for (const t of s.weekend.tray) if (t.placement && t.id !== exceptId) g.place(t.placement);
-  return g;
-}
-
-export function placeItem(s: GameState, itemId: number, placement: Omit<Placement, 'good'>): boolean {
-  const item = s.weekend.tray.find(t => t.id === itemId);
-  if (!item) return false;
-  const p: Placement = { ...placement, good: item.good };
-  if (gridFor(s, itemId).canPlace(p)) return false;
-  item.placement = p;
-  return true;
-}
-
-export function unplaceItem(s: GameState, itemId: number) {
-  const item = s.weekend.tray.find(t => t.id === itemId);
-  if (item) item.placement = null;
-}
-
-/**
- * Packs every unplaced item it can, biggest first, preferring spots where jars touch padding.
- * The fallback for fiddly packing on small phones (gdd 14.3).
- */
-export function autoPack(s: GameState) {
-  const order = [...s.weekend.tray]
-    .filter(t => !t.placement)
-    .sort((a, b) => cellsOf(b.good) - cellsOf(a.good) || (a.good === 'pottery' ? -1 : 1));
-  for (const item of order) {
-    const grid = gridFor(s);
-    let best: Placement | null = null;
-    let bestScore = -1;
-    for (const rotated of [false, true]) {
-      for (let row = 0; row < grid.rows; row++) for (let col = 0; col < grid.cols; col++) {
-        const p: Placement = { good: item.good, col, row, rotated };
-        if (!grid.canPlace(p)) {
-          const g2 = gridFor(s);
-          g2.place(p);
-          const idx = g2.placements.length - 1;
-          const touchesPad = g2.neighbours(idx).some(n => GOODS[n.good].padding);
-          const padsJar = g2.neighbours(idx).some(n => n.good === 'pottery') && GOODS[item.good].padding;
-          const score = (touchesPad && item.good === 'pottery' ? 4 : 0) + (padsJar ? 2 : 0) + g2.neighbours(idx).length * 0.1 - (row * grid.cols + col) * 0.001;
-          if (score > bestScore) { bestScore = score; best = p; }
-        }
-      }
-    }
-    if (best) item.placement = best;
+/** Demand drifts back, and anything due today arrives. */
+function overnight(s: GameState) {
+  for (const g of GOOD_IDS) s.demand[g] = 1 + (s.demand[g] - 1) * 0.7;
+  const today = dayIndex(s);
+  const due = s.pending.filter(p => p.day <= today);
+  s.pending = s.pending.filter(p => p.day > today);
+  for (const p of due) {
+    if (p.cash) s.cash += p.cash;
+    if (p.good && p.qty) addStock(s, p.good, p.qty, 0);
+    if (p.amanah) changeAmanah(s, p.amanah);
+    if (p.kind === 'regular') s.regulars += 1;
+    s.notices.push({ key: p.key, vars: { n: p.cash ?? p.qty ?? 0 } });
   }
 }
 
-/** Leaves the source: unpacked goods are refunded, packed goods are costed (gdd 3.4, 3.5). */
-export function leaveSource(s: GameState) {
-  const cart = CARTS[s.weekend.cart ?? 'handcart'];
-  const cellsTotal = cart.cols * cart.rows;
-  let refunded = 0;
-  for (const t of [...s.weekend.tray]) if (!t.placement) { refunded += t.credit ? 0 : buyPrice(s, t.good); returnOne(s, t.id); }
-  const byGood = new Map<GoodId, number>();
-  let cellsUsed = 0;
-  let boughtOnCredit = 0;
-  for (const t of s.weekend.tray) {
-    byGood.set(t.good, (byGood.get(t.good) ?? 0) + 1);
-    cellsUsed += cellsOf(t.good);
-    if (t.credit) boughtOnCredit += buyPrice(s, t.good);
-  }
-  const lines = [...byGood].map(([good, qty]) => {
-    const buyEach = buyPrice(s, good);
-    return { good, qty, buyEach, landedEach: buyEach + cart.hire * (cellsOf(good) / cellsTotal) };
-  });
-  const goodsCost = lines.reduce((a, l) => a + l.buyEach * l.qty, 0);
-  const wastedHire = cart.hire * ((cellsTotal - cellsUsed) / cellsTotal);
-  if (boughtOnCredit > 0) {
-    const d = s.debts.find(x => x.who === 'bedouin');
-    if (d) d.amount += boughtOnCredit; else s.debts.push({ who: 'bedouin', amount: boughtOnCredit });
-  }
-  s.weekStats.stockBought += goodsCost - boughtOnCredit;
-  s.weekStats.wastedHire += wastedHire;
-  s.weekend.ledger = { lines, goodsCost, hire: cart.hire, cellsUsed, cellsTotal, wastedHire, refunded, boughtOnCredit, broken: [] };
-  s.phase = 'ride';
+// ---------- stock ----------
+
+export function addStock(s: GameState, good: GoodId, qty: number, unitCost: number) {
+  s.store[good].qty += qty;
+  s.store[good].cost += qty * unitCost;
 }
 
-/** The ride home: unpadded jars may break (gdd 3.6). Then the goods go to the storeroom. */
-export function rideHome(s: GameState) {
-  const grid = gridFor(s);
-  const broken = withRng(s, rng => grid.rideHome(rng));
-  const ledger = s.weekend.ledger!;
-  const boughtDay = absDay(s.week, 0);
-  for (const t of s.weekend.tray) {
-    const line = ledger.lines.find(l => l.good === t.good)!;
-    // The grid holds the tray's own placement objects, so a broken placement is found by identity.
-    if (t.placement && broken.includes(t.placement)) {
-      ledger.broken.push({ good: t.good, landed: line.landedEach });
-      s.weekStats.writtenOff += line.landedEach;
-      continue;
-    }
-    if (t.good === 'straw') continue; // padding only, never sold (gdd 3.4)
-    addLot(s, t.good, 1, line.landedEach, boughtDay);
-  }
-  mergeLots(s);
-  s.phase = 'weekendLedger';
-}
-
-function mergeLots(s: GameState) {
-  const out: Lot[] = [];
-  for (const l of s.lots) {
-    const same = out.find(o => o.good === l.good && o.boughtDay === l.boughtDay && Math.abs(o.landedEach - l.landedEach) < 1e-9);
-    if (same) same.qty += l.qty; else out.push({ ...l });
-  }
-  s.lots = out.filter(l => l.qty > 0);
-}
-
-/** Straw is a cost of the trip, not stock: its landed cost goes to the week like the hire. */
-export function strawCost(s: GameState): number {
-  const line = s.weekend.ledger?.lines.find(l => l.good === 'straw');
-  return line ? line.landedEach * line.qty : 0;
-}
-
-export function startWeek(s: GameState) {
-  s.weekStats.writtenOff += strawCost(s);
-  s.day = 1;
-  s.phase = 'shop';
-  s.shelves = makeShelves(s.stall, s.shelves, s);
-  startDay(s);
-}
-
-// ---------- shop days ----------
-
-export function stockOf(s: GameState, good: GoodId): number {
-  return s.lots.filter(l => l.good === good).reduce((a, l) => a + l.qty, 0);
-}
-
-export function goodsInStore(s: GameState): GoodId[] {
-  return (Object.keys(GOODS) as GoodId[]).filter(g => GOODS[g].market && stockOf(s, g) > 0);
-}
-
-function makeShelves(stall: StallId, old: Shelf[], s?: GameState): Shelf[] {
-  const n = STALLS[stall].shelves;
-  const shelves: Shelf[] = [];
-  for (let i = 0; i < n; i++) shelves.push(old[i] ? { ...old[i]! } : { good: null, price: 0 });
-  if (s) {
-    // Fill empty shelves with goods in store that are not shelved yet, most valuable first.
-    const shelved = new Set(shelves.map(x => x.good).filter(Boolean));
-    for (const sh of shelves) {
-      if (sh.good && stockOf(s, sh.good) > 0) continue;
-      sh.good = null;
-      const next = goodsInStore(s)
-        .filter(g => !shelved.has(g))
-        .sort((a, b) => stockOf(s, b) * marketToday(s, b) - stockOf(s, a) * marketToday(s, a))[0];
-      if (next) { sh.good = next; shelved.add(next); sh.price = marketToday(s, next); }
-    }
-  }
-  return shelves;
-}
-
-export function setShelfGood(s: GameState, shelf: number, good: GoodId | null) {
-  const sh = s.shelves[shelf];
-  if (!sh) return;
-  if (good && s.shelves.some((x, i) => i !== shelf && x.good === good)) return;
-  sh.good = good;
-  if (good) sh.price = marketToday(s, good);
-}
-
-/** Cycles a shelf through the goods in store that are not on another shelf. */
-export function cycleShelf(s: GameState, shelf: number) {
-  const options: Array<GoodId | null> = [null, ...goodsInStore(s).filter(g => !s.shelves.some((x, i) => i !== shelf && x.good === g))];
-  const cur = options.indexOf(s.shelves[shelf]?.good ?? null);
-  setShelfGood(s, shelf, options[(cur + 1) % options.length] ?? null);
-}
-
-export function setPrice(s: GameState, shelf: number, price: number) {
-  const sh = s.shelves[shelf];
-  if (sh) sh.price = Math.max(1, Math.round(price));
-}
-
-/** Landed cost the player paid for the next unit sold (first in, first out). */
-export function nextLandedCost(s: GameState, good: GoodId): number | null {
-  const lot = oldestLot(s, good);
-  return lot ? lot.landedEach : null;
-}
-
-function oldestLot(s: GameState, good: GoodId): Lot | undefined {
-  return s.lots.filter(l => l.good === good && l.qty > 0).sort((a, b) => a.boughtDay - b.boughtDay)[0];
-}
-
-/** Shop days left before the oldest dates spoil, or null when there are none. */
-export function daysToSpoil(s: GameState, good: GoodId): number | null {
-  const life = GOODS[good].spoilsAfterDays;
-  const lot = oldestLot(s, good);
-  if (life === null || !lot) return null;
-  return lot.boughtDay + life - absDay(s.week, s.day) + 1;
-}
-
-/** Takes units out of the storeroom, oldest first. Returns their landed cost. */
+/** Takes units out of the storeroom and returns what they cost. */
 export function takeStock(s: GameState, good: GoodId, qty: number): number {
-  let cost = 0;
-  let left = qty;
-  while (left > 0) {
-    const lot = oldestLot(s, good);
-    if (!lot) break;
-    const n = Math.min(left, lot.qty);
-    lot.qty -= n; left -= n; cost += n * lot.landedEach;
-  }
-  s.lots = s.lots.filter(l => l.qty > 0);
+  const st = s.store[good];
+  const n = Math.min(qty, st.qty);
+  if (n <= 0) return 0;
+  const cost = st.qty ? (st.cost / st.qty) * n : 0;
+  st.qty -= n;
+  st.cost -= cost;
+  if (st.qty === 0) st.cost = 0;
   return cost;
 }
 
-export function recordSale(s: GameState, good: GoodId, qty: number, price: number, credit = false) {
-  const cogs = takeStock(s, good, qty);
-  s.weekStats.cogs += cogs;
-  s.dayStats.sold += qty;
-  if (credit) {
-    const r = s.receivables.find(x => x.who === 'scholar');
-    if (r) r.amount += qty * price; else s.receivables.push({ who: 'scholar', amount: qty * price });
-    s.dayStats.creditSales += qty * price;
-    s.weekStats.revenue += qty * price;
-  } else {
-    s.cash += qty * price;
-    s.dayStats.revenue += qty * price;
-    s.weekStats.revenue += qty * price;
+/** Everything you own of a good: storeroom plus shelves. */
+export function stockOf(s: GameState, good: GoodId): number {
+  return s.store[good].qty + s.slots.reduce((a, sl) => a + (sl.good === good ? sl.qty : 0), 0);
+}
+
+export function averageCost(s: GameState, good: GoodId): number | null {
+  const st = s.store[good];
+  let qty = st.qty, cost = st.cost;
+  for (const sl of s.slots) if (sl.good === good) { qty += sl.qty; cost += sl.cost; }
+  return qty ? cost / qty : null;
+}
+
+export function stockCost(s: GameState): number {
+  return GOOD_IDS.reduce((a, g) => a + s.store[g].cost, 0) + s.slots.reduce((a, sl) => a + sl.cost, 0);
+}
+
+export function goodsInStore(s: GameState): GoodId[] {
+  return GOOD_IDS.filter(g => s.store[g].qty > 0);
+}
+
+// ---------- the shop ----------
+
+export function slotCount(s: GameState): number {
+  return BASE_SLOTS + s.upgrades.shelf;
+}
+
+/** Puts a good on a slot, returning what was there to the storeroom, and fills the slot. */
+export function setSlotGood(s: GameState, i: number, good: GoodId | null) {
+  const sl = s.slots[i];
+  if (!sl) return;
+  if (sl.good && sl.qty > 0) { s.store[sl.good].qty += sl.qty; s.store[sl.good].cost += sl.cost; }
+  sl.good = good; sl.qty = 0; sl.cost = 0;
+  if (good) restockSlot(s, i);
+}
+
+/** Tops a slot up from the storeroom. Returns how many units were added. */
+export function restockSlot(s: GameState, i: number): number {
+  const sl = s.slots[i];
+  if (!sl || !sl.good) return 0;
+  const n = Math.min(SLOT_STACK - sl.qty, s.store[sl.good].qty);
+  if (n <= 0) return 0;
+  sl.cost += takeStock(s, sl.good, n);
+  sl.qty += n;
+  return n;
+}
+
+export function setPrice(s: GameState, good: GoodId, price: number) {
+  s.prices[good] = Math.max(1, Math.round(price));
+}
+
+/** Today's fair price for a good: the season's price times the week's demand. */
+export function fairToday(s: GameState, good: GoodId): number {
+  return seasonPrice(good, s.season) * s.demand[good] * (s.flags[`boom_${good}`] && s.flags[`boom_${good}`]! >= dayIndex(s) ? 1.5 : 1);
+}
+
+export function customersToday(s: GameState): number {
+  return BASE_CUSTOMERS + CUSTOMERS_PER_SHELF * s.upgrades.shelf + amanahCustomers(s.amanah) + s.regulars;
+}
+
+/** The uncle's dates, sold on the tutorial day. */
+export const TUTORIAL_DATES = 10;
+/** Tutorial steps, kept in flags.tut. */
+export const TUT = { slot: 0, price: 1, open: 2, watch: 3, restock: 4, selling: 5, morning: 6, done: 99 } as const;
+
+/** First-caravan hints, each shown once on the first trip and kept in flags. */
+export type CaravanTip = 'setout' | 'map' | 'event' | 'town' | 'back' | 'home';
+
+export function caravanTipDue(s: GameState, tip: CaravanTip): boolean {
+  // setOut counts the trip, so during the first trip the counter is already 1.
+  return s.counters.trips === (s.trip ? 1 : 0) && !s.flags[`tip_${tip}`];
+}
+
+export function seeCaravanTip(s: GameState, tip: CaravanTip) {
+  s.flags[`tip_${tip}`] = 1;
+}
+
+export function inTutorial(s: GameState): boolean {
+  return (s.flags.tut ?? TUT.done) < TUT.done;
+}
+
+export function startShopDay(s: GameState) {
+  s.phase = 'shop';
+  s.day = emptyDay(s.amanah);
+}
+
+/** A unit sold from a slot. */
+export function recordSale(s: GameState, slot: number, qty: number, price: number) {
+  const sl = s.slots[slot];
+  if (!sl || !sl.good || qty <= 0) return;
+  const n = Math.min(qty, sl.qty);
+  const cost = sl.qty ? (sl.cost / sl.qty) * n : 0;
+  sl.qty -= n; sl.cost -= cost;
+  if (sl.qty === 0) sl.cost = 0;
+  const revenue = n * price;
+  s.cash += revenue;
+  s.week_.revenue += revenue;
+  s.week_.costOfSold += cost;
+  s.day.sold += n;
+  s.day.revenue += revenue;
+  s.counters.sold += n;
+  s.counters.revenue += revenue;
+  // A dear price cools demand more, as in Moonlighter.
+  const dear = price > fairToday(s, sl.good) * 1.05;
+  s.demand[sl.good] = Math.max(0.75, s.demand[sl.good] - (dear ? 0.03 : 0.015) * n);
+  if (s.upgrades.boy && sl.qty === 0) restockSlot(s, slot);
+}
+
+export function noteReaction(s: GameState, good: GoodId, price: number, r: Reaction) {
+  s.notebook[good][String(price)] = r;
+}
+
+export function noteWanted(s: GameState, good: GoodId) {
+  s.wanted[good] += 1;
+  s.day.wanted += 1;
+  s.demand[good] = Math.min(1.3, s.demand[good] + 0.02);
+}
+
+/** What the notebook says about a good: the best price that sold well, and the lowest that put people off. */
+export function notebookRange(s: GameState, good: GoodId): { good: number | null; tooHigh: number | null } {
+  let best: number | null = null, tooHigh: number | null = null;
+  for (const [p, r] of Object.entries(s.notebook[good])) {
+    const price = Number(p);
+    if ((r === 'happy' || r === 'delighted') && (best === null || price > best)) best = price;
+    if ((r === 'unsure' || r === 'angry') && (tooHigh === null || price < tooHigh)) tooHigh = price;
   }
+  return { good: best, tooHigh };
+}
+
+export function endShopDay(s: GameState) {
+  advanceDay(s);
 }
 
 export function changeAmanah(s: GameState, delta: number) {
   s.amanah = clampAmanah(s.amanah + delta);
 }
 
-export function startDay(s: GameState) {
-  s.flags.inspectorToday = s.flags.inspectorTomorrow;
-  s.flags.inspectorTomorrow = false;
-  s.dayStats = emptyDayStats(s.amanah);
-  for (const sh of s.shelves) if (sh.good && stockOf(s, sh.good) === 0) sh.good = null;
+// ---------- the caravan ----------
+
+export function caravanSpace(s: GameState): number {
+  return BASE_SPACE + SPACE_PER_CAMEL * s.upgrades.camel;
 }
 
-/** Harith's offer on week 3, day 2 (gdd 7). */
-export function harithDue(s: GameState): boolean {
-  return s.week === 3 && s.day === 2 && s.flags.harith === null && s.phase === 'shop';
+export function supplyCap(s: GameState): number {
+  return s.upgrades.skins ? SKINS_SUPPLY_CAP : BASE_SUPPLY_CAP;
 }
 
-export function chooseHarith(s: GameState, choice: 'fair' | 'hold') {
-  s.flags.harith = choice;
-  if (choice === 'fair') changeAmanah(s, 15);
-  else { changeAmanah(s, -20); s.flags.inspectorToday = true; }
+// ---------- Friday ----------
+
+export interface FridayReport {
+  rent: number;
+  debtsDue: Debt[];
+  ordersDue: Order[];
+  mudarabah: { capital: number; share: number } | null;
 }
 
-export interface NightReport {
-  spoiled: Array<{ good: GoodId; qty: number }>;
-  aboutToSpoil: Array<{ good: GoodId; qty: number }>;
-  inspectorTomorrow: boolean;
+export function rentDue(s: GameState): number {
+  return RENT[Math.min(s.upgrades.shelf, RENT.length - 1)]!;
 }
 
-/** Closes the shop day: spoilage, and whether the inspector comes tomorrow (gdd 4.6, 4.7). */
-export function endDay(s: GameState): NightReport {
-  const today = absDay(s.week, s.day);
-  const spoiled: NightReport['spoiled'] = [];
-  for (const l of s.lots) {
-    const life = GOODS[l.good].spoilsAfterDays;
-    if (life !== null && today >= l.boughtDay + life) {
-      spoiled.push({ good: l.good, qty: l.qty });
-      s.weekStats.writtenOff += l.qty * l.landedEach;
-      s.weekStats.spoiled += l.qty;
-      l.qty = 0;
+export function fridayReport(s: GameState): FridayReport {
+  const today = dayIndex(s);
+  let mud: FridayReport['mudarabah'] = null;
+  if (s.mudarabah && s.mudarabah.due <= today) {
+    const m = s.mudarabah;
+    // Her capital earns what yours earned this week; she takes half the gain, or bears the loss.
+    const worth = netWorth(s);
+    const rate = m.worthAtStart > 0 ? (worth - m.worthAtStart) / m.worthAtStart : 0;
+    const share = rate >= 0 ? m.capital * rate * 0.5 : m.capital * rate;
+    mud = { capital: m.capital, share: Math.round(share * 10) / 10 };
+  }
+  return {
+    rent: rentDue(s),
+    debtsDue: s.debts.filter(d => d.due <= today),
+    ordersDue: s.orders.filter(o => o.due <= today),
+    mudarabah: mud,
+  };
+}
+
+export interface FridayResult {
+  broke: boolean;
+  rentPaid: number;
+  debtsPaid: number;
+  debtsLate: number;
+  ordersFilled: Array<{ order: Order; result: OrderResult }>;
+  mudarabahPaid: number;
+  /** Stock sold at half price to the wholesaler to cover rent. */
+  wholesale: { units: number; cash: number };
+}
+
+/** Sells stock to the wholesaler at half its fair price, cheapest first, until cash reaches the target. */
+export function sellToWholesaler(s: GameState, target: number): { units: number; cash: number } {
+  const out = { units: 0, cash: 0 };
+  const goods = [...GOOD_IDS].sort((a, b) => GOODS[a].fair - GOODS[b].fair);
+  for (const g of goods) {
+    const each = Math.max(1, Math.floor(seasonPrice(g, s.season) / 2));
+    while (s.cash < target && stockOf(s, g) > 0) {
+      if (s.store[g].qty > 0) takeStock(s, g, 1);
+      else {
+        const sl = s.slots.find(x => x.good === g && x.qty > 0)!;
+        sl.cost -= sl.cost / sl.qty; sl.qty -= 1;
+      }
+      s.cash += each;
+      out.units += 1; out.cash += each;
     }
   }
-  s.lots = s.lots.filter(l => l.qty > 0);
-  const aboutToSpoil = s.lots
-    .filter(l => { const life = GOODS[l.good].spoilsAfterDays; return life !== null && today + 1 >= l.boughtDay + life; })
-    .map(l => ({ good: l.good, qty: l.qty }));
-  s.flags.inspectorTomorrow = s.amanah < 40 || s.weekStats.shortWeights >= 2;
-  if (s.weekStats.shortWeights >= 2) s.weekStats.shortWeights = 0;
-  return { spoiled, aboutToSpoil, inspectorTomorrow: s.flags.inspectorTomorrow };
+  return out;
 }
 
-/** Moves to the next morning, or to the week's ledger after day 5. */
-export function nextDay(s: GameState) {
-  if (s.day >= SHOP_DAYS_PER_WEEK) {
-    s.phase = 'weekLedger';
-    return;
-  }
-  s.day += 1;
-  startDay(s);
-}
-
-export function currentWeekLedger(s: GameState): WeekLedger {
-  const w = s.weekStats;
-  const l = weekLedger({
-    cashAtStart: w.cashStart, revenue: w.revenue, costOfGoodsSold: w.cogs, stockBought: w.stockBought,
-    rent: w.rent, writtenOff: w.writtenOff, wastedHire: w.wastedHire,
+/** Pays rent, debts and partners, and fills orders. Going broke happens here. */
+export function settleFriday(s: GameState): FridayResult {
+  const r = fridayReport(s);
+  const out: FridayResult = { broke: false, rentPaid: 0, debtsPaid: 0, debtsLate: 0, ordersFilled: [], mudarabahPaid: 0, wholesale: { units: 0, cash: 0 } };
+  withRng(s, rng => {
+    for (const o of r.ordersDue) {
+      let result: OrderResult;
+      if (stockOf(s, o.good) < o.qty) {
+        // A handshake order may be forgotten by both sides; a written one is owed.
+        result = !o.written && rng.chance(0.5) ? 'backedOut' : 'short';
+        if (result === 'short') changeAmanah(s, -Math.max(3, o.amanah + 1));
+      } else result = fillOrder(s, o, rng);
+      out.ordersFilled.push({ order: o, result });
+    }
   });
-  // Cash may also have moved through loans and credit, so report what is really in the chest.
-  return { ...l, cashAtEnd: s.cash };
+  s.orders = s.orders.filter(o => !r.ordersDue.includes(o));
+  if (r.mudarabah) {
+    const pay = Math.max(0, r.mudarabah.capital + r.mudarabah.share);
+    s.cash -= pay;
+    s.week_.other += Math.max(0, r.mudarabah.share);
+    out.mudarabahPaid = pay;
+    s.mudarabah = null;
+  }
+  if (s.cash < r.rent) out.wholesale = sellToWholesaler(s, r.rent);
+  if (s.cash < r.rent) {
+    out.broke = true;
+    s.phase = 'broke';
+    return out;
+  }
+  s.cash -= r.rent;
+  out.rentPaid = r.rent;
+  for (const d of r.debtsDue) {
+    if (s.cash >= d.amount) { s.cash -= d.amount; out.debtsPaid += d.amount; s.debts = s.debts.filter(x => x !== d); }
+    else { d.due += 7; out.debtsLate += d.amount; changeAmanah(s, -3); }
+  }
+  return out;
 }
 
-export function stockValueLanded(s: GameState): number {
-  return s.lots.reduce((a, l) => a + l.qty * l.landedEach, 0);
+export function upgradeCost(s: GameState, id: UpgradeId): number | null {
+  const level = s.upgrades[id];
+  return UPGRADES[id].costs[level] ?? null;
 }
 
-/** Closes the week. After week 4 the crier ends the year (gdd 2.1). */
-export function endWeek(s: GameState) {
-  s.history.push({ ...currentWeekLedger(s), week: s.week, stall: s.stall, amanah: s.amanah });
-  if (s.week === 4) { s.phase = 'yearEnd'; return; }
-  s.week = (s.week + 1) as Week;
-  s.day = 0;
-  s.weekend = emptyWeekend();
-  s.weekStats = emptyWeekStats(s.cash, s.amanah);
-  s.phase = 'stall';
+export function buyUpgrade(s: GameState, id: UpgradeId): boolean {
+  const cost = upgradeCost(s, id);
+  if (cost === null || s.cash < cost) return false;
+  s.cash -= cost;
+  s.upgrades[id] += 1;
+  s.upgradesSpent += cost;
+  s.counters.upgrades += 1;
+  if (id === 'shelf') s.slots.push({ good: null, qty: 0, cost: 0 });
+  checkMainQuest(s);
+  return true;
 }
 
-// ---------- year end ----------
+// ---------- quests ----------
+
+export interface MainQuest {
+  objectives: ReadonlyArray<{ counter: keyof Counters; target: number }>;
+  /** Paid by the merchants' guild the moment every objective is met. */
+  reward: number;
+}
+
+/** The main quest: one chapter a season, all of its objectives counted within that season. */
+export const MAIN_QUESTS: Readonly<Record<Season, MainQuest>> = {
+  1: { objectives: [{ counter: 'sold', target: 25 }, { counter: 'trips', target: 3 }, { counter: 'upgrades', target: 1 }], reward: 25 },
+  2: { objectives: [{ counter: 'revenue', target: 250 }, { counter: 'helped', target: 2 }, { counter: 'trips', target: 4 }], reward: 40 },
+  3: { objectives: [{ counter: 'sold', target: 60 }, { counter: 'upgrades', target: 2 }, { counter: 'helped', target: 3 }], reward: 60 },
+  4: { objectives: [{ counter: 'revenue', target: 600 }, { counter: 'trips', target: 5 }, { counter: 'helped', target: 3 }], reward: 80 },
+};
+
+export function mainProgress(s: GameState): boolean[] {
+  return MAIN_QUESTS[s.season].objectives.map(g => s.counters[g.counter] >= g.target);
+}
+
+export function mainQuestDone(s: GameState): boolean {
+  return s.flags.mainDone === s.season;
+}
+
+/** Pays the main quest's reward once, as soon as every objective is met. */
+export function checkMainQuest(s: GameState): number {
+  if (mainQuestDone(s) || !mainProgress(s).every(Boolean)) return 0;
+  const reward = MAIN_QUESTS[s.season].reward;
+  s.flags.mainDone = s.season;
+  s.cash += reward;
+  s.notices.push({ key: 'notice.mainDone', vars: { n: reward } });
+  return reward;
+}
+
+/** Side quests open at once: orders and debts. */
+export const MAX_SIDE_QUESTS = 4;
+/** A side quest always gives at least a full week. */
+export const QUEST_MIN_DAYS = 7;
+/** Day index of the year's last Friday. */
+export const LAST_FRIDAY = 4 * WEEKS_PER_SEASON * 7 - 1;
+
+export function sideQuestCount(s: GameState): number {
+  return s.orders.length + s.debts.length;
+}
+
+/** The first Friday at least `days` from today, or null if that is past the year's end. */
+export function questDue(s: GameState, days = QUEST_MIN_DAYS): number | null {
+  const d = dayIndex(s) + days;
+  const due = d + ((FRIDAY - (d % 7) + 7) % 7);
+  return due <= LAST_FRIDAY ? due : null;
+}
+
+/** Whether a new side quest can be offered now. */
+export function canOfferQuest(s: GameState): boolean {
+  return sideQuestCount(s) < MAX_SIDE_QUESTS && questDue(s) !== null;
+}
+
+export type OrderResult = 'filled' | 'backedOut' | 'short';
+
+/** Hands over the goods and takes payment. A handshake buyer may back out. */
+function fillOrder(s: GameState, o: Order, rng: Rng): OrderResult {
+  if (stockOf(s, o.good) < o.qty) return 'short';
+  if (!o.written && rng.chance(0.3)) return 'backedOut';
+  let left = o.qty;
+  const fromStore = Math.min(left, s.store[o.good].qty);
+  let cost = takeStock(s, o.good, fromStore);
+  left -= fromStore;
+  for (const sl of s.slots) {
+    if (left <= 0 || sl.good !== o.good) continue;
+    const n = Math.min(left, sl.qty);
+    const c = sl.qty ? (sl.cost / sl.qty) * n : 0;
+    sl.qty -= n; sl.cost -= c; left -= n; cost += c;
+  }
+  const rev = o.qty * o.price;
+  s.cash += rev; s.week_.revenue += rev; s.week_.costOfSold += cost;
+  s.counters.revenue += rev; s.counters.sold += o.qty;
+  changeAmanah(s, o.amanah);
+  if (o.helps) { s.counters.helped += 1; s.flags.helpedTotal = (s.flags.helpedTotal ?? 0) + 1; }
+  return 'filled';
+}
+
+/** Delivers an order before its Friday. Needs the goods in the storeroom or on the slots. */
+export function deliverOrder(s: GameState, i: number): OrderResult | null {
+  const o = s.orders[i];
+  if (!o || stockOf(s, o.good) < o.qty) return null;
+  const result = withRng(s, rng => fillOrder(s, o, rng));
+  s.orders.splice(i, 1);
+  return result;
+}
+
+/** Pays a debt back before it is due. */
+export function repayDebt(s: GameState, i: number): boolean {
+  const d = s.debts[i];
+  if (!d || s.cash < d.amount) return false;
+  s.cash -= d.amount;
+  s.debts.splice(i, 1);
+  changeAmanah(s, 1);
+  return true;
+}
+
+export interface WeekEnd {
+  seasonEnded: boolean;
+  /** Whether this season's main quest was finished. */
+  mainDone: boolean;
+  yearEnded: boolean;
+}
+
+/** After Friday: on to Saturday, a new season, or the year end. */
+export function endFriday(s: GameState): WeekEnd {
+  checkMainQuest(s);
+  const out: WeekEnd = { seasonEnded: false, mainDone: mainQuestDone(s), yearEnded: false };
+  s.wanted = goodsRecord(() => 0);
+  s.week_ = emptyWeek(s.amanah);
+  s.week += 1;
+  s.dow = 0;
+  if (s.week > WEEKS_PER_SEASON) {
+    out.seasonEnded = true;
+    s.counters = emptyCounters();
+    s.week = 1;
+    if (s.season === 4) {
+      out.yearEnded = true;
+      s.phase = 'yearEnd';
+      return out;
+    }
+    s.season = (s.season + 1) as Season;
+  }
+  overnight(s);
+  s.phase = 'morning';
+  if (out.seasonEnded) saveSeason(s);
+  return out;
+}
+
+// ---------- going broke ----------
+
+function saveSeason(s: GameState) {
+  const copy = { ...s, seasonSave: null };
+  s.seasonSave = JSON.stringify(copy);
+}
+
+/** Back to the start of this season, as it was then. */
+export function retrySeason(s: GameState): GameState | null {
+  if (!s.seasonSave) return null;
+  const back = JSON.parse(s.seasonSave) as GameState;
+  back.seasonSave = s.seasonSave;
+  back.phase = 'morning';
+  return back;
+}
+
+// ---------- worth and the year end ----------
+
+export function owedTotal(s: GameState): number {
+  return s.owed.reduce((a, o) => a + o.amount, 0);
+}
+
+export function debtTotal(s: GameState): number {
+  return s.debts.reduce((a, d) => a + d.amount, 0) + (s.mudarabah?.capital ?? 0);
+}
+
+/** Cash, stock at cost and money owed, less debts. Fixtures are not counted. */
+export function netWorth(s: GameState): number {
+  return s.cash + stockCost(s) + owedTotal(s) - debtTotal(s);
+}
+
+export function totalProfit(s: GameState): number {
+  return netWorth(s) + s.upgradesSpent - s.openingWorth;
+}
 
 export interface StockValuation {
   good: GoodId;
@@ -602,45 +727,33 @@ export interface StockValuation {
   hoped: number;
 }
 
-/** The three price tags for each stack at the bayt al-mal (gdd 6.1 step 3). */
+/** Each good you hold, priced three ways for the bayt al-mal. */
 export function valuations(s: GameState): StockValuation[] {
-  return goodsInStore(s).map(good => {
-    const qty = stockOf(s, good);
-    const paid = s.lots.filter(l => l.good === good).reduce((a, l) => a + l.qty * l.landedEach, 0) / qty;
-    const market = marketPrice(good, 4);
-    return { good, qty, paid: Math.round(paid * 10) / 10, market, hoped: Math.round(market * 1.3) };
+  return GOOD_IDS.filter(g => stockOf(s, g) > 0).map(g => {
+    const qty = stockOf(s, g);
+    const market = Math.round(seasonPrice(g, s.season));
+    return { good: g, qty, paid: Math.round((averageCost(s, g) ?? 0) * qty), market, hoped: Math.round(market * 1.4) };
   });
 }
 
 export function yearEndCount(s: GameState): ZakatResult {
   const stockAtMarket = valuations(s).reduce((a, v) => a + v.qty * v.market, 0);
-  const owedToYou = s.receivables.reduce((a, r) => a + r.amount, 0);
-  const debtsDue = s.debts.reduce((a, d) => a + d.amount, 0);
-  return zakatCount({ cash: s.cash, stockAtMarket, owedToYou, debtsDue });
+  return zakatCount({ cash: s.cash, stockAtMarket, owedToYou: owedTotal(s), debtsDue: debtTotal(s) });
 }
 
-/**
- * Pays zakat, then any sadaqah, then settles debts due from the chest. Zakat paid beyond the cash
- * in the chest is not possible, so it is capped there and the shortfall is shown on the end screen.
- */
 export function payYearEnd(s: GameState, sadaqah: number) {
   const result = yearEndCount(s);
   const paid = Math.min(result.zakat, s.cash);
   s.cash -= paid;
-  const give = Math.max(0, Math.min(sadaqah, s.cash));
-  s.cash -= give;
-  let debtsSettled = 0;
-  for (const d of s.debts) { const pay = Math.min(d.amount, s.cash); s.cash -= pay; d.amount -= pay; debtsSettled += pay; }
-  s.debts = s.debts.filter(d => d.amount > 0);
-  s.yearEnd = { result, paid, sadaqah: give, debtsSettled };
+  const gift = Math.min(sadaqah, s.cash);
+  s.cash -= gift;
+  s.yearEnd = { result, paid, sadaqah: gift, rikaz: s.rikazPaid };
   s.phase = 'done';
 }
 
-export function totalProfit(s: GameState): number {
-  return s.history.reduce((a, w) => a + w.profit, 0);
-}
+export { NISAB };
 
-// ---------- saving ----------
+// ---------- saves ----------
 
 export function serialize(s: GameState): string {
   return JSON.stringify(s);
@@ -650,7 +763,7 @@ export function deserialize(raw: string | null): GameState | null {
   if (!raw) return null;
   try {
     const s = JSON.parse(raw) as GameState;
-    return s && s.version === SAVE_VERSION ? s : null;
+    return s.version === SAVE_VERSION ? s : null;
   } catch {
     return null;
   }

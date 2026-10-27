@@ -123,7 +123,7 @@ All people are built in code from primitives, so they match exactly.
 | Arms | None, or a short capsule when carrying | Carried items sit in front of the body. |
 | Props | Basket, jar, staff, bundle | These tell the player who the customer is. |
 
-Movement is a gentle bob and sway. Mood is shown with a small icon above the head (see 4.6), never with a face.
+Movement is a gentle bob and sway. Mood is shown with an emoji in a small bubble above the head (see 4.7). The figure itself never has a face.
 
 ### 4.3 World palette
 
@@ -191,7 +191,7 @@ Every model is checked in the game before it is committed, recoloured to the pal
 
 ### 4.7 Icons and mood bubbles
 
-Small flat icons drawn in canvas, two colours at most. Customer moods use three: a coin (happy, will buy), a balance scale (thinking, will haggle), and a closed hand (leaving, price too high). Never use emoji.
+Small flat icons drawn in canvas, two colours at most. Customer moods are the exception: four emoji, Moonlighter style, one per price band: 🤩 a bargain, 😊 a fair price, 😕 dear but they buy, 😠 too dear, they leave. The notebook shows the same emoji next to each price tried.
 
 ---
 

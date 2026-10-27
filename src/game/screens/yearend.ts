@@ -4,7 +4,7 @@
 import { L, fmt, money } from '../../i18n';
 import { emit, openZakatPage, share } from '../../platform/bridge';
 import { clearGame } from '../../platform/storage';
-import { NISAB, payYearEnd, totalProfit, valuations, yearEndCount, type StockValuation } from '../../sim';
+import { NISAB, debtTotal, owedTotal, payYearEnd, totalProfit, valuations, yearEndCount, type StockValuation } from '../../sim';
 import type { Draw } from '../../ui/draw';
 import { UI } from '../../world/palette';
 import type { App, Screen } from '../app';
@@ -73,8 +73,8 @@ export class BaytScreen implements Screen {
     if (this.step === 'count') {
       const r = yearEndCount(s);
       const stock = this.stacks.reduce((a, v) => a + v.qty * v.market, 0);
-      const owed = s.receivables.reduce((a, x) => a + x.amount, 0);
-      const debts = s.debts.reduce((a, x) => a + x.amount, 0);
+      const owed = owedTotal(s);
+      const debts = debtTotal(s);
       const rows: Array<[string, string, boolean?]> = [
         [t.cash, money(s.cash)],
         [t.stock, `+${money(stock)}`],
@@ -91,8 +91,10 @@ export class BaytScreen implements Screen {
         y += 34;
       });
       if (this.reveal >= rows.length) {
-        if (!r.aboveNisab) d.para(t.under, 180, y + 16, 270, { size: 14, align: 'center' }, 18);
-        else d.para(t.paid, 180, y + 16, 270, { size: 13, align: 'center', color: UI.inkSoft }, 17);
+        y = d.para(fmt(t.fixtures, { n: money(s.upgradesSpent) }), 180, y + 14, 280, { size: 11.5, align: 'center', color: UI.inkSoft }, 15);
+        if (s.rikazPaid > 0) y = d.para(fmt(t.rikaz, { n: money(s.rikazPaid) }), 180, y + 6, 280, { size: 11.5, align: 'center', color: UI.inkSoft }, 15);
+        if (!r.aboveNisab) d.para(t.under, 180, y + 12, 270, { size: 14, align: 'center' }, 18);
+        else d.para(t.paid, 180, y + 12, 270, { size: 13, align: 'center', color: UI.inkSoft }, 17);
         d.button('pay', 60, 560, 240, 48, r.aboveNisab ? fmt(t.pay, { n: money(Math.min(r.zakat, s.cash)) }) : t.continue, { size: 17 });
       }
       return;
@@ -216,13 +218,14 @@ export class EndScreen implements Screen {
       [t.amanah, String(Math.round(s.amanah))],
       [t.zakat, `${money(y.paid)} ${L().dirham}`],
       [t.sadaqah, `${money(y.sadaqah)} ${L().dirham}`],
+      [t.helped, String(s.flags.helpedTotal ?? 0)],
     ];
     rows.forEach(([k, v], i) => d.ledgerRow(k, v, 46, 150 + i * 36, 268));
-    d.ctx.fillStyle = UI.parchDark; d.rr(40, 300, 280, 70, 8); d.ctx.fill();
-    d.para(t.line, 180, 322, 250, { size: 15, align: 'center', font: 'head' }, 20);
-    d.button('cta', 50, 390, 260, 50, t.cta, { size: 17 });
-    d.button('share', 50, 452, 125, 44, t.share, { fill: UI.parchDark, size: 14 });
-    d.button('again', 185, 452, 125, 44, t.again, { fill: UI.parchDark, size: 14 });
+    d.ctx.fillStyle = UI.parchDark; d.rr(40, 320, 280, 62, 8); d.ctx.fill();
+    d.para(t.line, 180, 340, 250, { size: 15, align: 'center', font: 'head' }, 20);
+    d.button('cta', 50, 396, 260, 50, t.cta, { size: 17 });
+    d.button('share', 50, 458, 125, 44, t.share, { fill: UI.parchDark, size: 14 });
+    d.button('again', 185, 458, 125, 44, t.again, { fill: UI.parchDark, size: 14 });
   }
 
   press(id: string) {

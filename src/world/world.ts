@@ -2,16 +2,22 @@
 // that moves from morning to night (style guide 4.4, 4.5).
 
 import {
-  Color, DirectionalLight, Fog, Group, HemisphereLight, PerspectiveCamera, Scene, Vector3, WebGLRenderer,
+  Color, CylinderGeometry, DirectionalLight, Fog, Group, HemisphereLight, PerspectiveCamera, Scene, Vector3, WebGLRenderer,
 } from 'three';
-import type { Customer, CustomerType, DaySim } from '../sim';
+import type { Customer, CustomerType, DaySim, GoodId, NodeKind } from '../sim';
 import { DAY_SECONDS } from '../sim';
 import { Figure, randomLook, type Look, type Prop } from './figures';
 import { C } from './palette';
-import { NODES, buildAlley, buildBazaar, customerSpot, route, shelfX, SHELF_GOODS, STALL_Z, type Bazaar, type PlaceId } from './scenes';
-import { sceneryRandom } from './build';
+import { NODES, buildAlley, buildBazaar, customerSpot, goodsPile, route, shelfX, STALL_Z, type Bazaar, type PlaceId } from './scenes';
+import { Builder, sceneryRandom } from './build';
+import { LANE_X, MARKER_SCALE, STEP_Z, buildDesert, camelMesh, stopMarker, townMarker } from './desert';
 
-export type CameraMode = 'bazaar' | 'alley' | 'orbit';
+export type CameraMode = 'bazaar' | 'alley' | 'orbit' | 'desert';
+
+export interface RouteStop {
+  kind: NodeKind;
+  hidden: boolean;
+}
 
 const rnd = sceneryRandom(7);
 
@@ -27,7 +33,7 @@ const LIGHT_KEYS = [
 
 const PROPS: Record<CustomerType, Prop> = {
   household: 'basket', child: 'basket', labourer: 'sack', craftsman: 'bundle', scholar: 'scroll',
-  bedouin: 'jar', sailor: 'rope', harithBoy: 'none', regular: 'basket',
+  bedouin: 'jar', sailor: 'rope', regular: 'basket',
 };
 
 interface CustomerView {
@@ -59,7 +65,15 @@ export class World {
   private readonly camPos = new Vector3();
   private readonly camLook = new Vector3();
   private orbitT = 0;
-  private shelfCount = 2;
+  private shelfCount = 3;
+  private readonly desert: Group;
+  private readonly route = new Group();
+  private routeKey = '';
+  private readonly caravan = new Group();
+  private readonly caravanTarget = new Vector3();
+  private camelCount = -1;
+  private readonly stallCamels = new Group();
+  private stopPos: Vector3[][] = [];
 
   constructor(canvas: HTMLCanvasElement) {
     this.renderer = new WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
@@ -75,6 +89,11 @@ export class World {
     this.alley = buildAlley();
     this.alley.visible = false;
     this.scene.add(this.alley);
+    this.desert = buildDesert();
+    this.desert.add(this.route, this.caravan);
+    this.desert.visible = false;
+    this.scene.add(this.desert);
+    this.bazaar.group.add(this.stallCamels);
 
     const GX = [-6.3, -2.2, 2.3, 6.3];
     for (let i = 0; i < 11; i++) {
@@ -112,11 +131,15 @@ export class World {
 
   setMode(mode: CameraMode) {
     this.mode = mode;
-    const inAlley = mode === 'alley';
+    const inAlley = mode === 'alley', inDesert = mode === 'desert';
     this.alley.visible = inAlley;
-    this.bazaar.group.visible = !inAlley;
+    this.desert.visible = inDesert;
+    this.bazaar.group.visible = !inAlley && !inDesert;
     const fog = this.scene.fog as Fog;
-    if (inAlley) {
+    if (inDesert) {
+      fog.near = 22; fog.far = 70;
+      this.followCaravan(1);
+    } else if (inAlley) {
       fog.near = 14; fog.far = 40;
       const p = this.walker.group.position;
       this.camPos.set(p.x - this.heading.x * 3.4, 7.6, p.z - this.heading.z * 3.4);
@@ -150,15 +173,40 @@ export class World {
     this.bazaar.lamps.opacity = Math.max(0, Math.min(1, (t - 34) / 8));
   }
 
-  /** Shows what is on each shelf of the player's stall. */
-  setShelves(goods: ReadonlyArray<string | null>) {
+  /** Shows what is on each slot of the player's stall. Piles are built the first time they are needed. */
+  setShelves(goods: ReadonlyArray<GoodId | null>) {
     this.shelfCount = goods.length;
+    goods.forEach((g, i) => {
+      if (!g) return;
+      const key = `${goods.length}:${i}:${g}`;
+      if (this.bazaar.piles.has(key)) return;
+      const pb = new Builder();
+      goodsPile(pb, g, 0, 0, 0, goods.length <= 4);
+      const m = pb.mesh();
+      m.position.set(shelfX(goods.length, i), 1.0, STALL_Z);
+      this.bazaar.group.add(m);
+      this.bazaar.piles.set(key, m);
+    });
     for (const [key, m] of this.bazaar.piles) {
       const [count, slot, good] = key.split(':');
       m.visible = Number(count) === goods.length && goods[Number(slot)] === good;
     }
-    // Keep the player behind an empty spot on the counter.
-    this.you.group.position.x = goods.length === 3 ? 0.55 * 1.5 : 1.0;
+    // The player stands behind the counter, a little to one side.
+    this.you.group.position.x = 0.4;
+    this.you.group.position.z = STALL_Z + 1.5;
+  }
+
+  /** Camels you own wait behind the stall. */
+  setStallCamels(n: number) {
+    if (n === this.camelCount) return;
+    this.camelCount = n;
+    this.stallCamels.clear();
+    for (let i = 0; i < n; i++) {
+      const c = camelMesh(false);
+      c.position.set(3.6 + i * 1.3, 0, STALL_Z + 1.4 + (i % 2) * 0.6);
+      c.rotation.y = -0.4;
+      this.stallCamels.add(c);
+    }
   }
 
   // ---------- customers ----------
@@ -167,7 +215,7 @@ export class World {
     const pool = this.figurePool.get(type) ?? [];
     const f = pool.pop();
     if (f) { f.group.visible = true; return f; }
-    const child = type === 'child' || type === 'harithBoy';
+    const child = type === 'child';
     const fig = new Figure(randomLook(rnd.pick, PROPS[type], child ? 0.72 : rnd.range(0.9, 1.05)));
     this.bazaar.group.add(fig.group);
     return fig;
@@ -219,7 +267,7 @@ export class World {
       g.position.lerpVectors(v.from, v.to, k);
       g.rotation.y = Math.atan2(v.to.x - v.from.x, v.to.z - v.from.z);
       v.fig.bob(dt, true, this.reduceMotion);
-    } else if (c.state === 'look' || c.state === 'scale') {
+    } else if (c.state === 'look') {
       g.position.copy(v.to);
       g.rotation.y = 0;
       v.fig.bob(dt, false, this.reduceMotion);
@@ -279,10 +327,122 @@ export class World {
     return [(v.x * 0.5 + 0.5) * 360, (-v.y * 0.5 + 0.5) * 640, v.z];
   }
 
+  // ---------- the expedition map ----------
+
+  /** Builds the leg's route: where you start, two stops per step, and where you are going. */
+  showRoute(layers: ReadonlyArray<ReadonlyArray<RouteStop>>, picked: readonly number[], fromHome: boolean, camels: number) {
+    const key = `${fromHome}|${layers.map(l => l.map(n => `${n.kind}${n.hidden ? '?' : ''}`).join(',')).join(';')}|${picked.join(',')}|${camels}`;
+    if (key === this.routeKey) return;
+    const fresh = !this.routeKey.startsWith(`${fromHome}|${layers.map(l => l.map(n => `${n.kind}${n.hidden ? '?' : ''}`).join(',')).join(';')}|`);
+    this.routeKey = key;
+    this.route.clear();
+    const start = townMarker(fromHome);
+    start.position.set(0, 0, 3.2);
+    start.rotation.y = Math.PI;
+    const endZ = -(layers.length + 1) * STEP_Z;
+    const end = townMarker(!fromHome);
+    end.position.set(0, 0, endZ - 2.2);
+    this.route.add(start, end);
+    this.stopPos = layers.map((l, i) => l.map((_, j) => new Vector3((j - (l.length - 1) / 2) * LANE_X, 0, -(i + 1) * STEP_Z)));
+    layers.forEach((l, i) => l.forEach((n, j) => {
+      const m = stopMarker(n.hidden ? 'hidden' : n.kind);
+      m.position.copy(this.stopPos[i]![j]!);
+      m.scale.setScalar(MARKER_SCALE);
+      m.rotation.y = rnd.range(-0.3, 0.3);
+      this.route.add(m);
+    }));
+    // Dotted tracks: the way you came is solid, the ways ahead are faint.
+    const b = new Builder();
+    const dots = (a: Vector3, z: Vector3, strong: boolean) => {
+      const n = Math.max(3, Math.round(a.distanceTo(z) / 0.7));
+      for (let k = 1; k < n; k++) {
+        const p = a.clone().lerp(z, k / n);
+        b.add(new CylinderGeometry(strong ? 0.13 : 0.08, strong ? 0.13 : 0.08, 0.04, 6), strong ? C.woodDark : C.sandDark, p.x, 0.03, p.z);
+      }
+    };
+    const origin = new Vector3(0, 0, 1.2);
+    let from = [origin];
+    let came = origin;
+    layers.forEach((_, i) => {
+      const row = this.stopPos[i]!;
+      const pick = picked[i];
+      for (const f of from) for (let j = 0; j < row.length; j++) {
+        const strong = f === came && pick === j;
+        if (pick !== undefined && !strong) continue;
+        dots(f, row[j]!, strong);
+      }
+      if (pick !== undefined) { came = row[pick]!; from = [came]; } else from = [...row];
+    });
+    const goal = new Vector3(0, 0, endZ);
+    for (const f of from) dots(f, goal, false);
+    if (!b.empty) this.route.add(b.mesh());
+    // The caravan: you and your camels.
+    this.caravan.clear();
+    const walker = new Figure({ robe: 0x8a6a45, cloth: C.offWhite, skin: C.skins[0], height: 1, turban: true, prop: 'staff' });
+    // The caravan group walks towards its local -z; figures and camels are modelled facing +z.
+    walker.group.position.set(0.35, 0, -1.1);
+    walker.group.rotation.y = Math.PI;
+    this.caravan.add(walker.group);
+    for (let i = 0; i <= camels; i++) {
+      const c = camelMesh(true);
+      c.position.set(-0.15 + (i % 2) * 0.3, 0, 0.2 + i * 1.5);
+      c.rotation.y = Math.PI;
+      c.scale.setScalar(0.8);
+      this.caravan.add(c);
+    }
+    const at = picked.length ? this.stopPos[picked.length - 1]![picked[picked.length - 1]!]! : origin;
+    this.caravanTarget.copy(at);
+    if (fresh) { this.caravan.position.copy(at); this.followCaravan(1); }
+  }
+
+  /** Sends the caravan towards a stop, or to the end of the route. */
+  caravanTo(layer: number, i: number | 'end') {
+    if (i === 'end') this.caravanTarget.set(0, 0, -(this.stopPos.length + 1) * STEP_Z + 0.5);
+    else { const p = this.stopPos[layer]?.[i]; if (p) this.caravanTarget.copy(p); }
+  }
+
+  get caravanMoving(): boolean {
+    return this.caravan.position.distanceTo(this.caravanTarget) > 0.05;
+  }
+
+  stopScreen(layer: number, i: number): [number, number, number] {
+    const p = this.stopPos[layer]?.[i];
+    if (!p) return [-100, -100, 1];
+    const v = new Vector3(p.x, 1.4, p.z).project(this.camera);
+    return [(v.x * 0.5 + 0.5) * 360, (-v.y * 0.5 + 0.5) * 640, v.z];
+  }
+
+  private followCaravan(k: number) {
+    const p = this.caravan.position;
+    this.camPos.lerp(new Vector3(p.x * 0.3, 10.5, p.z + 8.5), k);
+    this.camLook.lerp(new Vector3(p.x * 0.2, 0, p.z - 7), k);
+    this.camera.position.copy(this.camPos);
+    this.camera.lookAt(this.camLook);
+    this.sun.target.position.set(p.x, 0, p.z);
+    this.sun.position.set(p.x - 8, 14, p.z + 6);
+  }
+
+  private updateDesert(dt: number) {
+    const p = this.caravan.position, t = this.caravanTarget;
+    const d = p.distanceTo(t), step = (this.reduceMotion ? 40 : 4) * dt;
+    const walking = d > 0.05;
+    if (walking) {
+      if (d <= step) p.copy(t);
+      else {
+        const dir = t.clone().sub(p).normalize();
+        p.addScaledVector(dir, step);
+        this.caravan.rotation.y = Math.atan2(dir.x, dir.z) + Math.PI;
+      }
+    }
+    for (const c of this.caravan.children) c.position.y = walking && !this.reduceMotion ? Math.abs(Math.sin(performance.now() / 160 + c.position.z)) * 0.05 : 0;
+    this.followCaravan(this.reduceMotion ? 1 : 1 - Math.pow(0.05, dt));
+  }
+
   // ---------- frame ----------
 
   update(dt: number) {
     if (this.mode === 'alley') this.updateAlley(dt);
+    else if (this.mode === 'desert') this.updateDesert(dt);
     else this.updateCrowd(dt);
     if (this.mode === 'orbit') {
       this.orbitT += this.reduceMotion ? 0 : dt * 0.05;
@@ -349,9 +509,5 @@ export class World {
 
   setOrbit() {
     this.setMode('orbit');
-  }
-
-  goods(): readonly string[] {
-    return SHELF_GOODS;
   }
 }
