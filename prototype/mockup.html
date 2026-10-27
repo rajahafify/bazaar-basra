@@ -1,0 +1,788 @@
+<title>Pasar Basra</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@500;700&family=Alegreya+Sans:wght@500;700;800&display=swap">
+<style>
+  /* Layout: one 9:16 phone frame centred on a dusk ground. Single dark look by choice. */
+  :root {
+    --ground: #241a13;
+    --ground-edge: #3a2a1c;
+    color-scheme: dark;
+  }
+  html, body { height: 100%; }
+  body {
+    background: radial-gradient(circle at 50% 30%, var(--ground-edge), var(--ground) 70%);
+    background-color: var(--ground);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 12px;
+    box-sizing: border-box;
+  }
+  #stage {
+    position: relative;
+    border-radius: 22px;
+    overflow: hidden;
+    box-shadow: 0 0 0 6px #120d09, 0 24px 60px rgba(0,0,0,.55);
+    touch-action: manipulation;
+  }
+  #stage canvas { position: absolute; inset: 0; display: block; }
+  #ui { cursor: pointer; }
+  #ui:focus-visible { outline: 3px solid #e0b04a; outline-offset: -3px; }
+</style>
+
+<div id="stage" aria-label="Pasar Basra game mockup: a stall in the Basra bazaar, and the alleys around it">
+  <canvas id="world"></canvas>
+  <canvas id="ui" tabindex="0" aria-label="Game controls. Use the price buttons, then Open Stall."></canvas>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+  // ---------- palette ----------
+  const C = {
+    sky: 0xe8cd9c, sand: 0xd8b685, sandDark: 0xc9a573, paving: 0xcfae80, brickA: 0xc59a6a, brickB: 0xb5875a, brickC: 0xd3aa79,
+    door: 0x5a3b26, wood: 0x7a5232, woodDark: 0x5b3b22, reed: 0xa88c52, palm: 0x56723c, palmDark: 0x3f5a2e,
+    trunk: 0x8a6a45, river: 0x5a8f99, indigo: 0x3d4f7c, madder: 0xa8432f, saffron: 0xd9a431, clay: 0xb4643f,
+    date: 0x5e2f1c, skin: 0x9c6b4a,
+    robes: [0xece3d0, 0x8a7a5a, 0x5b6f7a, 0xa8432f, 0x6b5a3e, 0xd9c7a2, 0x3d4f7c, 0x7d8c5c],
+    canopies: [0xa8432f, 0x3d4f7c, 0xd9a431, 0xece3d0, 0x6f7f4a, 0x8a4a5a]
+  };
+  const UI = {
+    parch: '#f2e4c4', parchDark: '#e2cfa4', ink: '#3a2a1a', inkSoft: '#6b5639', panel: '#4a3423', panelEdge: '#2e2015',
+    gold: '#c79232', green: '#5f8a3e', red: '#b04a32', grey: '#8d8172', delight: '#d9a431'
+  };
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ---------- text ----------
+  const T = {
+    bm: { round: 'Tahun 1 · Musim Bunga', amanah: 'Amanah', open: 'Buka Gerai', dirham: 'dirham',
+      goods: ['Kurma', 'Kain', 'Rempah', 'Tembikar'], hint: 'Tetapkan harga, kemudian buka gerai.',
+      hint2: 'Perhatikan wajah pelanggan.', crier: 'Penyeru: Kapal dari Hindustan berlabuh di Ubulla.',
+      open2: 'Gerai dibuka', closed: 'Gerai ditutup', sales: 'Jualan', takings: 'Hasil hari ini', walked: 'Pergi tanpa beli',
+      again: 'Main lagi', toAlley: 'Ke lorong', mock: 'PASAR BASRA · MOCKUP', stock: 'stok',
+      alley: 'Lorong Basra', alleyHint: 'Pilih tempat untuk dituju.',
+      places: { market: 'Pasar', gate: 'Pintu Kota', bayt: 'Baitul Mal' },
+      arrive: {
+        market: ['Pintu masuk pasar.', 'Gerai anda menunggu.'],
+        gate: ['Pintu kota. Kafilah ke kebun kurma dan', 'pelabuhan Ubulla bermula di sini.'],
+        bayt: ['Baitul Mal. Zakat dikira dan dibayar', 'di sini pada hujung tahun.']
+      },
+      soon: 'Dalam demo penuh', enter: 'Masuk pasar', walking: 'Berjalan...' },
+    en: { round: 'Year 1 · Spring', amanah: 'Amanah', open: 'Open Stall', dirham: 'dirham',
+      goods: ['Dates', 'Cloth', 'Spices', 'Pottery'], hint: 'Set your prices, then open the stall.',
+      hint2: "Watch the customers' faces.", crier: 'Crier: A ship from India has docked at Ubulla.',
+      open2: 'Stall open', closed: 'Stall closed', sales: 'Sales', takings: "Today's takings", walked: 'Walked off',
+      again: 'Play again', toAlley: 'To the alleys', mock: 'BASRA MARKET · MOCKUP', stock: 'stock',
+      alley: 'The alleys of Basra', alleyHint: 'Pick a place to go.',
+      places: { market: 'Bazaar', gate: 'City Gate', bayt: 'Bayt al-Mal' },
+      arrive: {
+        market: ['The bazaar entrance.', 'Your stall is waiting.'],
+        gate: ['The city gate. Caravans to the date', 'groves and Ubulla port leave from here.'],
+        bayt: ['The bayt al-mal. Zakat is counted', 'and paid here at the end of the year.']
+      },
+      soon: 'In the full demo', enter: 'Enter the bazaar', walking: 'Walking...' }
+  };
+
+  // ---------- stage sizing ----------
+  const stage = document.getElementById('stage');
+  const worldCanvas = document.getElementById('world');
+  const ui = document.getElementById('ui');
+  const ctx = ui.getContext('2d');
+  const LW = 360, LH = 640;
+  let W = 360, H = 640, DPR = 1, uiScale = 1;
+
+  const renderer = new THREE.WebGLRenderer({ canvas: worldCanvas, antialias: true });
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(C.sky);
+  scene.fog = new THREE.Fog(C.sky, 26, 60);
+  const camera = new THREE.PerspectiveCamera(44, 9 / 16, 0.1, 120);
+
+  function resize() {
+    const availW = window.innerWidth - 32, availH = window.innerHeight - 24;
+    let h = availH, w = h * 9 / 16;
+    if (w > availW) { w = availW; h = w * 16 / 9; }
+    W = Math.max(200, Math.floor(w)); H = Math.floor(W * 16 / 9);
+    stage.style.width = W + 'px'; stage.style.height = H + 'px';
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    renderer.setPixelRatio(DPR);
+    renderer.setSize(W, H, false);
+    worldCanvas.style.width = ui.style.width = W + 'px';
+    worldCanvas.style.height = ui.style.height = H + 'px';
+    ui.width = Math.round(W * DPR); ui.height = Math.round(H * DPR);
+    uiScale = W / LW;
+    camera.aspect = W / H; camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // ---------- lights ----------
+  scene.add(new THREE.HemisphereLight(0xfff1d6, 0x8a6a45, 0.6));
+  const sun = new THREE.DirectionalLight(0xffe2b0, 0.9);
+  const SUN_OFFSET = new THREE.Vector3(-8, 14, 6);
+  sun.position.copy(SUN_OFFSET);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(1024, 1024);
+  Object.assign(sun.shadow.camera, { left: -14, right: 14, top: 16, bottom: -16, near: 1, far: 60 });
+  sun.shadow.bias = -0.0008;
+  scene.add(sun); scene.add(sun.target);
+
+  // ---------- helpers ----------
+  const mats = {};
+  function mat(color) {
+    if (!mats[color]) mats[color] = new THREE.MeshStandardMaterial({ color, flatShading: true, roughness: 1, metalness: 0 });
+    return mats[color];
+  }
+  function mesh(geo, color, x, y, z, parent) {
+    const m = new THREE.Mesh(geo, mat(color));
+    m.position.set(x || 0, y || 0, z || 0); m.castShadow = true; m.receiveShadow = true;
+    parent.add(m); return m;
+  }
+  function rand(a, b) { return a + Math.random() * (b - a); }
+  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+  function flat(geo, color, x, y, z, parent) { const m = mesh(geo, color, x, y, z, parent); m.rotation.x = -Math.PI / 2; m.castShadow = false; return m; }
+
+  const bazaar = new THREE.Group(); scene.add(bazaar);
+  const alley = new THREE.Group(); scene.add(alley); alley.visible = false;
+
+  // ---------- shared builders ----------
+  function house(parent, x, z, w, d, h, color, faceDir) {
+    // faceDir: which side the door faces, as a unit vector [dx, dz]
+    const g = new THREE.Group(); g.position.set(x, 0, z); parent.add(g);
+    mesh(new THREE.BoxGeometry(w, h, d), color, 0, h / 2, 0, g);
+    mesh(new THREE.BoxGeometry(w + 0.12, 0.22, d + 0.12), C.brickB, 0, h + 0.11, 0, g);
+    const [fx, fz] = faceDir;
+    const ox = fx * (w / 2 + 0.02), oz = fz * (d / 2 + 0.02);
+    const along = fx !== 0 ? [0, 1] : [1, 0];
+    const doorOff = rand(-0.25, 0.25) * (fx !== 0 ? d : w);
+    const door = mesh(new THREE.BoxGeometry(fx !== 0 ? 0.06 : 0.8, 1.3, fx !== 0 ? 0.8 : 0.06), C.door, ox + along[0] * doorOff, 0.65, oz + along[1] * doorOff, g);
+    if (h > 2.6) mesh(new THREE.BoxGeometry(fx !== 0 ? 0.06 : 0.38, 0.38, fx !== 0 ? 0.38 : 0.06), C.door, ox - along[0] * doorOff * 0.6, h - 0.8, oz - along[1] * doorOff * 0.6, g);
+    for (let i = -1; i <= 1; i++) {
+      const beam = mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.4, 5), C.woodDark,
+        fx * (w / 2 + 0.15) + along[0] * i * w / 3.2, h - 0.25, fz * (d / 2 + 0.15) + along[1] * i * d / 3.2, g);
+      if (fx !== 0) beam.rotation.z = Math.PI / 2; else beam.rotation.x = Math.PI / 2;
+    }
+    return g;
+  }
+  function palm(parent, x, z, s) {
+    const g = new THREE.Group(); g.position.set(x, 0, z); g.scale.setScalar(s || 1); parent.add(g);
+    let y = 0; const lean = rand(-0.12, 0.12);
+    for (let i = 0; i < 6; i++) {
+      const seg = mesh(new THREE.CylinderGeometry(0.13 - i * 0.008, 0.16 - i * 0.008, 0.75, 6), C.trunk, lean * i, y + 0.37, 0, g);
+      seg.rotation.z = -lean * 0.5; y += 0.72;
+    }
+    const top = new THREE.Group(); top.position.set(lean * 6, y, 0); g.add(top);
+    for (let i = 0; i < 9; i++) {
+      const f = mesh(new THREE.ConeGeometry(0.22, 1.9, 4), i % 2 ? C.palm : C.palmDark, 0, 0, 0, top);
+      f.geometry.translate(0, 0.95, 0); f.scale.set(1, 1, 0.25);
+      f.rotation.set(0, (i / 9) * Math.PI * 2, 1.15 + rand(-0.15, 0.2));
+    }
+    mesh(new THREE.SphereGeometry(0.2, 5, 4), C.date, 0, -0.15, 0, top);
+    return g;
+  }
+  function figure(parent, robe, cloth, tall) {
+    const g = new THREE.Group(); g.scale.setScalar(tall || 1);
+    mesh(new THREE.CylinderGeometry(0.2, 0.36, 1.15, 7), robe, 0, 0.58, 0, g);
+    mesh(new THREE.CylinderGeometry(0.21, 0.21, 0.08, 7), C.woodDark, 0, 0.82, 0, g);
+    mesh(new THREE.SphereGeometry(0.19, 7, 5), C.skin, 0, 1.32, 0, g);
+    const hc = mesh(new THREE.SphereGeometry(0.215, 7, 5, 0, Math.PI * 2, 0, Math.PI * 0.55), cloth, 0, 1.33, 0, g);
+    hc.rotation.x = -0.25;
+    const drape = mesh(new THREE.ConeGeometry(0.24, 0.5, 6, 1, true), cloth, 0, 1.12, -0.06, g);
+    drape.material = drape.material.clone(); drape.material.side = THREE.DoubleSide;
+    parent.add(g); return g;
+  }
+  const lathePts = [[0, 0], [0.12, 0.02], [0.2, 0.15], [0.21, 0.3], [0.14, 0.48], [0.07, 0.56], [0.09, 0.62], [0, 0.62]].map(([r, y]) => new THREE.Vector2(r, y));
+  const jarGeo = new THREE.LatheGeometry(lathePts, 8);
+  function goodsPile(parent, kind, x, z) {
+    const g = new THREE.Group(); g.position.set(x, 0, z); parent.add(g);
+    if (kind === 0) {
+      mesh(new THREE.CylinderGeometry(0.34, 0.26, 0.22, 8), C.reed, 0, 0.11, 0, g);
+      for (let i = 0; i < 9; i++) mesh(new THREE.SphereGeometry(0.08, 5, 4), C.date, rand(-0.22, 0.22), 0.25 + rand(0, 0.08), rand(-0.22, 0.22), g);
+    } else if (kind === 1) {
+      [[pick([C.indigo, C.madder, 0x6f7f4a]), -0.1, 0.12], [pick([0xece3d0, C.saffron]), 0.12, 0.12]].forEach(([c, zz, y]) => {
+        const b = mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.7, 8), c, 0, y, zz, g); b.rotation.z = Math.PI / 2;
+      });
+    } else if (kind === 2) {
+      [[-0.18, C.saffron], [0.18, 0xb8552c]].forEach(([xx, c]) => {
+        mesh(new THREE.CylinderGeometry(0.15, 0.18, 0.36, 7), 0xd8c9a3, xx, 0.18, 0, g);
+        mesh(new THREE.ConeGeometry(0.15, 0.1, 7), c, xx, 0.41, 0, g);
+      });
+    } else {
+      mesh(jarGeo, C.clay, -0.14, 0, 0, g).scale.setScalar(0.8);
+      mesh(jarGeo, 0xc9784d, 0.18, 0, 0.05, g).scale.setScalar(0.65);
+    }
+    return g;
+  }
+
+  // ---------- BAZAAR ----------
+  flat(new THREE.PlaneGeometry(60, 80), C.sand, 0, 0, -14, bazaar);
+  flat(new THREE.PlaneGeometry(20, 22), C.paving, 0, 0.01, -5, bazaar);
+
+  // ring of mud-brick buildings around the square, with an arch out to the alleys at the back
+  for (let x = -12; x <= 12; x += 3.2) {
+    if (Math.abs(x) < 1.8) continue;
+    house(bazaar, x, -17.5, 3, 3, rand(2.6, 3.8), pick([C.brickA, C.brickB, C.brickC]), [0, 1]);
+  }
+  for (let z = 4; z >= -15; z -= 3.3) {
+    house(bazaar, -11.5, z, 3, 3.1, rand(2.6, 3.6), pick([C.brickA, C.brickB, C.brickC]), [1, 0]);
+    house(bazaar, 11.5, z, 3, 3.1, rand(2.6, 3.6), pick([C.brickA, C.brickB, C.brickC]), [-1, 0]);
+  }
+  [-1.5, 1.5].forEach(x => mesh(new THREE.BoxGeometry(0.7, 4, 0.9), C.brickB, x, 2, -17.3, bazaar));
+  mesh(new THREE.BoxGeometry(3.7, 0.8, 1), C.brickA, 0, 4.2, -17.3, bazaar);
+
+  // a well in the middle of the square
+  mesh(new THREE.CylinderGeometry(0.75, 0.8, 0.6, 10), C.brickC, 0, 0.3, -9.4, bazaar);
+  [-0.6, 0.6].forEach(x => mesh(new THREE.BoxGeometry(0.1, 1.5, 0.1), C.woodDark, x, 0.75, -9.4, bazaar));
+  mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.3, 5), C.woodDark, 0, 1.45, -9.4, bazaar).rotation.z = Math.PI / 2;
+
+  [[-8.5, 2], [8.6, -1.5], [-8.2, -13], [8.4, -12.8], [-4, -15], [5, -15.2]].forEach(([x, z]) => palm(bazaar, x, z, rand(0.9, 1.15)));
+
+  // neighbouring stalls, each with its own seller
+  const sellers = [];
+  function otherStall(x, z, facing) {
+    // facing: +1 means counter faces +z (toward the camera), -1 faces -z
+    const g = new THREE.Group(); g.position.set(x, 0, z); if (facing < 0) g.rotation.y = Math.PI; bazaar.add(g);
+    mesh(new THREE.BoxGeometry(2.6, 0.85, 0.9), C.wood, 0, 0.42, 0, g);
+    mesh(new THREE.BoxGeometry(2.7, 0.06, 1.0), C.woodDark, 0, 0.88, 0, g);
+    [[-1.25, -0.45], [1.25, -0.45], [-1.25, 0.45], [1.25, 0.45]].forEach(([px, pz]) => mesh(new THREE.CylinderGeometry(0.05, 0.06, pz < 0 ? 2.5 : 2.2, 5), C.woodDark, px, pz < 0 ? 1.25 : 1.1, pz, g));
+    const roof = mesh(new THREE.BoxGeometry(3, 0.05, 1.5), pick(C.canopies), 0, 2.35, 0, g);
+    roof.rotation.x = -0.14;
+    const kinds = [0, 1, 2, 3].sort(() => Math.random() - 0.5).slice(0, 3);
+    kinds.forEach((k, i) => goodsPile(g, k, -0.8 + i * 0.8, 0.05).position.y = 0.9);
+    const s = figure(g, pick(C.robes), pick(C.robes), rand(0.92, 1.03));
+    s.position.set(rand(-0.6, 0.6), 0, -0.85);
+    sellers.push(s);
+  }
+  [[-4.4, -3.4, 1], [0.1, -3.4, 1], [4.6, -3.4, 1], [-4.4, -6.8, -1], [4.6, -6.8, -1], [-4.4, -12.4, 1], [0.1, -13.2, 1], [4.6, -12.4, 1]]
+    .forEach(([x, z, f]) => otherStall(x, z, f));
+  [[-7.8, -0.5], [7.8, -0.5]].forEach(([x, z]) => {
+    otherStall(x, z, 1);
+  });
+
+  // your stall
+  const stall = new THREE.Group(); stall.position.set(0, 0, 2.4); bazaar.add(stall);
+  mesh(new THREE.BoxGeometry(4.6, 0.9, 1.1), C.wood, 0, 0.45, 0, stall);
+  mesh(new THREE.BoxGeometry(4.8, 0.08, 1.25), C.woodDark, 0, 0.94, 0, stall);
+  mesh(new THREE.BoxGeometry(4.4, 0.02, 0.95), C.reed, 0, 0.99, 0, stall);
+  [-2.3, 2.3].forEach(x => {
+    mesh(new THREE.CylinderGeometry(0.07, 0.08, 3.1, 6), C.woodDark, x, 1.55, -0.55, stall);
+    mesh(new THREE.CylinderGeometry(0.07, 0.08, 1.6, 6), C.woodDark, x, 0.8, 0.55, stall);
+  });
+  mesh(new THREE.BoxGeometry(4.8, 0.1, 0.1), C.woodDark, 0, 3.1, -0.55, stall);
+  const stripe = document.createElement('canvas'); stripe.width = 256; stripe.height = 32;
+  const sctx = stripe.getContext('2d');
+  for (let i = 0; i < 16; i++) { sctx.fillStyle = i % 2 ? '#a8432f' : '#ece3d0'; sctx.fillRect(i * 16, 0, 16, 32); }
+  sctx.fillStyle = '#3d4f7c'; sctx.fillRect(0, 26, 256, 6);
+  const valance = new THREE.Mesh(new THREE.PlaneGeometry(4.8, 0.45), new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(stripe), side: THREE.DoubleSide, roughness: 1 }));
+  valance.position.set(0, 2.88, -0.6); valance.castShadow = true; stall.add(valance);
+
+  const SLOT_X = [-1.65, -0.55, 0.55, 1.65];
+  const goodsGroups = [];
+  function goodsGroup(i) { const g = new THREE.Group(); g.position.set(SLOT_X[i], 1.0, 0); stall.add(g); goodsGroups.push(g); return g; }
+  {
+    const g = goodsGroup(0);
+    mesh(new THREE.CylinderGeometry(0.42, 0.32, 0.28, 8), C.reed, 0, 0.14, 0, g);
+    for (let i = 0; i < 14; i++) mesh(new THREE.SphereGeometry(0.09, 5, 4), C.date, rand(-0.28, 0.28), 0.3 + rand(0, 0.12), rand(-0.28, 0.28), g);
+  }
+  {
+    const g = goodsGroup(1);
+    [[C.indigo, -0.12, 0.13], [C.madder, 0.12, 0.13], [0xece3d0, 0, 0.36]].forEach(([c, z, y]) => {
+      const b = mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.8, 8), c, 0, y, z, g); b.rotation.z = Math.PI / 2;
+    });
+  }
+  {
+    const g = goodsGroup(2);
+    [[-0.22, C.saffron], [0.2, 0xb8552c], [0, 0x8a5a2b]].forEach(([x, c], k) => {
+      mesh(new THREE.CylinderGeometry(0.17, 0.2, 0.42, 7), 0xd8c9a3, x, 0.21, k === 2 ? -0.22 : 0.12, g);
+      mesh(new THREE.ConeGeometry(0.17, 0.12, 7), c, x, 0.47, k === 2 ? -0.22 : 0.12, g);
+    });
+  }
+  {
+    const g = goodsGroup(3);
+    mesh(jarGeo, C.clay, -0.18, 0, 0.05, g);
+    mesh(jarGeo, 0xc9784d, 0.2, 0, -0.08, g).scale.setScalar(0.8);
+    mesh(new THREE.CylinderGeometry(0.16, 0.11, 0.18, 8), C.clay, 0.05, 0.09, 0.28, g);
+  }
+  const you = figure(bazaar, 0x8a6a45, 0xece3d0, 1.05);
+  you.position.set(1.0, 0, 4.1); you.rotation.y = Math.PI;
+
+  // the crowd: people browsing along the aisles
+  const GX = [-6.3, -2.2, 2.3, 6.3], GZ = [-1.1, -5.1, -9.6];
+  const crowd = [];
+  for (let i = 0; i < 11; i++) {
+    const obj = figure(bazaar, pick(C.robes), pick(C.robes), rand(0.86, 1.04));
+    const gx = Math.floor(rand(0, 4)), gz = Math.floor(rand(0, 3));
+    obj.position.set(GX[gx], 0, GZ[gz]);
+    crowd.push({ obj, gx, gz, to: null, wait: rand(0, 3), bob: rand(0, 6), speed: rand(1.1, 1.7) });
+  }
+  function crowdStep(p, dt) {
+    if (!p.to) {
+      p.wait -= dt;
+      if (p.wait > 0) return;
+      const opts = [];
+      if (p.gx > 0) opts.push([p.gx - 1, p.gz]); if (p.gx < 3) opts.push([p.gx + 1, p.gz]);
+      if (p.gz > 0) opts.push([p.gx, p.gz - 1]); if (p.gz < 2) opts.push([p.gx, p.gz + 1]);
+      const [nx, nz] = pick(opts); p.gx = nx; p.gz = nz;
+      p.to = new THREE.Vector3(GX[nx] + rand(-0.5, 0.5), 0, GZ[nz] + rand(-0.35, 0.35));
+    }
+    const o = p.obj.position, dx = p.to.x - o.x, dz = p.to.z - o.z, d = Math.hypot(dx, dz), step = p.speed * dt;
+    if (d <= step) { o.x = p.to.x; o.z = p.to.z; p.to = null; p.wait = rand(0.8, 3.5); o.y = 0; return; }
+    o.x += dx / d * step; o.z += dz / d * step; p.obj.rotation.y = Math.atan2(dx, dz);
+    p.bob += dt * 8; o.y = reduceMotion ? 0 : Math.abs(Math.sin(p.bob)) * 0.05;
+  }
+
+  // ---------- ALLEY ----------
+  // a narrow lane north from the bazaar arch to the city gate, with a side lane west to the bayt al-mal
+  const NODES = { market: new THREE.Vector3(0, 0, 4), junction: new THREE.Vector3(0, 0, -9), gate: new THREE.Vector3(0, 0, -23), bayt: new THREE.Vector3(-11, 0, -9) };
+  const EDGES = { market: ['junction'], junction: ['market', 'gate', 'bayt'], gate: ['junction'], bayt: ['junction'] };
+  flat(new THREE.PlaneGeometry(60, 70), C.sandDark, 0, 0, -10, alley);
+  flat(new THREE.PlaneGeometry(2.6, 34), C.sand, 0, 0.01, -9, alley);
+  flat(new THREE.PlaneGeometry(13, 2.6), C.sand, -6.5, 0.012, -9, alley);
+  const brick = [C.brickA, C.brickB, C.brickC];
+  for (let z = 6.5; z > -25; z -= 2.9) {
+    const zz = z - 1.4;
+    // the side lane opening on the west wall
+    if (!(zz < -7.2 && zz > -10.8)) house(alley, -3.1, zz, 2.4, 2.8, rand(2.8, 4.2), pick(brick), [1, 0]);
+    house(alley, 3.1, zz, 2.4, 2.8, rand(2.8, 4.2), pick(brick), [-1, 0]);
+  }
+  for (let x = -2.9; x > -14; x -= 2.9) {
+    house(alley, x - 1.4, -6.2, 2.8, 2.4, rand(2.8, 4), pick(brick), [0, -1]);
+    house(alley, x - 1.4, -11.8, 2.8, 2.4, rand(2.8, 4), pick(brick), [0, 1]);
+  }
+  // cloth shades strung across the lane
+  [-4.5, -15.5, -19.5].forEach(z => {
+    const sh = mesh(new THREE.BoxGeometry(2.6, 0.03, 0.9), pick(C.canopies), 0, rand(3.1, 3.4), z, alley);
+    sh.rotation.z = rand(-0.08, 0.08);
+  });
+  // the city gate: two towers and a lintel, desert and palms beyond
+  [-1.9, 1.9].forEach(x => mesh(new THREE.BoxGeometry(1.4, 5.2, 1.6), C.brickB, x, 2.6, -25, alley));
+  mesh(new THREE.BoxGeometry(5.2, 1, 1.6), C.brickA, 0, 4.9, -25, alley);
+  for (let i = 0; i < 8; i++) palm(alley, rand(-9, 9), rand(-34, -29), rand(0.9, 1.2));
+  // the bayt al-mal: a larger building closing the side lane, with a heavy door
+  mesh(new THREE.BoxGeometry(3, 4.4, 5), C.brickC, -14.6, 2.2, -9, alley);
+  mesh(new THREE.BoxGeometry(3.2, 0.3, 5.2), C.brickB, -14.6, 4.5, -9, alley);
+  mesh(new THREE.BoxGeometry(0.08, 2, 1.4), C.woodDark, -13.07, 1, -9, alley);
+
+  const walker = figure(alley, 0x8a6a45, 0xece3d0, 1.05);
+  walker.position.copy(NODES.market);
+  const alleyNPCs = [];
+  [[0.6, -3], [-0.7, -15], [-6, -9.4], [0.5, -19]].forEach(([x, z]) => {
+    const n = figure(alley, pick(C.robes), pick(C.robes), rand(0.9, 1.02));
+    n.position.set(x, 0, z); n.rotation.y = rand(0, 6); alleyNPCs.push(n);
+  });
+
+  // ---------- game state ----------
+  const GOODS = [
+    { market: 4, price: 4, stock: 20 },
+    { market: 14, price: 14, stock: 5 },
+    { market: 21, price: 28, stock: 4 },   // the ship from India makes spices cheap today
+    { market: 6, price: 6, stock: 6 }
+  ];
+  const DAY_LEN = 60;
+  let lang = 'bm';
+  let mode = 'bazaar';   // bazaar | alley
+  let state = 'setup';   // setup | open | closing | summary
+  let dayT = 0, cash = 180, amanah = 60, nextSpawn = 0, crierT = 0;
+  let stats = { sales: 0, takings: 0, walked: 0, amanahStart: 60 };
+  const ledger = [null, null, null, null];
+  const customers = [];
+  const walk = { at: 'market', path: [], heading: new THREE.Vector3(0, 0, -1), bob: 0, arrived: 'market' };
+  const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
+
+  function setBazaarCamera() {
+    camera.position.set(0, 7.4, 11.8); camera.lookAt(0, 0.3, -1.2);
+    scene.fog.near = 26; scene.fog.far = 60;
+    sun.position.copy(SUN_OFFSET); sun.target.position.set(0, 0, 0);
+  }
+  setBazaarCamera();
+
+  function newDay() {
+    customers.forEach(c => bazaar.remove(c.obj)); customers.length = 0;
+    GOODS[0].stock = 20; GOODS[1].stock = 5; GOODS[2].stock = 4; GOODS[3].stock = 6;
+    dayT = 0; state = 'setup';
+    stats = { sales: 0, takings: 0, walked: 0, amanahStart: amanah };
+    refreshGoods();
+  }
+  function refreshGoods() { goodsGroups.forEach((g, i) => { g.visible = GOODS[i].stock > 0; }); }
+
+  function goAlley() {
+    mode = 'alley'; bazaar.visible = false; alley.visible = true;
+    walker.position.copy(NODES.market); walk.at = 'market'; walk.arrived = 'market'; walk.path = [];
+    walk.heading.set(0, 0, -1);
+    scene.fog.near = 14; scene.fog.far = 40;
+    camPos.set(0, 7.6, 7.4); camLook.set(0, 0.6, 3.6);
+  }
+  function goBazaar() {
+    mode = 'bazaar'; alley.visible = false; bazaar.visible = true;
+    setBazaarCamera(); newDay();
+  }
+  function route(from, to) {
+    const prev = { [from]: null }, q = [from];
+    while (q.length) { const n = q.shift(); if (n === to) break; EDGES[n].forEach(m => { if (!(m in prev)) { prev[m] = n; q.push(m); } }); }
+    const out = []; let n = to; while (n && n !== from) { out.unshift(n); n = prev[n]; } return out;
+  }
+
+  function reaction(ratio) {
+    if (ratio < 0.8) return 'delight';
+    if (ratio <= 1.1) return 'happy';
+    if (ratio <= 1.3) return 'unsure';
+    return 'angry';
+  }
+  function spawn() {
+    const free = [0, 1, 2, 3].filter(i => GOODS[i].stock > 0 && !customers.some(c => c.slot === i && c.phase !== 'out'));
+    if (!free.length) return;
+    const slot = pick(free);
+    const obj = figure(bazaar, pick(C.robes), pick(C.robes), rand(0.88, 1.05));
+    obj.position.set(pick([-6.3, 6.3]), 0, -1.1 + rand(-0.3, 0.3));
+    customers.push({ obj, slot, phase: 'in', t: 0, target: new THREE.Vector3(SLOT_X[slot], 0, 1.25), face: null, bob: rand(0, 6) });
+  }
+  function decide(c) {
+    const g = GOODS[c.slot];
+    const r = reaction(g.price / g.market);
+    c.face = r; ledger[c.slot] = r;
+    let buy = 0;
+    if (r === 'delight') buy = 2; else if (r === 'happy') buy = 1; else if (r === 'unsure') buy = Math.random() < 0.5 ? 1 : 0;
+    buy = Math.min(buy, g.stock);
+    if (buy > 0) {
+      g.stock -= buy; cash += buy * g.price; stats.sales += buy; stats.takings += buy * g.price;
+      if (r === 'happy') amanah += 1;
+      if (r === 'unsure') amanah -= 2;
+    } else {
+      stats.walked++;
+      if (r === 'angry') amanah -= 5;
+    }
+    amanah = Math.max(0, Math.min(100, amanah));
+    c.bought = buy;
+    refreshGoods();
+  }
+
+  function updateBazaar(dt) {
+    crowd.forEach(p => crowdStep(p, dt));
+    if (state === 'open') {
+      dayT += dt;
+      crierT = Math.max(0, crierT - dt);
+      nextSpawn -= dt;
+      if (nextSpawn <= 0 && dayT < DAY_LEN - 4) { spawn(); nextSpawn = 8 - (amanah / 100) * 3.6 + rand(-0.8, 0.8); }
+      if (dayT >= DAY_LEN) state = 'closing';
+    }
+    if (state === 'closing' && customers.length === 0) state = 'summary';
+    for (let i = customers.length - 1; i >= 0; i--) {
+      const c = customers[i], p = c.obj.position;
+      c.t += dt; c.bob += dt * 9;
+      if (c.phase === 'in' || c.phase === 'out') {
+        const to = c.phase === 'in' ? c.target : c.exit;
+        const dx = to.x - p.x, dz = to.z - p.z, dist = Math.hypot(dx, dz), step = 3.2 * dt;
+        if (dist <= step) {
+          p.x = to.x; p.z = to.z;
+          if (c.phase === 'in') { c.phase = 'look'; c.t = 0; c.obj.rotation.y = 0; }
+          else { bazaar.remove(c.obj); customers.splice(i, 1); continue; }
+        } else {
+          p.x += dx / dist * step; p.z += dz / dist * step; c.obj.rotation.y = Math.atan2(dx, dz);
+        }
+        p.y = reduceMotion ? 0 : Math.abs(Math.sin(c.bob)) * 0.06;
+      } else if (c.phase === 'look') {
+        p.y = 0;
+        if (c.t > 0.7 && !c.face) decide(c);
+        if (c.t > 2.1) { c.phase = 'out'; c.exit = new THREE.Vector3(pick([-6.3, 6.3]), 0, -1.1); }
+      }
+    }
+  }
+
+  function updateAlley(dt) {
+    const p = walker.position;
+    if (walk.path.length) {
+      const target = NODES[walk.path[0]];
+      const dx = target.x - p.x, dz = target.z - p.z, d = Math.hypot(dx, dz), step = 3 * dt;
+      if (d <= step) {
+        p.x = target.x; p.z = target.z; walk.at = walk.path.shift();
+        if (!walk.path.length) { walk.arrived = walk.at; p.y = 0; }
+      } else {
+        p.x += dx / d * step; p.z += dz / d * step;
+        walk.heading.set(dx / d, 0, dz / d);
+        walker.rotation.y = Math.atan2(dx, dz);
+        walk.bob += dt * 9; p.y = reduceMotion ? 0 : Math.abs(Math.sin(walk.bob)) * 0.06;
+      }
+    }
+    // camera rides behind and above, turning with the lane
+    const want = new THREE.Vector3(p.x - walk.heading.x * 3.4, 7.6, p.z - walk.heading.z * 3.4);
+    const k = reduceMotion ? 1 : 1 - Math.pow(0.02, dt);
+    camPos.lerp(want, k);
+    camLook.lerp(new THREE.Vector3(p.x + walk.heading.x * 0.4, 0.6, p.z + walk.heading.z * 0.4), k);
+    camera.position.copy(camPos); camera.lookAt(camLook);
+    sun.target.position.set(p.x, 0, p.z); sun.position.copy(p).add(SUN_OFFSET);
+  }
+
+  // ---------- canvas UI ----------
+  const buttons = [];
+  function rr(x, y, w, h, r) {
+    ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+  function panel(x, y, w, h, fill, edge) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(30,20,10,.28)'; rr(x + 2, y + 3, w, h, 9); ctx.fill();
+    ctx.fillStyle = fill || UI.parch; rr(x, y, w, h, 9); ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = edge || UI.panelEdge; ctx.stroke();
+    ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(255,255,255,.35)'; rr(x + 3, y + 3, w - 6, h - 6, 7); ctx.stroke();
+    ctx.restore();
+  }
+  function text(s, x, y, o) {
+    o = Object.assign({ size: 14, font: 'Alegreya Sans', weight: 700, color: UI.ink, align: 'left' }, o || {});
+    ctx.font = `${o.weight} ${o.size}px "${o.font}", "Trebuchet MS", sans-serif`;
+    ctx.fillStyle = o.color; ctx.textAlign = o.align; ctx.textBaseline = 'middle'; ctx.fillText(s, x, y);
+  }
+  function coin(x, y, r) {
+    ctx.fillStyle = '#9c7c3c'; ctx.beginPath(); ctx.arc(x, y + 1, r, 0, 7); ctx.fill();
+    ctx.fillStyle = '#d8d2c2'; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#a49c88'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(x, y, r * 0.62, 0, 7); ctx.stroke();
+  }
+  function faceIcon(x, y, r, kind) {
+    const col = { delight: UI.delight, happy: UI.green, unsure: UI.grey, angry: UI.red }[kind];
+    ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+    ctx.strokeStyle = UI.panelEdge; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = UI.panelEdge;
+    ctx.beginPath(); ctx.arc(x - r * 0.33, y - r * 0.2, r * 0.11, 0, 7); ctx.arc(x + r * 0.33, y - r * 0.2, r * 0.11, 0, 7); ctx.fill();
+    ctx.lineWidth = r * 0.14; ctx.lineCap = 'round'; ctx.beginPath();
+    if (kind === 'delight') ctx.arc(x, y + r * 0.05, r * 0.42, 0.15 * Math.PI, 0.85 * Math.PI);
+    else if (kind === 'happy') ctx.arc(x, y + r * 0.1, r * 0.3, 0.2 * Math.PI, 0.8 * Math.PI);
+    else if (kind === 'unsure') { ctx.moveTo(x - r * 0.3, y + r * 0.35); ctx.lineTo(x + r * 0.3, y + r * 0.28); }
+    else ctx.arc(x, y + r * 0.55, r * 0.3, 1.2 * Math.PI, 1.8 * Math.PI);
+    ctx.stroke();
+  }
+  function goodsIcon(i, x, y) {
+    ctx.save();
+    if (i === 0) {
+      ctx.fillStyle = '#b08d4f'; rr(x - 17, y + 2, 34, 11, 4); ctx.fill();
+      ctx.fillStyle = '#5e2f1c';
+      [[-10, 0], [-3, -2], [4, 0], [11, -1], [-6, -7], [1, -8], [8, -6], [-1, -13]].forEach(([dx, dy]) => { ctx.beginPath(); ctx.ellipse(x + dx, y + dy, 4, 5.5, 0, 0, 7); ctx.fill(); });
+    } else if (i === 1) {
+      [['#3d4f7c', -8, 4], ['#a8432f', 8, 4], ['#ece3d0', 0, -7]].forEach(([c, dx, dy]) => {
+        ctx.fillStyle = c; rr(x - 15 + dx * 0.3, y + dy - 5, 30, 10, 5); ctx.fill();
+        ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 1; ctx.stroke();
+      });
+    } else if (i === 2) {
+      ctx.fillStyle = '#d8c9a3'; rr(x - 13, y - 8, 26, 22, 7); ctx.fill();
+      ctx.fillStyle = '#d9a431'; ctx.beginPath(); ctx.ellipse(x, y - 8, 12, 6, 0, 0, 7); ctx.fill();
+      ctx.strokeStyle = '#8a5a2b'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x - 10, y - 2); ctx.lineTo(x + 10, y - 2); ctx.stroke();
+    } else {
+      ctx.fillStyle = '#b4643f'; ctx.beginPath();
+      ctx.moveTo(x - 4, y - 15); ctx.lineTo(x + 4, y - 15); ctx.quadraticCurveTo(x + 15, y - 4, x + 9, y + 10);
+      ctx.lineTo(x - 9, y + 10); ctx.quadraticCurveTo(x - 15, y - 4, x - 4, y - 15); ctx.fill();
+      ctx.strokeStyle = '#7d3f24'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x - 10, y - 3); ctx.lineTo(x + 10, y - 3); ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function placeIcon(kind, x, y) {
+    ctx.save(); ctx.fillStyle = UI.panelEdge; ctx.strokeStyle = UI.panelEdge; ctx.lineWidth = 1.6;
+    if (kind === 'gate') { rr(x - 8, y - 7, 16, 14, 2); ctx.stroke(); ctx.beginPath(); ctx.arc(x, y + 1, 4, Math.PI, 0); ctx.lineTo(x + 4, y + 7); ctx.lineTo(x - 4, y + 7); ctx.closePath(); ctx.fill(); }
+    else if (kind === 'bayt') { coin(x, y, 7); }
+    else { ctx.beginPath(); ctx.moveTo(x - 9, y - 1); ctx.lineTo(x, y - 8); ctx.lineTo(x + 9, y - 1); ctx.closePath(); ctx.fill(); ctx.fillRect(x - 7, y - 1, 2, 8); ctx.fillRect(x + 5, y - 1, 2, 8); }
+    ctx.restore();
+  }
+  function button(id, x, y, w, h, label, o) {
+    o = Object.assign({ fill: UI.gold, color: UI.ink, size: 16, disabled: false }, o || {});
+    ctx.save();
+    ctx.globalAlpha = o.disabled ? 0.45 : 1;
+    ctx.fillStyle = UI.panelEdge; rr(x, y + 3, w, h, 8); ctx.fill();
+    ctx.fillStyle = o.fill; rr(x, y, w, h, 8); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.22)'; rr(x + 3, y + 2, w - 6, h * 0.42, 6); ctx.fill();
+    ctx.strokeStyle = UI.panelEdge; ctx.lineWidth = 2; rr(x, y, w, h, 8); ctx.stroke();
+    text(label, x + w / 2, y + h / 2 + 1, { size: o.size, font: 'Reem Kufi', color: o.color, align: 'center' });
+    ctx.restore();
+    if (!o.disabled) buttons.push({ id, x, y, w, h });
+  }
+  function topBar(L) {
+    panel(10, 10, 340, 66);
+    text(L.mock, 22, 24, { size: 9, color: UI.inkSoft, weight: 800 });
+    text(mode === 'alley' ? L.alley : L.round, 22, 42, { size: 16, font: 'Reem Kufi' });
+    coin(258, 38, 8);
+    text(String(cash), 272, 39, { size: 20, font: 'Reem Kufi' });
+    text(L.dirham, 272 + ctx.measureText(String(cash)).width + 4, 41, { size: 12, color: UI.inkSoft });
+    if (mode === 'bazaar') {
+      const bx = 22, bw = 236, by = 62, prog = Math.min(1, dayT / DAY_LEN);
+      ctx.fillStyle = UI.parchDark; rr(bx, by - 3, bw, 6, 3); ctx.fill();
+      ctx.fillStyle = UI.gold; rr(bx, by - 3, bw * prog, 6, 3); ctx.fill();
+      ctx.fillStyle = '#e9a83a'; ctx.beginPath(); ctx.arc(bx + bw * prog, by, 5.5, 0, 7); ctx.fill();
+      ctx.strokeStyle = UI.panelEdge; ctx.lineWidth = 1.2; ctx.stroke();
+    } else {
+      text(L.alleyHint, 22, 62, { size: 12, color: UI.inkSoft });
+    }
+    button('lang', 296, 52, 44, 20, lang === 'bm' ? 'EN' : 'BM', { fill: UI.parchDark, size: 11 });
+  }
+
+  const v = new THREE.Vector3();
+  function toScreen(x, y, z) { v.set(x, y, z).project(camera); return [(v.x * 0.5 + 0.5) * LW, (-v.y * 0.5 + 0.5) * LH, v.z]; }
+
+  function drawBazaarUI(L) {
+    customers.forEach(c => {
+      if (!c.face || c.phase === 'in') return;
+      const [x, y] = toScreen(c.obj.position.x, 1.9 * c.obj.scale.y, c.obj.position.z);
+      const fade = c.phase === 'out' ? Math.max(0, 1 - c.t * 0.9) : 1;
+      if (fade <= 0) return;
+      ctx.save(); ctx.globalAlpha = fade;
+      ctx.fillStyle = UI.parch; ctx.strokeStyle = UI.panelEdge; ctx.lineWidth = 2;
+      rr(x - 18, y - 40, 36, 32, 9); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x - 5, y - 9); ctx.lineTo(x, y - 2); ctx.lineTo(x + 5, y - 9); ctx.fill();
+      faceIcon(x, y - 24, 11, c.face);
+      if (c.bought) text('+' + (c.bought * GOODS[c.slot].price), x + 22, y - 36, { size: 13, color: UI.gold, font: 'Reem Kufi' });
+      ctx.restore();
+    });
+    topBar(L);
+    panel(10, 82, 186, 28);
+    text(L.amanah, 20, 97, { size: 13, font: 'Reem Kufi' });
+    const ax = 86, aw = 76;
+    ctx.fillStyle = UI.parchDark; rr(ax, 92, aw, 9, 4); ctx.fill();
+    ctx.fillStyle = amanah >= 60 ? UI.green : amanah >= 40 ? UI.gold : UI.red; rr(ax, 92, aw * amanah / 100, 9, 4); ctx.fill();
+    ctx.strokeStyle = UI.panelEdge; ctx.lineWidth = 1; rr(ax, 92, aw, 9, 4); ctx.stroke();
+    text(String(amanah), 170, 97, { size: 13, font: 'Reem Kufi' });
+    if (crierT > 0 || state === 'setup') {
+      ctx.save(); ctx.globalAlpha = state === 'setup' ? 1 : Math.min(1, crierT);
+      panel(10, 116, 340, 30, UI.panel, UI.panelEdge);
+      text(L.crier, 180, 131, { size: 12.5, color: UI.parch, align: 'center' });
+      ctx.restore();
+    }
+    const cy = 462;
+    panel(6, cy - 8, 348, 174, UI.panel, UI.panelEdge);
+    for (let i = 0; i < 4; i++) {
+      const x = 14 + i * 84, w = 78, g = GOODS[i];
+      ctx.save(); ctx.globalAlpha = g.stock > 0 ? 1 : 0.5;
+      panel(x, cy, w, 156);
+      goodsIcon(i, x + w / 2, cy + 26);
+      text(L.goods[i], x + w / 2, cy + 54, { size: 13, align: 'center', font: 'Reem Kufi' });
+      text(`${L.stock} ×${g.stock}`, x + w / 2, cy + 70, { size: 11, align: 'center', color: UI.inkSoft });
+      coin(x + 22, cy + 96, 6);
+      text(String(g.price), x + 32, cy + 97, { size: 22, font: 'Reem Kufi' });
+      if (ledger[i]) faceIcon(x + w - 12, cy + 12, 7, ledger[i]);
+      ctx.restore();
+      button('minus' + i, x + 5, cy + 116, 32, 30, '−', { fill: UI.parchDark, size: 18, disabled: g.price <= 1 });
+      button('plus' + i, x + w - 37, cy + 116, 32, 30, '+', { fill: UI.parchDark, size: 18 });
+    }
+    if (state === 'setup') {
+      panel(50, 362, 260, 40, 'rgba(242,228,196,.92)');
+      text(L.hint, 180, 375, { size: 12.5, align: 'center' });
+      text(L.hint2, 180, 390, { size: 12.5, align: 'center', color: UI.inkSoft });
+      button('open', 60, 410, 150, 34, L.open, { size: 17 });
+      button('alley', 220, 410, 80, 34, L.toAlley, { fill: UI.parchDark, size: 12 });
+    } else if (state === 'open' || state === 'closing') {
+      const left = Math.max(0, Math.ceil(DAY_LEN - dayT));
+      panel(120, 420, 120, 26, 'rgba(242,228,196,.92)');
+      text(state === 'open' ? `${L.open2} · ${left}s` : L.closed, 180, 433, { size: 12.5, align: 'center' });
+    } else if (state === 'summary') {
+      ctx.fillStyle = 'rgba(30,20,10,.45)'; ctx.fillRect(0, 0, LW, LH);
+      panel(36, 170, 288, 256);
+      text(L.closed, 180, 200, { size: 22, font: 'Reem Kufi', align: 'center' });
+      [[L.sales, String(stats.sales)], [L.takings, `${stats.takings} ${L.dirham}`], [L.walked, String(stats.walked)], [L.amanah, `${stats.amanahStart} → ${amanah}`]]
+        .forEach(([k, val], r) => {
+          const y = 236 + r * 28;
+          text(k, 60, y, { size: 14, color: UI.inkSoft });
+          text(val, 300, y, { size: 15, font: 'Reem Kufi', align: 'right' });
+          ctx.strokeStyle = UI.parchDark; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(60, y + 13); ctx.lineTo(300, y + 13); ctx.stroke();
+        });
+      button('alley', 56, 362, 150, 36, L.toAlley, { size: 15 });
+      button('again', 214, 362, 90, 36, L.again, { fill: UI.parchDark, size: 13 });
+    }
+  }
+
+  function drawAlleyUI(L) {
+    // floating signs over each place, tap to walk there
+    ['gate', 'bayt', 'market'].forEach(k => {
+      const n = NODES[k];
+      const [x, y, z] = toScreen(n.x, 2.6, n.z);
+      if (z > 1 || x < -40 || x > LW + 40 || y < 120 || y > 440) return;
+      const label = L.places[k];
+      ctx.font = '700 13px "Reem Kufi", sans-serif';
+      const w = ctx.measureText(label).width + 36;
+      ctx.save();
+      ctx.fillStyle = UI.parch; ctx.strokeStyle = UI.panelEdge; ctx.lineWidth = 2;
+      rr(x - w / 2, y - 30, w, 26, 7); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x - 5, y - 5); ctx.lineTo(x, y + 2); ctx.lineTo(x + 5, y - 5); ctx.fill();
+      placeIcon(k, x - w / 2 + 14, y - 17);
+      text(label, x - w / 2 + 26, y - 16, { size: 13, font: 'Reem Kufi' });
+      ctx.restore();
+      if (walk.arrived !== k && !walk.path.length) buttons.push({ id: 'go-' + k, x: x - w / 2, y: y - 30, w, h: 30 });
+    });
+    topBar(L);
+    // destinations panel
+    const py = 470;
+    panel(6, py - 8, 348, 170, UI.panel, UI.panelEdge);
+    const arrivedAt = walk.path.length ? null : walk.arrived;
+    panel(14, py, 332, 74);
+    if (arrivedAt) {
+      placeIcon(arrivedAt, 34, py + 22);
+      text(L.places[arrivedAt], 50, py + 21, { size: 16, font: 'Reem Kufi' });
+      text(L.arrive[arrivedAt][0], 26, py + 44, { size: 12.5, color: UI.inkSoft });
+      text(L.arrive[arrivedAt][1], 26, py + 59, { size: 12.5, color: UI.inkSoft });
+      if (arrivedAt !== 'market') text(L.soon, 336, py + 21, { size: 11, color: UI.gold, align: 'right', weight: 800 });
+    } else {
+      text(L.walking, 180, py + 37, { size: 15, align: 'center', color: UI.inkSoft });
+    }
+    const busy = walk.path.length > 0;
+    const keys = ['market', 'bayt', 'gate'];
+    keys.forEach((k, i) => {
+      const x = 14 + i * 112;
+      button('go-' + k, x, py + 86, 104, 34, L.places[k], { fill: walk.arrived === k && !busy ? UI.gold : UI.parchDark, size: 13, disabled: busy || walk.arrived === k });
+    });
+    if (arrivedAt === 'market') button('enter', 90, py + 130, 180, 28, L.enter, { size: 14 });
+  }
+
+  function drawUI() {
+    const L = T[lang];
+    buttons.length = 0;
+    ctx.setTransform(DPR * uiScale, 0, 0, DPR * uiScale, 0, 0);
+    ctx.clearRect(0, 0, LW, LH);
+    if (mode === 'bazaar') drawBazaarUI(L); else drawAlleyUI(L);
+  }
+
+  // ---------- input ----------
+  function press(id) {
+    if (id === 'lang') { lang = lang === 'bm' ? 'en' : 'bm'; return; }
+    if (id === 'open' && state === 'setup') { state = 'open'; dayT = 0; nextSpawn = 0.6; crierT = 4.5; stats.amanahStart = amanah; return; }
+    if (id === 'again') { newDay(); return; }
+    if (id === 'alley') { goAlley(); return; }
+    if (id === 'enter') { goBazaar(); return; }
+    if (id.startsWith('go-')) {
+      const to = id.slice(3);
+      if (!walk.path.length && to !== walk.arrived) { walk.path = route(walk.at, to); walk.arrived = null; }
+      return;
+    }
+    const m = id.match(/^(minus|plus)(\d)$/);
+    if (m) { const g = GOODS[+m[2]]; g.price = Math.max(1, g.price + (m[1] === 'plus' ? 1 : -1)); }
+  }
+  ui.addEventListener('pointerdown', e => {
+    const r = ui.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width * LW, y = (e.clientY - r.top) / r.height * LH;
+    for (let i = buttons.length - 1; i >= 0; i--) {
+      const b = buttons[i];
+      if (x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h) { press(b.id); e.preventDefault(); return; }
+    }
+  });
+  ui.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    if (mode === 'bazaar') { if (state === 'setup') press('open'); else if (state === 'summary') press('again'); }
+    else if (walk.arrived === 'market') press('enter');
+    e.preventDefault();
+  });
+
+  // ---------- loop ----------
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (mode === 'bazaar') updateBazaar(dt); else updateAlley(dt);
+    renderer.render(scene, camera);
+    drawUI();
+    requestAnimationFrame(frame);
+  }
+  refreshGoods();
+  const fontsReady = document.fonts && document.fonts.load
+    ? Promise.all([document.fonts.load('700 16px "Reem Kufi"'), document.fonts.load('700 14px "Alegreya Sans"')]).catch(() => {})
+    : Promise.resolve();
+  Promise.race([fontsReady, new Promise(r => setTimeout(r, 1500))]).then(() => requestAnimationFrame(frame));
+  renderer.render(scene, camera);
+})();
+</script>
