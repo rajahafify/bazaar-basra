@@ -1,7 +1,7 @@
 // Canvas UI on the fixed 360 x 640 frame: parchment panels, wooden bars, coins and icons
 // (style guide 4.7, 5). Buttons register hit areas as they are drawn each frame.
 
-import type { GoodId } from '../sim';
+import { REACTION_EMOJI, type GoodId, type Reaction } from '../sim';
 import { UI } from '../world/palette';
 
 export const LW = 360;
@@ -36,7 +36,11 @@ export interface ButtonOpts {
 
 export type Mood = 'delighted' | 'happy' | 'unsure' | 'angry';
 
-const FONTS = { body: '"Alegreya Sans", "Trebuchet MS", sans-serif', head: '"Reem Kufi", "Trebuchet MS", sans-serif' };
+const EMOJI = '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji"';
+const FONTS = {
+  body: `"Alegreya Sans", "Trebuchet MS", ${EMOJI}, sans-serif`,
+  head: `"Reem Kufi", "Trebuchet MS", ${EMOJI}, sans-serif`,
+};
 
 export class Draw {
   readonly hits: Hit[] = [];
@@ -153,33 +157,24 @@ export class Draw {
     c.strokeStyle = '#a49c88'; c.lineWidth = 1.2; c.beginPath(); c.arc(x, y, r * 0.62, 0, 7); c.stroke();
   }
 
-  /**
-   * Customer mood without faces (style guide 4.7): a coin (will buy, two coins when delighted),
-   * a balance scale (thinking it over), a closed hand (leaving, price too high).
-   */
+  /** Customer mood as an emoji, Moonlighter style: one emoji per price band. */
   mood(x: number, y: number, r: number, mood: Mood) {
-    const c = this.ctx;
-    c.save();
-    c.fillStyle = UI.parch; c.strokeStyle = UI.panelEdge; c.lineWidth = 1.5;
-    c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); c.stroke();
-    if (mood === 'happy') this.coin(x, y, r * 0.55);
-    else if (mood === 'delighted') { this.coin(x - r * 0.25, y + r * 0.12, r * 0.45); this.coin(x + r * 0.25, y - r * 0.12, r * 0.45); }
-    else if (mood === 'unsure') {
-      c.strokeStyle = UI.panelEdge; c.lineWidth = r * 0.12; c.lineCap = 'round';
-      c.beginPath(); c.moveTo(x, y - r * 0.55); c.lineTo(x, y + r * 0.45); c.moveTo(x - r * 0.45, y + r * 0.5); c.lineTo(x + r * 0.45, y + r * 0.5);
-      c.moveTo(x - r * 0.55, y - r * 0.35); c.lineTo(x + r * 0.55, y - r * 0.45); c.stroke();
-      c.fillStyle = UI.gold;
-      c.beginPath(); c.arc(x - r * 0.55, y - r * 0.1, r * 0.22, 0, Math.PI); c.fill();
-      c.beginPath(); c.arc(x + r * 0.55, y - r * 0.2, r * 0.22, 0, Math.PI); c.fill();
-    } else {
-      // A closed hand: a fist block with knuckle lines.
-      c.fillStyle = UI.red;
-      this.rr(x - r * 0.45, y - r * 0.4, r * 0.9, r * 0.8, r * 0.25); c.fill();
-      c.strokeStyle = UI.parch; c.lineWidth = r * 0.08;
-      for (const k of [-0.15, 0.15]) { c.beginPath(); c.moveTo(x + k * r, y - r * 0.4); c.lineTo(x + k * r, y - r * 0.05); c.stroke(); }
-      c.beginPath(); c.moveTo(x - r * 0.45, y + r * 0.1); c.lineTo(x - r * 0.1, y + r * 0.1); c.stroke();
+    this.text(REACTION_EMOJI[mood], x, y + 1, { size: r * 1.9, align: 'center' });
+  }
+
+  /** The notebook for one good: each price tried, with the emoji it got, cheapest first. */
+  priceChips(book: Readonly<Record<string, Reaction>>, x: number, y: number, maxW: number, size = 11) {
+    const prices = Object.keys(book).map(Number).sort((a, b) => a - b);
+    let cx = x;
+    for (const p of prices) {
+      const label = `${p}${REACTION_EMOJI[book[String(p)]!]}`;
+      const w = this.measure(label, { size }) + 8;
+      if (cx + w > x + maxW) break;
+      this.ctx.fillStyle = 'rgba(0,0,0,.07)'; this.rr(cx, y - size * 0.75, w - 2, size * 1.5, 4); this.ctx.fill();
+      this.text(label, cx + 3, y, { size, color: UI.ink });
+      cx += w;
     }
-    c.restore();
+    return cx;
   }
 
   goodIcon(good: GoodId, x: number, y: number, s = 1) {

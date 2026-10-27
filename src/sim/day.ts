@@ -4,7 +4,10 @@
 
 import { DAY_SECONDS, GOODS, GOOD_IDS, type GoodId } from './data';
 import { visit, type Reaction, type Sensitivity } from './customers';
-import { changeAmanah, customersToday, fairToday, noteReaction, noteWanted, recordSale, withRng, type GameState } from './game';
+import {
+  TUT, changeAmanah, customersToday, endShopDay, fairToday, noteReaction, noteWanted, recordSale, restockSlot, setPrice, setSlotGood,
+  startShopDay, withRng, type GameState,
+} from './game';
 import type { Rng } from './rng';
 
 export type CustomerType = 'household' | 'child' | 'labourer' | 'craftsman' | 'scholar' | 'bedouin' | 'sailor' | 'regular';
@@ -63,12 +66,18 @@ export class DaySim {
   closed = false;
   private nextId = 1;
 
-  constructor(private readonly s: GameState) {
+  /** On the tutorial day everyone comes for what is on the slot, and there are enough of them to sell out. */
+  constructor(private readonly s: GameState, private readonly tutorial = false) {
     withRng(s, rng => this.schedule(rng));
   }
 
   private schedule(rng: Rng) {
     const s = this.s;
+    if (this.tutorial) {
+      const good = s.slots.find(sl => sl.good)?.good ?? 'dates';
+      for (let i = 0; i < 14; i++) this.add('regular', good, ((i + 0.5) / 14) * LAST_ARRIVAL);
+      return;
+    }
     const count = Math.max(2, customersToday(s) + rng.int(-1, 1));
     for (let i = 0; i < count; i++) {
       const at = ((i + rng.next() * 0.8) / count) * LAST_ARRIVAL;
@@ -88,10 +97,9 @@ export class DaySim {
   /** What they came for, leaning towards what the season wants. Regulars ask for what you sell. */
   private pickWant(rng: Rng, type: CustomerType): GoodId {
     const s = this.s;
-    if (type === 'regular') {
-      const onShow = s.slots.filter(sl => sl.good && sl.qty > 0).map(sl => sl.good!);
-      if (onShow.length) return rng.pick(onShow);
-    }
+    // Regulars ask for what you sell, and so do half of the others: people come for what a stall is known for.
+    const onShow = s.slots.filter(sl => sl.good && sl.qty > 0).map(sl => sl.good!);
+    if (onShow.length && (type === 'regular' || rng.chance(0.5))) return rng.pick(onShow);
     const wants = CUSTOMER_TYPES[type].wants;
     let r = rng.next() * wants.reduce((a, g) => a + GOODS[g].season[s.season] * s.demand[g], 0);
     for (const g of wants) { r -= GOODS[g].season[s.season] * s.demand[g]; if (r <= 0) return g; }
@@ -161,6 +169,8 @@ export class DaySim {
     noteReaction(s, good, price, v.reaction);
     const bought = browsing && v.reaction !== 'delighted' ? 0 : v.bought;
     if (bought > 0) recordSale(s, c.shelf!, bought, price); else s.day.walked += 1;
+    // The tutorial day teaches the faces; demand stays put so the dates sell out.
+    if (this.tutorial) s.demand[good] = 1;
     c.bought = bought;
     c.revenue = bought * price;
     changeAmanah(s, v.amanahDelta);
@@ -178,4 +188,14 @@ export class DaySim {
     }
     return all;
   }
+}
+
+/** The first day: the uncle's dates at a fair price, restocked as they sell. */
+export function tutorialDay(s: GameState) {
+  startShopDay(s);
+  setSlotGood(s, 0, 'dates');
+  setPrice(s, 'dates', fairToday(s, 'dates'));
+  new DaySim(s, true).runToEnd(0.1, slot => { restockSlot(s, slot); });
+  endShopDay(s);
+  s.flags.tut = TUT.done;
 }

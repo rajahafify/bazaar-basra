@@ -4,6 +4,7 @@ import {
   endFriday, endShopDay, eventOptions, finishEvent, finishPrologue, leaveTown, newGame, notebookRange, restockSlot,
   retrySeason, setOut, setPrice, setSlotGood, settleFriday, startShopDay, stockOf, townBuy, yearEndCount,
   MAIN_QUESTS, QUEST_MIN_DAYS, checkMainQuest, dayIndex, deliverOrder, questDue, repayDebt,
+  TUTORIAL_DATES, addStock, inTutorial, tutorialDay,
   type GameState,
 } from '../index';
 
@@ -29,24 +30,35 @@ function playTrip(s: GameState) {
 }
 
 describe('a new year', () => {
-  it('starts on a Saturday morning with the uncle\'s stock on the shelves', () => {
+  it('starts on a Saturday morning with no money, one empty slot and the uncle\'s dates', () => {
     const s = fresh();
-    expect(s).toMatchObject({ phase: 'morning', season: 1, week: 1, dow: 0 });
-    expect(s.slots).toHaveLength(3);
-    expect(s.slots[0]).toMatchObject({ good: 'dates', qty: 5 });
-    expect(stockOf(s, 'dates')).toBe(6);
+    expect(s).toMatchObject({ phase: 'morning', season: 1, week: 1, dow: 0, cash: 0 });
+    expect(s.slots).toEqual([{ good: null, qty: 0, cost: 0 }]);
+    expect(stockOf(s, 'dates')).toBe(TUTORIAL_DATES);
+    expect(inTutorial(s)).toBe(true);
+  });
+
+  it('sells out the uncle\'s dates on the tutorial day, for the first capital', () => {
+    const s = fresh();
+    tutorialDay(s);
+    expect(stockOf(s, 'dates')).toBe(0);
+    expect(s.cash).toBeGreaterThanOrEqual(TUTORIAL_DATES * 5);
+    expect(inTutorial(s)).toBe(false);
+    expect(s.dow).toBe(1);
   });
 });
 
 describe('a market day', () => {
   it('sells from the slots, writes reactions in the notebook and moves to the next day', () => {
     const s = fresh();
+    setSlotGood(s, 0, 'dates');
     setPrice(s, 'dates', 6);
     startShopDay(s);
     new DaySim(s).runToEnd();
     expect(s.day.sold).toBeGreaterThan(0);
-    expect(s.cash).toBeGreaterThan(70);
-    expect(notebookRange(s, 'dates').good).toBe(6);
+    expect(s.cash).toBeGreaterThan(0);
+    expect(s.notebook.dates['6']).toBeDefined();
+    expect(notebookRange(s, 'dates').good ?? notebookRange(s, 'dates').tooHigh).toBe(6);
     endShopDay(s);
     expect(s).toMatchObject({ phase: 'morning', dow: 1 });
   });
@@ -60,11 +72,14 @@ describe('a market day', () => {
 
   it('restocks a slot from the storeroom and swaps goods back', () => {
     const s = fresh();
+    addStock(s, 'salt', 2, 2);
+    setSlotGood(s, 0, 'dates');
+    expect(s.slots[0]).toMatchObject({ good: 'dates', qty: 5 });
     s.slots[0]!.qty = 0;
-    expect(restockSlot(s, 0)).toBe(1);
+    expect(restockSlot(s, 0)).toBe(5);
     setSlotGood(s, 0, 'salt');
-    expect(stockOf(s, 'dates')).toBe(1);
-    expect(s.store.dates.qty).toBe(1);
+    expect(stockOf(s, 'dates')).toBe(5);
+    expect(s.store.dates.qty).toBe(5);
   });
 
   it('leads to Friday after Thursday', () => {
@@ -85,12 +100,13 @@ describe('expeditions', () => {
 
   it('goes to town and back, filling the storeroom and using the days', () => {
     const s = fresh(3);
+    s.cash = 40;
     expect(setOut(s, 'groves', 5)).toBe(true);
     expect(s.trip!.layers).toHaveLength(TOWNS.groves.stops);
     playTrip(s);
     expect(s.trip).toBeNull();
     expect(s.dow).toBeGreaterThanOrEqual(2);
-    expect(stockOf(s, 'dates')).toBeGreaterThan(6);
+    expect(stockOf(s, 'dates')).toBeGreaterThan(TUTORIAL_DATES);
     expect(s.counters.trips).toBe(1);
   });
 
@@ -108,13 +124,12 @@ describe('expeditions', () => {
 describe('Friday', () => {
   it('takes rent, or sells to the wholesaler, or the stall is lost', () => {
     const s = fresh();
-    s.dow = FRIDAY; s.phase = 'friday';
-    const cash = s.cash;
-    expect(settleFriday(s).rentPaid).toBe(15);
-    expect(s.cash).toBe(cash - 15);
+    s.dow = FRIDAY; s.phase = 'friday'; s.cash = 20;
+    expect(settleFriday(s).rentPaid).toBe(5);
+    expect(s.cash).toBe(15);
 
     const t = fresh();
-    t.dow = FRIDAY; t.cash = 5;
+    t.dow = FRIDAY; t.cash = 1;
     const r = settleFriday(t);
     expect(r.wholesale.units).toBeGreaterThan(0);
     expect(r.broke).toBe(false);
@@ -132,8 +147,8 @@ describe('Friday', () => {
     const s = fresh();
     s.cash = 100;
     expect(buyUpgrade(s, 'shelf')).toBe(true);
-    expect(s.slots).toHaveLength(4);
-    expect(s.cash).toBe(40);
+    expect(s.slots).toHaveLength(2);
+    expect(s.cash).toBe(85);
   });
 
   it('runs four weeks to a season and four seasons to the year end', () => {
@@ -154,7 +169,7 @@ describe('the year end', () => {
     s.cash = 300;
     const before = yearEndCount(s).zakatableTotal;
     buyUpgrade(s, 'camel');
-    expect(yearEndCount(s).zakatableTotal).toBe(before - 70);
+    expect(yearEndCount(s).zakatableTotal).toBe(before - 25);
     expect(yearEndCount(s).zakat).toBeCloseTo(yearEndCount(s).zakatableTotal / 40);
   });
 });
@@ -188,6 +203,7 @@ describe('quests', () => {
 
   it('debts can be repaid early', () => {
     const s = fresh();
+    s.cash = 50;
     s.debts.push({ who: 'friend', amount: 40, due: questDue(s, 14)! });
     const cash = s.cash;
     expect(repayDebt(s, 0)).toBe(true);

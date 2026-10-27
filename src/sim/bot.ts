@@ -2,7 +2,7 @@
 // and a greedy one who overprices and takes every shortcut on the road.
 
 import { GOODS, GOOD_IDS, TOWNS, TOWN_IDS, UPGRADES, type GoodId, type TownId, type UpgradeId } from './data';
-import { DaySim } from './day';
+import { DaySim, tutorialDay } from './day';
 import { eventById } from './events';
 import {
   arriveHome, canSetOut, chooseNode, chooseOption, eventOptions, finishEvent, freeSpace, leaveTown, setOut,
@@ -141,6 +141,7 @@ export interface YearResult {
 export function playYear(st: Strategy, seed: number): YearResult {
   const s = newGame(seed);
   finishPrologue(s);
+  tutorialDay(s);
   let trips = 0;
   const worthBySeason: number[] = [];
   let lastSeason = s.season;

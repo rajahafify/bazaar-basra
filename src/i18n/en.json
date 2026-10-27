@@ -48,7 +48,7 @@
     "Your uncle leaves you his market stall, a storeroom with a little stock, and his ledger.",
     "His note: \"Each morning, choose. Open the stall and sell, or take the caravan out to buy.\"",
     "\"Keep enough for Friday's rent. Deal honestly on the road. At the year's end, count what you own and pay zakat.\"",
-    "Four seasons of four weeks. You have 70 dirham. The year starts now."
+    "Four seasons of four weeks. You have no money yet, only your uncle's dates. Sell them first."
   ],
   "morning": {
     "open": "Open the shop",
@@ -487,7 +487,7 @@
     },
     "carryForBrother": {
       "title": "Carry this for my brother",
-      "body": "A traveller asks you to carry three bundles to his brother in Basra. They take space.",
+      "body": "A traveller asks you to carry two bundles to his brother in Basra. They take space.",
       "a": "Agree",
       "b": "No room",
       "out": {
@@ -587,7 +587,7 @@
     },
     "upgradeText": {
       "shelf": "One more slot. Two more customers a day. Rent goes up.",
-      "camel": "8 more space in the caravan.",
+      "camel": "Carry 5 more goods on each trip.",
       "skins": "Carry up to 10 supplies.",
       "guide": "See every stop on the map.",
       "boy": "Empty slots refill themselves from the storeroom."
@@ -728,5 +728,20 @@
     "backedOut": "The buyer backed out. Nothing was written down.",
     "repaid": "Debt repaid early. Your name is good in the bazaar.",
     "rule": "Each side quest gives at least a week. Finish it early any morning, or it is settled on its Friday."
+  },
+  "tutorial": {
+    "slot": "Your uncle left 10 baskets of dates. Tap your slot and put the dates on it.",
+    "price": "Set your price with − and +. Dates are worth about {n} today.",
+    "next": "Got it",
+    "open": "Open the shop and watch your customers.",
+    "tooHigh": "That is too dear for a first day. Try a lower price.",
+    "watch": "Each customer shows how they feel about your price:",
+    "delighted": "a bargain",
+    "happy": "a fair price",
+    "unsure": "dear, but they buy",
+    "angry": "too dear, they leave",
+    "restock": "The slot is empty. Tap Restock to bring more dates from the storeroom.",
+    "night": "Sold out! That money is your capital. The notebook keeps every price you tried, with the face it got.",
+    "morning": "Each morning, choose: open the shop, or set out to buy more. Your storeroom is empty, so set out to the date groves."
   }
 }

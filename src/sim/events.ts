@@ -95,7 +95,7 @@ function rollOrder(s: GameState, rng: Rng, pool: readonly GoodId[], markup: numb
   const goods = pool.filter(g => open.includes(g));
   const good = rng.pick(goods.length ? goods : open);
   const dear = GOODS[good].fair >= 30;
-  const qty = dear ? rng.int(3, 4) : rng.int(6, 10);
+  const qty = dear ? rng.int(2, 3) : rng.int(4, 7);
   return { good, qty, price: Math.round(fair(s, good) * markup), days: questDays(s) };
 }
 
@@ -271,10 +271,10 @@ export const EVENTS: readonly EventDef[] = [
   {
     id: 'bigOrder', kind: 'trader',
     when: s => canOfferQuest(s) && !s.orders.some(o => o.from === 'cook'),
-    setup: s => ({ qty: 10, price: fair(s, 'salt') + 2, days: questDays(s) }),
+    setup: s => ({ qty: 6, price: fair(s, 'salt') + 2, days: questDays(s) }),
     options: [
-      { id: 'a', resolve: c => { c.order({ from: 'cook', good: 'salt', qty: 10, price: Number(c.vars.price), written: true, amanah: 2 }); } },
-      { id: 'b', resolve: c => { c.order({ from: 'cook', good: 'salt', qty: 10, price: Number(c.vars.price), written: false, amanah: 2 }); } },
+      { id: 'a', resolve: c => { c.order({ from: 'cook', good: 'salt', qty: 6, price: Number(c.vars.price), written: true, amanah: 2 }); } },
+      { id: 'b', resolve: c => { c.order({ from: 'cook', good: 'salt', qty: 6, price: Number(c.vars.price), written: false, amanah: 2 }); } },
       { id: 'c', resolve: () => {} },
     ],
   },
@@ -300,7 +300,7 @@ export const EVENTS: readonly EventDef[] = [
   {
     id: 'mosqueKitchen', kind: 'people',
     when: s => canOfferQuest(s) && !s.orders.some(o => o.from === 'imam'),
-    setup: (s, rng) => ({ qty: rng.int(6, 8), price: fair(s, 'dates'), days: questDays(s) }),
+    setup: (s, rng) => ({ qty: rng.int(4, 6), price: fair(s, 'dates'), days: questDays(s) }),
     options: [
       { id: 'a', resolve: c => { c.order({ from: 'imam', good: 'dates', qty: Number(c.vars.qty), price: Number(c.vars.price), written: true, amanah: 4, helps: true }); } },
       { id: 'b', resolve: () => {} },
@@ -381,7 +381,7 @@ export const EVENTS: readonly EventDef[] = [
     id: 'carryForBrother', kind: 'find',
     when: (_, t) => t.leg === 'back' && !t.flags.carrying,
     options: [
-      { id: 'a', need: needSpace(3), resolve: c => { c.trip.held += 3; c.trip.flags.carrying = 1; } },
+      { id: 'a', need: needSpace(2), resolve: c => { c.trip.held += 2; c.trip.flags.carrying = 1; } },
       { id: 'b', resolve: () => {} },
     ],
   },

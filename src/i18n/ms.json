@@ -48,7 +48,7 @@
     "Bapa saudara anda menyerahkan gerainya, sebuah stor dengan sedikit barang, dan buku kiranya.",
     "Pesannya: \"Setiap pagi, pilih. Buka gerai dan menjual, atau bawa kafilah keluar membeli.\"",
     "\"Simpan cukup untuk sewa hari Jumaat. Berniaga dengan jujur di jalan. Di hujung tahun, kira harta anda dan bayar zakat.\"",
-    "Empat musim, empat minggu setiap satu. Anda ada 70 dirham. Tahun bermula sekarang."
+    "Empat musim, empat minggu setiap satu. Anda belum ada wang, hanya kurma bapa saudara anda. Jual kurma itu dahulu."
   ],
   "morning": {
     "open": "Buka kedai",
@@ -487,7 +487,7 @@
     },
     "carryForBrother": {
       "title": "Bawakan untuk abang saya",
-      "body": "Seorang musafir meminta anda membawa tiga bungkusan kepada abangnya di Basra. Ia mengambil ruang.",
+      "body": "Seorang musafir meminta anda membawa dua bungkusan kepada abangnya di Basra. Ia mengambil ruang.",
       "a": "Setuju",
       "b": "Tiada ruang",
       "out": {
@@ -587,7 +587,7 @@
     },
     "upgradeText": {
       "shelf": "Satu slot lagi. Dua pelanggan lagi sehari. Sewa naik.",
-      "camel": "8 ruang lagi dalam kafilah.",
+      "camel": "Bawa 5 barang lagi setiap perjalanan.",
       "skins": "Bawa sehingga 10 bekalan.",
       "guide": "Lihat setiap hentian di peta.",
       "boy": "Slot kosong diisi semula sendiri dari stor."
@@ -728,5 +728,20 @@
     "backedOut": "Pembeli menarik diri. Tiada apa yang ditulis.",
     "repaid": "Hutang dibayar awal. Nama anda baik di pasar.",
     "rule": "Setiap misi sampingan memberi sekurang-kurangnya seminggu. Selesaikan awal pada mana-mana pagi, atau ia diselesaikan pada hari Jumaatnya."
+  },
+  "tutorial": {
+    "slot": "Bapa saudara anda meninggalkan 10 bakul kurma. Ketik slot anda dan letakkan kurma di situ.",
+    "price": "Tetapkan harga dengan − dan +. Kurma bernilai kira-kira {n} hari ini.",
+    "next": "Faham",
+    "open": "Buka kedai dan perhatikan pelanggan anda.",
+    "tooHigh": "Itu terlalu mahal untuk hari pertama. Cuba harga yang lebih rendah.",
+    "watch": "Setiap pelanggan menunjukkan perasaan mereka tentang harga anda:",
+    "delighted": "murah sekali",
+    "happy": "harga adil",
+    "unsure": "mahal, tetapi dibeli",
+    "angry": "terlalu mahal, mereka pergi",
+    "restock": "Slot sudah kosong. Ketik Isi semula untuk membawa lagi kurma dari stor.",
+    "night": "Habis dijual! Wang itu modal anda. Buku nota menyimpan setiap harga yang anda cuba, bersama reaksinya.",
+    "morning": "Setiap pagi, pilih: buka kedai, atau bertolak untuk membeli lagi. Stor anda kosong, jadi bertolaklah ke kebun kurma."
   }
 }

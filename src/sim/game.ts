@@ -11,7 +11,7 @@ import { zakatCount, type ZakatResult } from './ledger';
 import { createRng, type Rng } from './rng';
 import type { Trip } from './expedition';
 
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 
 export type Phase =
   | 'prologue'
@@ -201,14 +201,13 @@ export function newGame(seed: number, nowMs = 0): GameState {
     openingWorth: 0,
     minutesStart: nowMs,
   };
-  // The uncle leaves some dates and salt in the storeroom.
-  addStock(s, 'dates', 6, 3);
-  addStock(s, 'salt', 4, 2);
+  // No money, only the uncle's dates: the tutorial day sells them for the first capital.
+  addStock(s, 'dates', TUTORIAL_DATES, 3);
   // A merchant still owes the uncle money.
   s.owed.push({ who: 'merchant', amount: 20 });
+  // The slot starts empty: the shop tutorial has the player stock it.
   s.slots = Array.from({ length: BASE_SLOTS }, () => ({ good: null, qty: 0, cost: 0 }));
-  setSlotGood(s, 0, 'dates');
-  setSlotGood(s, 1, 'salt');
+  s.flags.tut = 0;
   s.openingWorth = netWorth(s);
   return s;
 }
@@ -349,6 +348,15 @@ export function customersToday(s: GameState): number {
   return BASE_CUSTOMERS + CUSTOMERS_PER_SHELF * s.upgrades.shelf + amanahCustomers(s.amanah) + s.regulars;
 }
 
+/** The uncle's dates, sold on the tutorial day. */
+export const TUTORIAL_DATES = 10;
+/** Tutorial steps, kept in flags.tut. */
+export const TUT = { slot: 0, price: 1, open: 2, watch: 3, restock: 4, selling: 5, morning: 6, done: 99 } as const;
+
+export function inTutorial(s: GameState): boolean {
+  return (s.flags.tut ?? TUT.done) < TUT.done;
+}
+
 export function startShopDay(s: GameState) {
   s.phase = 'shop';
   s.day = emptyDay(s.amanah);
@@ -370,7 +378,9 @@ export function recordSale(s: GameState, slot: number, qty: number, price: numbe
   s.day.revenue += revenue;
   s.counters.sold += n;
   s.counters.revenue += revenue;
-  s.demand[sl.good] = Math.max(0.75, s.demand[sl.good] - 0.02 * n);
+  // A dear price cools demand more, as in Moonlighter.
+  const dear = price > fairToday(s, sl.good) * 1.05;
+  s.demand[sl.good] = Math.max(0.75, s.demand[sl.good] - (dear ? 0.03 : 0.015) * n);
   if (s.upgrades.boy && sl.qty === 0) restockSlot(s, slot);
 }
 
@@ -540,10 +550,10 @@ export interface MainQuest {
 
 /** The main quest: one chapter a season, all of its objectives counted within that season. */
 export const MAIN_QUESTS: Readonly<Record<Season, MainQuest>> = {
-  1: { objectives: [{ counter: 'sold', target: 40 }, { counter: 'trips', target: 3 }, { counter: 'upgrades', target: 1 }], reward: 60 },
-  2: { objectives: [{ counter: 'revenue', target: 500 }, { counter: 'helped', target: 2 }, { counter: 'trips', target: 4 }], reward: 90 },
-  3: { objectives: [{ counter: 'sold', target: 90 }, { counter: 'upgrades', target: 2 }, { counter: 'helped', target: 3 }], reward: 120 },
-  4: { objectives: [{ counter: 'revenue', target: 1200 }, { counter: 'trips', target: 5 }, { counter: 'helped', target: 3 }], reward: 150 },
+  1: { objectives: [{ counter: 'sold', target: 25 }, { counter: 'trips', target: 3 }, { counter: 'upgrades', target: 1 }], reward: 25 },
+  2: { objectives: [{ counter: 'revenue', target: 250 }, { counter: 'helped', target: 2 }, { counter: 'trips', target: 4 }], reward: 40 },
+  3: { objectives: [{ counter: 'sold', target: 60 }, { counter: 'upgrades', target: 2 }, { counter: 'helped', target: 3 }], reward: 60 },
+  4: { objectives: [{ counter: 'revenue', target: 600 }, { counter: 'trips', target: 5 }, { counter: 'helped', target: 3 }], reward: 80 },
 };
 
 export function mainProgress(s: GameState): boolean[] {

@@ -2,12 +2,13 @@
 
 import { L, lang } from '../../i18n';
 import { clearGame, loadGame } from '../../platform/storage';
-import { finishPrologue, newGame } from '../../sim';
+import { finishPrologue, inTutorial, newGame } from '../../sim';
 import { LH, LW, type Draw } from '../../ui/draw';
 import { UI } from '../../world/palette';
 import type { App, Screen } from '../app';
 import { resume } from '../flow';
 import { MorningScreen } from './morning';
+import { ShopScreen } from './shop';
 
 export class TitleScreen implements Screen {
   camera = 'orbit' as const;
@@ -81,6 +82,7 @@ export class PrologueScreen implements Screen {
     if (this.page < L().prologue.length - 1) { this.page++; return; }
     finishPrologue(this.app.s!);
     this.app.save();
-    this.app.go(new MorningScreen(this.app));
+    // A new year starts with the guided shop day.
+    this.app.go(inTutorial(this.app.s!) ? new ShopScreen(this.app) : new MorningScreen(this.app));
   }
 }

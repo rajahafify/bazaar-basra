@@ -4,8 +4,8 @@
 import { L, fmt, money } from '../../i18n';
 import { emit } from '../../platform/bridge';
 import {
-  GOOD_IDS, MAIN_QUESTS, SUPPLY_PRICE, TOWNS, TOWN_IDS, canSetOut, caravanSpace, dayIndex, daysBeforeFriday,
-  deliverOrder, goodsInStore, mainQuestDone, notebookRange, rentDue, repayDebt, setOut, sideQuestCount, stockOf,
+  GOOD_IDS, MAIN_QUESTS, SUPPLY_PRICE, TUT, TOWNS, TOWN_IDS, canSetOut, caravanSpace, dayIndex, daysBeforeFriday,
+  deliverOrder, goodsInStore, mainQuestDone, rentDue, repayDebt, setOut, sideQuestCount, stockOf,
   suggestedSupplies, supplyCap, tripDays, type GoodId, type TownId,
 } from '../../sim';
 import type { Draw } from '../../ui/draw';
@@ -57,7 +57,8 @@ export class MorningScreen implements Screen {
     if (this.mode === 'quests') { this.drawQuests(d); return; }
     if (this.mode === 'setout') { this.drawSetOut(d); return; }
 
-    app.crier(d, this.nextStep(), 116);
+    const tutorial = s.flags.tut === TUT.morning;
+    app.crier(d, tutorial ? L().tutorial.morning : this.nextStep(), 116);
     d.bar(6, 388, 348, 246);
     d.text(t.store, 20, 406, { size: 14, font: 'head', color: UI.parch });
     const goods = GOOD_IDS.filter(g => stockOf(s, g) > 0);
@@ -76,6 +77,11 @@ export class MorningScreen implements Screen {
     const anything = goodsInStore(s).length > 0 || s.slots.some(sl => sl.qty > 0);
     d.button('open', 16, 548, 160, 48, t.open, { size: 17, fill: anything ? UI.gold : UI.parchDark });
     d.button('setout', 184, 548, 160, 48, t.setOut, { size: 17 });
+    if (tutorial) {
+      const pulse = 0.55 + 0.45 * Math.sin(performance.now() / 220);
+      d.ctx.save(); d.ctx.strokeStyle = `rgba(233,168,58,${pulse})`; d.ctx.lineWidth = 4;
+      d.rr(180, 544, 168, 56, 10); d.ctx.stroke(); d.ctx.restore();
+    }
     d.button('notebook', 16, 602, 104, 26, t.notebook, { size: 12, fill: UI.parchDark });
     const n = sideQuestCount(s);
     d.button('quests', 128, 602, 104, 26, n ? `${t.goals} · ${n}` : t.goals, { size: 12, fill: n ? UI.gold : UI.parchDark });
@@ -100,11 +106,8 @@ export class MorningScreen implements Screen {
       const y = 196 + i * 46;
       d.goodIcon(g, 42, y + 8, 0.7);
       d.text(L().goods[g], 72, y, { size: 14, font: 'head' });
-      const r = notebookRange(s, g);
-      const parts: string[] = [];
-      if (r.good !== null) parts.push(fmt(L().shop.knownGood, { n: r.good }));
-      if (r.tooHigh !== null) parts.push(fmt(L().shop.knownHigh, { n: r.tooHigh }));
-      d.text(parts.length ? parts.join(' · ') : t.none, 72, y + 18, { size: 12, color: parts.length ? UI.ink : UI.inkSoft, maxWidth: 260 });
+      if (Object.keys(s.notebook[g]).length) d.priceChips(s.notebook[g], 72, y + 20, 262, 12);
+      else d.text(t.none, 72, y + 18, { size: 12, color: UI.inkSoft, maxWidth: 260 });
     });
     if (s.flags.zakatPage) d.para(t.zakat, 180, 528, 300, { size: 11.5, align: 'center', color: UI.inkSoft }, 14);
     d.button('close', 120, 570, 120, 40, L().close, { size: 15, fill: UI.parchDark });
@@ -241,6 +244,7 @@ export class MorningScreen implements Screen {
       if (id.startsWith('debt-') && repayDebt(s, Number(id.slice(5)))) { app.toast(t.repaid); app.save(); }
       return;
     }
+    if ((id === 'setout' || id === 'open') && s.flags.tut === TUT.morning) s.flags.tut = TUT.done;
     if (id === 'setout') this.openSetOut();
     if (id === 'open') app.go(new ShopScreen(app));
   }

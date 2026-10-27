@@ -5,8 +5,8 @@
 import { L, fmt, money } from '../../i18n';
 import { emit } from '../../platform/bridge';
 import {
-  DAY_SECONDS, DaySim, GOOD_IDS, averageCost, endShopDay, notebookRange, restockSlot, setPrice, setSlotGood,
-  startShopDay, type DayEvent, type GoodId, type Reaction,
+  DAY_SECONDS, DaySim, GOOD_IDS, REACTION_EMOJI, TUT, averageCost, endShopDay, fairToday, inTutorial, restockSlot,
+  setPrice, setSlotGood, startShopDay, type DayEvent, type GoodId, type Reaction,
 } from '../../sim';
 import type { Draw, Mood } from '../../ui/draw';
 import { UI } from '../../world/palette';
@@ -48,13 +48,19 @@ export class ShopScreen implements Screen {
 
   update(dt: number) {
     if (this.mode !== 'open' || !this.day) return;
+    // The tutorial waits while the player restocks the empty slot.
+    if (this.app.s!.flags.tut === TUT.restock) return;
     for (const e of this.day.step(dt)) this.onEvent(e);
   }
 
   private onEvent(e: DayEvent) {
     const s = this.app.s!;
     if (e.kind === 'decide' && e.customer.shelf !== null) { this.lastMood[e.customer.shelf] = e.customer.reaction; this.syncShelves(); }
-    if (e.kind === 'empty') this.syncShelves();
+    if (e.kind === 'empty') {
+      this.syncShelves();
+      const sl = s.slots[e.slot];
+      if (s.flags.tut === TUT.watch && sl?.good && s.store[sl.good].qty > 0) s.flags.tut = TUT.restock;
+    }
     if (e.kind === 'asked') this.say(fmt(L().shop.asked, { good: L().goods[e.customer.want] }), 2.4);
     if (e.kind === 'closed') {
       this.mode = 'night';
@@ -79,19 +85,67 @@ export class ShopScreen implements Screen {
     app.topBar(d, app.calendar(), undefined, progress);
     app.amanahBar(d);
     app.sidePanel(d, this.mode === 'open' && this.day ? fmt(t.openFor, { s: Math.max(0, Math.ceil(DAY_SECONDS - this.day.t)) }) : L().days[s.dow]!);
-    if (this.mode === 'setup') app.crier(d, t.setupHint, 116, 0.95);
+    if (this.mode === 'setup' && !inTutorial(s)) app.crier(d, t.setupHint, 116, 0.95);
     else if (this.hint && this.hintT > 0) app.crier(d, this.hint, 116, Math.min(1, this.hintT * 2));
 
     this.drawCards(d);
 
     if (this.mode === 'setup' && this.picking === null) {
       const any = s.slots.some(sl => sl.good && sl.qty > 0);
-      d.button('home', 16, 340, 110, 42, t.home, { size: 15, fill: UI.parchDark });
+      if (!inTutorial(s)) d.button('home', 16, 340, 110, 42, t.home, { size: 15, fill: UI.parchDark });
       d.button('open', 190, 336, 154, 48, t.open, { size: 19, disabled: !any });
       if (!any) d.text(t.nothing, 180, 320, { size: 12.5, align: 'center', color: UI.parch });
     }
     if (this.picking !== null) this.drawPicker(d);
     if (this.mode === 'night') this.drawNight(d);
+    if (inTutorial(s)) this.drawTutorial(d);
+  }
+
+  /** What the tutorial asks for now, and which controls it points at. */
+  private tutorialStep(): { text: string; targets: string[]; next?: boolean } | null {
+    const s = this.app.s!, t = L().tutorial, step = s.flags.tut;
+    const legend = `${REACTION_EMOJI.delighted} ${t.delighted}  ${REACTION_EMOJI.happy} ${t.happy}\n${REACTION_EMOJI.unsure} ${t.unsure}  ${REACTION_EMOJI.angry} ${t.angry}`;
+    if (this.mode === 'setup') {
+      if (step === TUT.slot) return { text: t.slot, targets: this.picking === null ? ['slot-0'] : ['pick-dates'] };
+      if (step === TUT.price) return { text: fmt(t.price, { n: Math.round(fairToday(s, 'dates')) }), targets: ['minus-0', 'plus-0'], next: true };
+      return { text: t.open, targets: ['open'] };
+    }
+    if (this.mode === 'open') {
+      if (step === TUT.restock) return { text: t.restock, targets: ['restock-0'] };
+      return { text: `${t.watch}\n${legend}`, targets: [] };
+    }
+    return { text: t.night, targets: ['next'] };
+  }
+
+  private drawTutorial(d: Draw) {
+    const step = this.tutorialStep();
+    if (!step) return;
+    // Outline the controls it points at, pulsing.
+    const pulse = 0.55 + 0.45 * Math.sin(performance.now() / 220);
+    d.ctx.save();
+    d.ctx.strokeStyle = `rgba(233,168,58,${pulse})`; d.ctx.lineWidth = 4;
+    for (const h of d.hits.filter(h => step.targets.includes(h.id))) { d.rr(h.x - 4, h.y - 4, h.w + 8, h.h + 8, 10); d.ctx.stroke(); }
+    d.ctx.restore();
+    const lines = step.text.split('\n');
+    const heights = lines.map(l => d.lines(l, 300, { size: 14 }) * 19);
+    const h = 22 + heights.reduce((a, b) => a + b, 0) + (step.next ? 44 : 0);
+    const y = this.mode === 'night' ? 96 : 116;
+    d.panel(10, y, 340, h, '#f6e3b4', UI.gold);
+    let yy = y + 20;
+    lines.forEach((l, i) => { d.para(l, 180, yy, 300, { size: 14, align: 'center' }, 19); yy += heights[i]!; });
+    if (step.next) d.button('tut-next', 120, y + h - 42, 120, 34, L().tutorial.next, { size: 14 });
+  }
+
+  /** In the tutorial only the control it points at works. */
+  private tutorialAllows(id: string): boolean {
+    const s = this.app.s!;
+    if (!inTutorial(s)) return true;
+    const step = s.flags.tut;
+    if (this.mode === 'night') return id === 'next';
+    if (this.mode === 'open') return step === TUT.restock ? id === 'restock-0' : false;
+    if (step === TUT.slot) return id === 'slot-0' || id === 'pick-dates' || id === 'pick-cancel';
+    if (step === TUT.price) return id === 'minus-0' || id === 'plus-0' || id === 'tut-next';
+    return id === 'open' || id === 'minus-0' || id === 'plus-0';
   }
 
   private drawBubbles(d: Draw) {
@@ -162,14 +216,17 @@ export class ShopScreen implements Screen {
   /** What the notebook knows about a good, and what it cost you. */
   private cardKnowledge(d: Draw, good: GoodId, x: number, y: number, w: number) {
     const s = this.app.s!, t = L().shop;
-    const r = notebookRange(s, good);
-    const lines: Array<[string, string]> = [];
-    if (r.good !== null) lines.push([fmt(t.knownGood, { n: r.good }), UI.green]);
-    if (r.tooHigh !== null) lines.push([fmt(t.knownHigh, { n: r.tooHigh }), UI.red]);
-    if (!lines.length) lines.push([t.unknown, UI.inkSoft]);
+    // The notebook: each price tried with the emoji it got, two rows at most.
+    const book = s.notebook[good];
+    const prices = Object.keys(book).map(Number).sort((a, b) => a - b);
+    if (!prices.length) d.text(t.unknown, x, y, { size: 10.5, color: UI.inkSoft, maxWidth: w });
+    else {
+      const half = Math.ceil(prices.length / 2);
+      const rows = prices.length > 3 ? [prices.slice(0, half), prices.slice(half)] : [prices];
+      rows.forEach((row, k) => d.priceChips(Object.fromEntries(row.map(p => [String(p), book[String(p)]!])), x, y + k * 17, w, 10.5));
+    }
     const cost = averageCost(s, good);
-    if (cost !== null) lines.push([fmt(t.cost, { n: money(cost) }), UI.inkSoft]);
-    lines.forEach(([text, color], k) => d.text(text, x, y + k * 15, { size: 10.5, color, maxWidth: w }));
+    if (cost !== null) d.text(fmt(t.cost, { n: money(cost) }), x, y + 36, { size: 10.5, color: UI.inkSoft, maxWidth: w });
   }
 
   private drawPicker(d: Draw) {
@@ -207,8 +264,14 @@ export class ShopScreen implements Screen {
 
   press(id: string) {
     const app = this.app, s = app.s!;
+    if (!this.tutorialAllows(id)) return;
+    if (id === 'tut-next') { s.flags.tut = TUT.open; return; }
     if (this.mode === 'night') {
-      if (id === 'next') { endShopDay(s); afterDay(app); }
+      if (id === 'next') {
+        if (inTutorial(s)) s.flags.tut = TUT.morning;
+        endShopDay(s);
+        afterDay(app);
+      }
       return;
     }
     if (this.picking !== null) {
@@ -216,6 +279,7 @@ export class ShopScreen implements Screen {
       if (id.startsWith('pick-')) {
         const what = id.slice(5);
         if (what !== 'cancel') { setSlotGood(s, i, what === 'none' ? null : (what as GoodId)); this.lastMood[i] = null; this.syncShelves(); }
+        if (what === 'dates' && s.flags.tut === TUT.slot) s.flags.tut = TUT.price;
         this.picking = null;
       }
       return;
@@ -225,14 +289,17 @@ export class ShopScreen implements Screen {
       const i = Number(m[2]);
       const sl = s.slots[i]!;
       if (m[1] === 'slot') { this.picking = i; return; }
-      if (m[1] === 'restock') { restockSlot(s, i); this.syncShelves(); return; }
+      if (m[1] === 'restock') { restockSlot(s, i); this.syncShelves(); if (s.flags.tut === TUT.restock) s.flags.tut = TUT.selling; return; }
       if (sl.good) setPrice(s, sl.good, s.prices[sl.good] + (m[1] === 'plus' ? 1 : -1));
       return;
     }
     if (this.mode === 'setup' && id === 'home') { app.go(new MorningScreen(app)); return; }
     if (this.mode === 'setup' && id === 'open') {
+      const tutorial = inTutorial(s);
+      if (tutorial && s.prices.dates > fairToday(s, 'dates') * 1.25) { this.say(L().tutorial.tooHigh); return; }
       startShopDay(s);
-      this.day = new DaySim(s);
+      if (tutorial) s.flags.tut = TUT.watch;
+      this.day = new DaySim(s, tutorial);
       this.mode = 'open';
       app.world.clearCustomers();
     }

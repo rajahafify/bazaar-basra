@@ -26,8 +26,8 @@ export const GOODS: Readonly<Record<GoodId, Good>> = {
   dates: { id: 'dates', fair: 6, space: 1, season: { 1: 1, 2: 1, 3: 0.85, 4: 1.15 } },
   salt: { id: 'salt', fair: 5, space: 1, season: { 1: 1, 2: 1.2, 3: 1, 4: 0.9 } },
   fish: { id: 'fish', fair: 9, space: 1, season: { 1: 1, 2: 0.9, 3: 1, 4: 1.15 } },
-  vinegar: { id: 'vinegar', fair: 11, space: 2, season: { 1: 1.1, 2: 1, 3: 1, 4: 0.95 } },
-  beef: { id: 'beef', fair: 16, space: 2, season: { 1: 0.95, 2: 1, 3: 1.05, 4: 1.2 } },
+  vinegar: { id: 'vinegar', fair: 11, space: 1, season: { 1: 1.1, 2: 1, 3: 1, 4: 0.95 } },
+  beef: { id: 'beef', fair: 16, space: 1, season: { 1: 0.95, 2: 1, 3: 1.05, 4: 1.2 } },
   cardamom: { id: 'cardamom', fair: 30, space: 1, season: flat },
   saffron: { id: 'saffron', fair: 48, space: 1, season: { 1: 1, 2: 1, 3: 1.1, 4: 1.15 } },
 };
@@ -55,8 +55,8 @@ export const TOWNS: Readonly<Record<TownId, Town>> = {
 /** Chance a rare good is on sale on a given visit. */
 export const RARE_CHANCE = 0.5;
 
-export const SUPPLY_PRICE = 2;
-export const TOWN_SUPPLY_PRICE = 3;
+export const SUPPLY_PRICE = 1;
+export const TOWN_SUPPLY_PRICE = 2;
 
 // ---------- the stall and the caravan ----------
 
@@ -69,33 +69,34 @@ export interface Upgrade {
 }
 
 export const UPGRADES: Readonly<Record<UpgradeId, Upgrade>> = {
-  shelf: { id: 'shelf', costs: [60, 120, 200] },
-  camel: { id: 'camel', costs: [70, 140, 220] },
-  skins: { id: 'skins', costs: [40] },
-  guide: { id: 'guide', costs: [90] },
-  boy: { id: 'boy', costs: [150] },
+  shelf: { id: 'shelf', costs: [15, 35, 60, 100, 150] },
+  camel: { id: 'camel', costs: [25, 50, 90] },
+  skins: { id: 'skins', costs: [15] },
+  guide: { id: 'guide', costs: [40] },
+  boy: { id: 'boy', costs: [60] },
 };
 
-export const BASE_SLOTS = 3;
-export const BASE_SPACE = 12;
-export const SPACE_PER_CAMEL = 8;
+/** The stall starts small: one slot, and a caravan that carries five units. */
+export const BASE_SLOTS = 1;
+export const BASE_SPACE = 5;
+export const SPACE_PER_CAMEL = 5;
 export const BASE_SUPPLY_CAP = 6;
 export const SKINS_SUPPLY_CAP = 10;
 /** Most units one shelf slot holds at a time. */
 export const SLOT_STACK = 5;
 
 /** Weekly rent, by how many extra shelves the stall has. */
-export const RENT = [15, 20, 26, 33] as const;
+export const RENT = [5, 7, 10, 14, 19, 25] as const;
 
 // ---------- customers ----------
 
 export const DAY_SECONDS = 40;
-export const BASE_CUSTOMERS = 8;
+export const BASE_CUSTOMERS = 7;
 export const CUSTOMERS_PER_SHELF = 2;
 
 // ---------- the year ----------
 
-export const OPENING_CASH = 70;
+export const OPENING_CASH = 0;
 export const OPENING_AMANAH = 50;
 export const AMANAH_MIN = 0;
 export const AMANAH_MAX = 100;
