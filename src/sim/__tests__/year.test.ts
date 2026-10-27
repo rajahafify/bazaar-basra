@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { CAREFUL, CARELESS, playYear } from '../bot';
 import {
   DaySim, autoPack, buyOne, chooseSource, deserialize, finishPrologue, gridFor, hireCart, leaveSource, newGame,
-  rideHome, serialize, startWeek, stockOf,
+  rideHome, serialize, startWeek, stockOf, valuations, yearEndCount,
 } from '../index';
 
 describe('a whole year', () => {
@@ -79,5 +79,24 @@ describe('saving', () => {
     expect(deserialize(serialize(s))).toEqual(s);
     expect(deserialize('{nope')).toBeNull();
     expect(deserialize(null)).toBeNull();
+  });
+});
+
+describe('year end (gdd 6)', () => {
+  it('offers paid, market and hoped prices, and counts stock at market', () => {
+    const s = newGame(5);
+    finishPrologue(s);
+    chooseSource(s, 'port');
+    hireCart(s, 'handcart');
+    buyOne(s, 'cloth'); buyOne(s, 'spices');
+    autoPack(s); leaveSource(s); rideHome(s); startWeek(s);
+    s.week = 4;
+    const v = valuations(s);
+    const cloth = v.find(x => x.good === 'cloth')!;
+    expect(cloth.qty).toBe(2); // one bought, one from the uncle
+    expect(cloth.market).toBe(40); // winter price (gdd 9.2)
+    expect(cloth.hoped).toBeGreaterThan(cloth.market);
+    const count = yearEndCount(s);
+    expect(count.zakatableTotal).toBe(s.cash + 2 * 40 + 50 + 2 * 11);
   });
 });
