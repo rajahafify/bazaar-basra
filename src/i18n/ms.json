@@ -1,0 +1,255 @@
+{
+  "dirham": "dirham",
+  "amanah": "Amanah",
+  "next": "Seterusnya",
+  "back": "Kembali",
+  "tapToContinue": "Ketik untuk teruskan",
+  "weekLabel": "Minggu {week} · {season}",
+  "dayLabel": "Hari {day} daripada 5",
+  "seasons": [
+    "Musim Bunga",
+    "Musim Panas",
+    "Musim Luruh",
+    "Musim Sejuk"
+  ],
+  "goods": {
+    "dates": "Kurma",
+    "pottery": "Tembikar",
+    "straw": "Jerami",
+    "cloth": "Kain",
+    "spices": "Rempah",
+    "leather": "Kulit"
+  },
+  "goodUnits": {
+    "dates": "bakul",
+    "pottery": "tempayan",
+    "straw": "ikat",
+    "cloth": "gulung",
+    "spices": "karung",
+    "leather": "ikat"
+  },
+  "title": {
+    "name": "Pasar Basra",
+    "tagline": "Setahun di gerai pasar",
+    "play": "Tahun baharu",
+    "continue": "Sambung",
+    "lang": "English"
+  },
+  "prologue": [
+    "Basra, tahun 638. Kota ini baharu, dibina daripada buluh dan bata lumpur di pertemuan sungai.",
+    "Bapa saudara anda menyerahkan gerai dan buku kiranya, lalu pergi jauh.",
+    "Pesannya: \"Jaga timbangan yang jujur. Catat setiap kos. Di hujung tahun, kira harta anda.\"",
+    "Penyeru membaca surat Umar al-Khattab RA: nilaikan barang dagangan setiap tahun dan bayar zakatnya. (Parafrasa)",
+    "Anda ada 160 dirham, dua bakul kurma dan segulung kain. Setahun hijrah bermula sekarang."
+  ],
+  "stall": {
+    "title": "Sewa gerai untuk minggu ini",
+    "small": "Gerai kecil",
+    "medium": "Gerai sederhana",
+    "big": "Gerai besar",
+    "shelves": "{n} rak",
+    "rent": "Sewa {n}",
+    "customers": "{a} hingga {b} pelanggan sehari",
+    "where": {
+      "small": "Barisan belakang, dekat gerbang",
+      "medium": "Lorong tengah",
+      "big": "Sudut tepi perigi"
+    },
+    "loan": "Duit sewa tak cukup. Kawan bapa saudara anda meminjamkan {n} dirham tanpa faedah (qard hasan)."
+  },
+  "places": {
+    "market": "Pasar",
+    "gate": "Pintu Kota",
+    "bayt": "Baitulmal"
+  },
+  "alley": {
+    "title": "Lorong Basra",
+    "hint": "Pilih tempat untuk dituju.",
+    "walking": "Berjalan...",
+    "arrive": {
+      "market": "Pintu masuk pasar. Gerai anda menunggu.",
+      "gate": "Pintu kota. Kafilah ke kebun kurma dan pelabuhan bertolak dari sini.",
+      "bayt": "Baitulmal. Zakat dikira dan dibayar di sini pada hujung tahun."
+    },
+    "notYet": "Datang semula pada hujung tahun.",
+    "toGate": "Keluar pintu kota",
+    "enterBayt": "Masuk",
+    "enterBazaar": "Masuk pasar"
+  },
+  "source": {
+    "title": "Di mana anda membeli hujung minggu ini?",
+    "groves": "Kebun kurma",
+    "port": "Pelabuhan Ubulla",
+    "bedouin": "Khemah Badwi",
+    "grovesSells": "Kurma, tembikar, jerami",
+    "portSells": "Kain, rempah",
+    "bedouinSells": "Kulit, tunai atau hutang",
+    "crier2": "Penyeru: kapal dari Hindustan berlabuh di Ubulla. Rempah murah minggu ini.",
+    "crier3": "Seorang pedagang Badwi berkhemah di luar pintu kota. Dia menjual kulit secara hutang.",
+    "crier4": "Musim sejuk tiba. Kain laris dalam cuaca sejuk."
+  },
+  "cart": {
+    "title": "Sewa kereta",
+    "handcart": "Kereta tolak",
+    "donkey": "Kereta keldai",
+    "camels": "Dua ekor unta",
+    "grid": "{c} x {r} petak",
+    "hire": "Sewa {n}",
+    "match": "Sesuai untuk {stall}"
+  },
+  "buy": {
+    "title": "Beli dan susun",
+    "hint": "Beli, kemudian ketik barang dan ketik kereta untuk menyusun.",
+    "tray": "Belum disusun",
+    "rotate": "Pusing",
+    "auto": "Susun sendiri",
+    "leave": "Bertolak",
+    "credit": "Secara hutang",
+    "unpacked": "{n} yang belum disusun akan dipulangkan.",
+    "cantFit": "Barang itu tak muat di situ.",
+    "padNote": "Tempayan yang bersentuh kain atau jerami tidak pecah."
+  },
+  "ride": {
+    "title": "Perjalanan pulang",
+    "broken": "{n} tempayan pecah di jalan. Jerami boleh menyelamatkannya.",
+    "brokenMany": "{n} tempayan pecah di jalan. Jerami boleh menyelamatkannya.",
+    "whole": "Semua barang sampai dengan selamat."
+  },
+  "weekendLedger": {
+    "title": "Buku kira hujung minggu",
+    "colGood": "Barang",
+    "colBuy": "Beli",
+    "colHire": "Bahagian sewa",
+    "colLanded": "Kos sampai",
+    "goods": "Barang",
+    "hire": "Sewa kereta",
+    "total": "Jumlah belanja",
+    "wasted": "Sewa untuk {n} petak kosong",
+    "credit": "Dibeli secara hutang, dibayar hujung tahun",
+    "broken": "Pecah di jalan",
+    "note": "Kos sampai ialah harga terendah anda. Jual lebih daripadanya.",
+    "toStall": "Ke gerai"
+  },
+  "shop": {
+    "setup": "Tetapkan harga, kemudian buka gerai.",
+    "setup2": "Perhatikan pelanggan.",
+    "open": "Buka Gerai",
+    "openFor": "Gerai dibuka · {s}s",
+    "closed": "Gerai ditutup",
+    "cost": "kos {n}",
+    "empty": "Kosong",
+    "tapToChange": "Ketik untuk tukar",
+    "spoilSoon": "Rosak esok",
+    "inspector": "Muhtasib memeriksa timbangan anda. Gerai dibuka tengah hari.",
+    "crierCaravan": "Penyeru: kafilah lewat. Kurma berkurangan hari ini.",
+    "crierHarith": "Menyorok makanan untuk menaikkan harga (ihtikar) adalah haram.",
+    "crierEnd": "Penyeru: setahun sudah berlalu. Kira harta anda.",
+    "rest": "Tiada barang untuk dijual. Tutup gerai hari ini"
+  },
+  "scale": {
+    "title": "Pelanggan minta ditimbang",
+    "hint": "Tekan lama untuk mengisi. Lepaskan pada garisan.",
+    "hold": "Tekan",
+    "fair": "Timbangan yang adil.",
+    "short": "Timbangan kurang. Pelanggan perasan.",
+    "over": "Terlebih. Anda memberi stok percuma."
+  },
+  "harith": {
+    "title": "Harith bersandar di gerai anda",
+    "body": "\"Kafilah lewat. Simpan kurma anda sampai esok dan jual mahal.\"",
+    "fair": "Jual pada harga adil",
+    "hold": "Simpan kurma",
+    "fairOutcome": "Anda berjual dengan adil. Berita tersebar, pelanggan tetap datang setiap hari.",
+    "holdOutcome": "Muhtasib nampak rak kosong. Kafilah tiba malam tadi, kini kurma murah."
+  },
+  "night": {
+    "title": "Malam",
+    "sold": "Terjual",
+    "takings": "Hasil",
+    "credit": "Jualan secara hutang",
+    "walked": "Pergi tanpa beli",
+    "spoiled": "Rosak",
+    "soon": "Rosak esok",
+    "inspector": "Muhtasib datang esok pagi.",
+    "next": "Pagi esok",
+    "toLedger": "Buka buku kira"
+  },
+  "ledger": {
+    "title": "Buku kira minggu {week}",
+    "revenue": "Hasil jualan",
+    "cogs": "Kos barang dijual (kos sampai)",
+    "rent": "Sewa gerai",
+    "written": "Rosak, pecah dan jerami",
+    "wasted": "Sewa petak kosong",
+    "profit": "Untung minggu ini",
+    "cash": "Wang dalam peti",
+    "stock": "Stok dibawa ke depan (kos sampai)",
+    "owedToYou": "Hutang orang kepada anda",
+    "youOwe": "Hutang anda",
+    "next": "Minggu depan",
+    "yearEnd": "Setahun sudah berlalu"
+  },
+  "bayt": {
+    "title": "Baitulmal",
+    "clerk": "Kerani membuka buku kira anda. \"Mari kita kira harta anda hari ini.\"",
+    "valueTitle": "Nilaikan stok anda",
+    "valueHint": "Pilih harga untuk setiap timbunan.",
+    "tagPaid": "Harga beli {n}",
+    "tagMarket": "Harga pasaran hari ini {n}",
+    "tagHoped": "Harga diharap {n}",
+    "wrongPaid": "Bukan harga beli. Barang dagangan dinilai pada harga pasaran hari ini.",
+    "wrongHoped": "Bukan harga yang diharap. Guna harga yang pasaran bayar hari ini.",
+    "noStock": "Stor anda kosong. Tiada apa untuk dinilai.",
+    "cash": "Wang dalam peti",
+    "stock": "Stok pada harga pasaran hari ini",
+    "owed": "Hutang orang kepada anda",
+    "debts": "Hutang yang perlu dibayar sekarang",
+    "total": "Jumlah harta berzakat",
+    "nisab": "Nisab",
+    "due": "Zakat (satu perempat puluh)",
+    "under": "Harta anda di bawah nisab. Tiada zakat tahun ini.",
+    "pay": "Bayar {n} dirham",
+    "continue": "Teruskan",
+    "paid": "Kerani mencatat zakat anda dalam daftarnya.",
+    "sadaqahTitle": "Sedekah",
+    "sadaqahBody": "Zakat sudah dibayar. Mahu bersedekah lagi, secara sukarela?",
+    "none": "Bukan sekarang",
+    "give": "Beri {n}"
+  },
+  "asnaf": {
+    "title": "Ke mana zakat pergi",
+    "names": [
+      "Fakir",
+      "Miskin",
+      "Amil",
+      "Muallaf",
+      "Riqab",
+      "Gharimin",
+      "Fisabilillah",
+      "Ibnu Sabil"
+    ],
+    "scenes": [
+      "Seorang balu tanpa pendapatan menerima makanan sebulan.",
+      "Seorang buruh yang bekerja tetapi tak cukup untuk sewa dibantu.",
+      "Kerani itu sendiri dibayar untuk kerjanya.",
+      "Seorang tukang Parsi yang baru memeluk Islam dibantu menetap di kota.",
+      "Seorang lelaki membayar untuk menebus kebebasannya.",
+      "Seorang tukang perahu yang perahunya tenggelam dilangsaikan hutangnya.",
+      "Bantuan untuk kerja kebajikan masyarakat.",
+      "Seorang musafir yang dirompak di jalan diberi bekal untuk pulang."
+    ],
+    "others": "Zakat peniaga lain membuat kebaikan ini tahun ini."
+  },
+  "end": {
+    "title": "Tahun anda",
+    "profit": "Jumlah untung",
+    "amanah": "Amanah",
+    "zakat": "Zakat dibayar",
+    "sadaqah": "Sedekah diberi",
+    "line": "Zakat perniagaan masih wajib hari ini. Kira zakat anda.",
+    "cta": "Kira zakat saya",
+    "share": "Kongsi",
+    "again": "Main lagi",
+    "shareText": "Setahun saya di Pasar Basra: untung {profit} dirham, amanah {amanah}, zakat {zakat} dirham dibayar."
+  }
+}

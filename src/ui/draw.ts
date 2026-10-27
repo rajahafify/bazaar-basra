@@ -1,0 +1,249 @@
+// Canvas UI on the fixed 360 x 640 frame: parchment panels, wooden bars, coins and icons
+// (style guide 4.7, 5). Buttons register hit areas as they are drawn each frame.
+
+import type { GoodId } from '../sim';
+import { UI } from '../world/palette';
+
+export const LW = 360;
+export const LH = 640;
+
+export interface Hit {
+  id: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  /** A press-and-hold control (the scale). */
+  hold?: boolean;
+}
+
+export interface TextOpts {
+  size?: number;
+  font?: 'body' | 'head';
+  weight?: number;
+  color?: string;
+  align?: CanvasTextAlign;
+  maxWidth?: number;
+}
+
+export interface ButtonOpts {
+  fill?: string;
+  color?: string;
+  size?: number;
+  disabled?: boolean;
+  hold?: boolean;
+}
+
+export type Mood = 'delighted' | 'happy' | 'unsure' | 'angry';
+
+const FONTS = { body: '"Alegreya Sans", "Trebuchet MS", sans-serif', head: '"Reem Kufi", "Trebuchet MS", sans-serif' };
+
+export class Draw {
+  readonly hits: Hit[] = [];
+
+  constructor(readonly ctx: CanvasRenderingContext2D) {}
+
+  begin(scale: number) {
+    this.hits.length = 0;
+    this.ctx.setTransform(scale, 0, 0, scale, 0, 0);
+    this.ctx.clearRect(0, 0, LW, LH);
+  }
+
+  rr(x: number, y: number, w: number, h: number, r: number) {
+    const c = this.ctx;
+    c.beginPath();
+    c.moveTo(x + r, y);
+    c.arcTo(x + w, y, x + w, y + h, r);
+    c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r);
+    c.arcTo(x, y, x + w, y, r);
+    c.closePath();
+  }
+
+  panel(x: number, y: number, w: number, h: number, fill: string = UI.parch, edge: string = UI.panelEdge) {
+    const c = this.ctx;
+    c.save();
+    c.fillStyle = 'rgba(30,20,10,.28)'; this.rr(x + 2, y + 3, w, h, 9); c.fill();
+    c.fillStyle = fill; this.rr(x, y, w, h, 9); c.fill();
+    c.lineWidth = 2; c.strokeStyle = edge; c.stroke();
+    c.lineWidth = 1; c.strokeStyle = 'rgba(255,255,255,.35)'; this.rr(x + 3, y + 3, w - 6, h - 6, 7); c.stroke();
+    c.restore();
+  }
+
+  /** Wooden bar panel, for the lower control area. */
+  bar(x: number, y: number, w: number, h: number) {
+    this.panel(x, y, w, h, UI.panel, UI.panelEdge);
+  }
+
+  dim(alpha = 0.45) {
+    this.ctx.fillStyle = `rgba(30,20,10,${alpha})`;
+    this.ctx.fillRect(0, 0, LW, LH);
+  }
+
+  font(o: TextOpts = {}) {
+    const size = o.size ?? 14;
+    this.ctx.font = `${o.weight ?? 700} ${size}px ${FONTS[o.font ?? 'body']}`;
+  }
+
+  text(s: string, x: number, y: number, o: TextOpts = {}) {
+    const c = this.ctx;
+    this.font(o);
+    c.fillStyle = o.color ?? UI.ink;
+    c.textAlign = o.align ?? 'left';
+    c.textBaseline = 'middle';
+    c.fillText(s, x, y, o.maxWidth);
+  }
+
+  measure(s: string, o: TextOpts = {}): number {
+    this.font(o);
+    return this.ctx.measureText(s).width;
+  }
+
+  /** Word-wrapped text. Returns the y after the last line. */
+  para(s: string, x: number, y: number, width: number, o: TextOpts = {}, lineHeight = (o.size ?? 14) * 1.3): number {
+    this.font(o);
+    const words = s.split(' ');
+    let line = '';
+    let yy = y;
+    for (const w of words) {
+      const next = line ? `${line} ${w}` : w;
+      if (this.ctx.measureText(next).width > width && line) {
+        this.text(line, x, yy, o);
+        line = w;
+        yy += lineHeight;
+      } else line = next;
+    }
+    if (line) { this.text(line, x, yy, o); yy += lineHeight; }
+    return yy;
+  }
+
+  /** Number of lines a paragraph would take. */
+  lines(s: string, width: number, o: TextOpts = {}): number {
+    this.font(o);
+    let n = 1, line = '';
+    for (const w of s.split(' ')) {
+      const next = line ? `${line} ${w}` : w;
+      if (this.ctx.measureText(next).width > width && line) { n++; line = w; } else line = next;
+    }
+    return n;
+  }
+
+  button(id: string, x: number, y: number, w: number, h: number, label: string, o: ButtonOpts = {}) {
+    const c = this.ctx;
+    c.save();
+    c.globalAlpha = o.disabled ? 0.45 : 1;
+    c.fillStyle = UI.panelEdge; this.rr(x, y + 3, w, h, 8); c.fill();
+    c.fillStyle = o.fill ?? UI.gold; this.rr(x, y, w, h, 8); c.fill();
+    c.fillStyle = 'rgba(255,255,255,.22)'; this.rr(x + 3, y + 2, w - 6, h * 0.42, 6); c.fill();
+    c.strokeStyle = UI.panelEdge; c.lineWidth = 2; this.rr(x, y, w, h, 8); c.stroke();
+    this.text(label, x + w / 2, y + h / 2 + 1, { size: o.size ?? 16, font: 'head', color: o.color ?? UI.ink, align: 'center', maxWidth: w - 8 });
+    c.restore();
+    if (!o.disabled) this.hits.push({ id, x, y, w, h, hold: o.hold });
+  }
+
+  /** An invisible tap area, e.g. a whole card. */
+  area(id: string, x: number, y: number, w: number, h: number) {
+    this.hits.push({ id, x, y, w, h });
+  }
+
+  coin(x: number, y: number, r: number) {
+    const c = this.ctx;
+    c.fillStyle = '#9c7c3c'; c.beginPath(); c.arc(x, y + 1, r, 0, 7); c.fill();
+    c.fillStyle = UI.silver; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill();
+    c.strokeStyle = '#a49c88'; c.lineWidth = 1.2; c.beginPath(); c.arc(x, y, r * 0.62, 0, 7); c.stroke();
+  }
+
+  /**
+   * Customer mood without faces (style guide 4.7): a coin (will buy, two coins when delighted),
+   * a balance scale (thinking it over), a closed hand (leaving, price too high).
+   */
+  mood(x: number, y: number, r: number, mood: Mood) {
+    const c = this.ctx;
+    c.save();
+    c.fillStyle = UI.parch; c.strokeStyle = UI.panelEdge; c.lineWidth = 1.5;
+    c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); c.stroke();
+    if (mood === 'happy') this.coin(x, y, r * 0.55);
+    else if (mood === 'delighted') { this.coin(x - r * 0.25, y + r * 0.12, r * 0.45); this.coin(x + r * 0.25, y - r * 0.12, r * 0.45); }
+    else if (mood === 'unsure') {
+      c.strokeStyle = UI.panelEdge; c.lineWidth = r * 0.12; c.lineCap = 'round';
+      c.beginPath(); c.moveTo(x, y - r * 0.55); c.lineTo(x, y + r * 0.45); c.moveTo(x - r * 0.45, y + r * 0.5); c.lineTo(x + r * 0.45, y + r * 0.5);
+      c.moveTo(x - r * 0.55, y - r * 0.35); c.lineTo(x + r * 0.55, y - r * 0.45); c.stroke();
+      c.fillStyle = UI.gold;
+      c.beginPath(); c.arc(x - r * 0.55, y - r * 0.1, r * 0.22, 0, Math.PI); c.fill();
+      c.beginPath(); c.arc(x + r * 0.55, y - r * 0.2, r * 0.22, 0, Math.PI); c.fill();
+    } else {
+      // A closed hand: a fist block with knuckle lines.
+      c.fillStyle = UI.red;
+      this.rr(x - r * 0.45, y - r * 0.4, r * 0.9, r * 0.8, r * 0.25); c.fill();
+      c.strokeStyle = UI.parch; c.lineWidth = r * 0.08;
+      for (const k of [-0.15, 0.15]) { c.beginPath(); c.moveTo(x + k * r, y - r * 0.4); c.lineTo(x + k * r, y - r * 0.05); c.stroke(); }
+      c.beginPath(); c.moveTo(x - r * 0.45, y + r * 0.1); c.lineTo(x - r * 0.1, y + r * 0.1); c.stroke();
+    }
+    c.restore();
+  }
+
+  goodIcon(good: GoodId, x: number, y: number, s = 1) {
+    const c = this.ctx;
+    c.save();
+    c.translate(x, y);
+    c.scale(s, s);
+    if (good === 'dates') {
+      c.fillStyle = '#b08d4f'; this.rr(-17, 2, 34, 11, 4); c.fill();
+      c.fillStyle = '#5e2f1c';
+      for (const [dx, dy] of [[-10, 0], [-3, -2], [4, 0], [11, -1], [-6, -7], [1, -8], [8, -6], [-1, -13]] as const) { c.beginPath(); c.ellipse(dx, dy, 4, 5.5, 0, 0, 7); c.fill(); }
+    } else if (good === 'cloth') {
+      for (const [col, dx, dy] of [['#3d4f7c', -8, 4], ['#a8432f', 8, 4], ['#ece3d0', 0, -7]] as const) {
+        c.fillStyle = col; this.rr(-15 + dx * 0.3, dy - 5, 30, 10, 5); c.fill();
+        c.strokeStyle = 'rgba(0,0,0,.25)'; c.lineWidth = 1; c.stroke();
+      }
+    } else if (good === 'spices') {
+      c.fillStyle = '#d8c9a3'; this.rr(-13, -8, 26, 22, 7); c.fill();
+      c.fillStyle = '#d9a431'; c.beginPath(); c.ellipse(0, -8, 12, 6, 0, 0, 7); c.fill();
+      c.strokeStyle = '#8a5a2b'; c.lineWidth = 2; c.beginPath(); c.moveTo(-10, -2); c.lineTo(10, -2); c.stroke();
+    } else if (good === 'pottery') {
+      c.fillStyle = '#b4643f'; c.beginPath();
+      c.moveTo(-4, -15); c.lineTo(4, -15); c.quadraticCurveTo(15, -4, 9, 10);
+      c.lineTo(-9, 10); c.quadraticCurveTo(-15, -4, -4, -15); c.fill();
+      c.strokeStyle = '#7d3f24'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(-10, -3); c.lineTo(10, -3); c.stroke();
+    } else if (good === 'leather') {
+      c.fillStyle = '#8a5a33';
+      this.rr(-16, -2, 32, 9, 3); c.fill();
+      this.rr(-14, -11, 28, 9, 3); c.fill();
+      c.strokeStyle = '#5b3b22'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(-4, -12); c.lineTo(-4, 8); c.stroke();
+    } else {
+      c.fillStyle = '#d8c27a'; this.rr(-14, -7, 28, 14, 6); c.fill();
+      c.strokeStyle = '#a88c52'; c.lineWidth = 1.5;
+      for (const k of [-6, 0, 6]) { c.beginPath(); c.moveTo(k, -7); c.lineTo(k, 7); c.stroke(); }
+    }
+    c.restore();
+  }
+
+  placeIcon(kind: 'market' | 'gate' | 'bayt', x: number, y: number) {
+    const c = this.ctx;
+    c.save(); c.fillStyle = UI.panelEdge; c.strokeStyle = UI.panelEdge; c.lineWidth = 1.6;
+    if (kind === 'gate') {
+      this.rr(x - 8, y - 7, 16, 14, 2); c.stroke();
+      c.beginPath(); c.arc(x, y + 1, 4, Math.PI, 0); c.lineTo(x + 4, y + 7); c.lineTo(x - 4, y + 7); c.closePath(); c.fill();
+    } else if (kind === 'bayt') this.coin(x, y, 7);
+    else {
+      c.beginPath(); c.moveTo(x - 9, y - 1); c.lineTo(x, y - 8); c.lineTo(x + 9, y - 1); c.closePath(); c.fill();
+      c.fillRect(x - 7, y - 1, 2, 8); c.fillRect(x + 5, y - 1, 2, 8);
+    }
+    c.restore();
+  }
+
+  /** A ruled ledger row: label left, amount right, a pen line under it. */
+  ledgerRow(label: string, value: string, x: number, y: number, w: number, o: { bold?: boolean; color?: string } = {}) {
+    this.text(label, x, y, { size: 13, color: o.bold ? UI.ink : UI.inkSoft, weight: o.bold ? 800 : 700, maxWidth: w - 70 });
+    this.text(value, x + w, y, { size: o.bold ? 16 : 14, font: 'head', align: 'right', color: o.color ?? UI.ink });
+    const c = this.ctx;
+    c.strokeStyle = UI.parchDark; c.lineWidth = 1;
+    c.beginPath(); c.moveTo(x, y + 11); c.lineTo(x + w, y + 11); c.stroke();
+  }
+}
+
+/** Signed money with an explicit plus or minus, so it never relies on colour alone (style guide 5.2). */
+export function signed(n: number, fmt: (n: number) => string): string {
+  if (Math.abs(n) < 0.05) return fmt(0);
+  return `${n > 0 ? '+' : '−'}${fmt(Math.abs(n))}`;
+}

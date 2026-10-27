@@ -1,0 +1,255 @@
+{
+  "dirham": "dirham",
+  "amanah": "Amanah",
+  "next": "Next",
+  "back": "Back",
+  "tapToContinue": "Tap to continue",
+  "weekLabel": "Week {week} · {season}",
+  "dayLabel": "Day {day} of 5",
+  "seasons": [
+    "Spring",
+    "Summer",
+    "Autumn",
+    "Winter"
+  ],
+  "goods": {
+    "dates": "Dates",
+    "pottery": "Pottery",
+    "straw": "Straw",
+    "cloth": "Cloth",
+    "spices": "Spices",
+    "leather": "Leather"
+  },
+  "goodUnits": {
+    "dates": "basket",
+    "pottery": "jar",
+    "straw": "bundle",
+    "cloth": "roll",
+    "spices": "sack",
+    "leather": "bundle"
+  },
+  "title": {
+    "name": "Bazaar Basra",
+    "tagline": "One year at the market stall",
+    "play": "New year",
+    "continue": "Continue",
+    "lang": "Bahasa Melayu"
+  },
+  "prologue": [
+    "Basra, in the year 638. The city is new, built of reed and mud brick where the rivers meet.",
+    "Your uncle hands you his market stall and his ledger, then leaves on a long journey.",
+    "His note: \"Keep honest weights. Write down every cost. At the end of the year, count what you own.\"",
+    "The crier reads a letter from Umar ibn al-Khattab (may Allah be pleased with him): value your trade goods each year and pay zakat on them. (Paraphrase)",
+    "You have 160 dirham, two baskets of dates and a roll of cloth. One lunar year starts now."
+  ],
+  "stall": {
+    "title": "Rent a stall for the week",
+    "small": "Small stall",
+    "medium": "Medium stall",
+    "big": "Big stall",
+    "shelves": "{n} shelves",
+    "rent": "Rent {n}",
+    "customers": "{a} to {b} customers a day",
+    "where": {
+      "small": "Back row, near the arch",
+      "medium": "Middle aisle",
+      "big": "Corner by the well"
+    },
+    "loan": "Short of rent. Your uncle's friend lends {n} dirham, interest free (qard hasan)."
+  },
+  "places": {
+    "market": "Bazaar",
+    "gate": "City Gate",
+    "bayt": "Bayt al-Mal"
+  },
+  "alley": {
+    "title": "The alleys of Basra",
+    "hint": "Pick a place to go.",
+    "walking": "Walking...",
+    "arrive": {
+      "market": "The bazaar entrance. Your stall is waiting.",
+      "gate": "The city gate. Caravans to the groves and the port leave from here.",
+      "bayt": "The bayt al-mal. Zakat is counted and paid here at the end of the year."
+    },
+    "notYet": "Come back at the end of the year.",
+    "toGate": "Through the gate",
+    "enterBayt": "Go inside",
+    "enterBazaar": "Enter the bazaar"
+  },
+  "source": {
+    "title": "Where will you buy this weekend?",
+    "groves": "Date groves",
+    "port": "Ubulla port",
+    "bedouin": "Bedouin camp",
+    "grovesSells": "Dates, pottery, straw",
+    "portSells": "Cloth, spices",
+    "bedouinSells": "Leather, on cash or credit",
+    "crier2": "The crier: a ship from India has docked at Ubulla. Spices are cheap this week.",
+    "crier3": "A Bedouin trader camps outside the gate. He offers leather on credit.",
+    "crier4": "Winter is coming. Cloth will sell well in the cold."
+  },
+  "cart": {
+    "title": "Hire a cart",
+    "handcart": "Handcart",
+    "donkey": "Donkey cart",
+    "camels": "Two camels",
+    "grid": "{c} x {r} cells",
+    "hire": "Hire {n}",
+    "match": "Suits the {stall}"
+  },
+  "buy": {
+    "title": "Buy and pack",
+    "hint": "Buy, then tap a good and tap the cart to pack it.",
+    "tray": "Not packed",
+    "rotate": "Rotate",
+    "auto": "Auto-pack",
+    "leave": "Leave",
+    "credit": "On credit",
+    "unpacked": "{n} not packed will be refunded.",
+    "cantFit": "That does not fit there.",
+    "padNote": "A jar touching cloth or straw will not break."
+  },
+  "ride": {
+    "title": "The ride home",
+    "broken": "{n} jar cracked on the road. Straw would have saved it.",
+    "brokenMany": "{n} jars cracked on the road. Straw would have saved them.",
+    "whole": "Everything arrived whole."
+  },
+  "weekendLedger": {
+    "title": "Weekend ledger",
+    "colGood": "Good",
+    "colBuy": "Buy",
+    "colHire": "Hire share",
+    "colLanded": "Landed",
+    "goods": "Goods",
+    "hire": "Cart hire",
+    "total": "Total spent",
+    "wasted": "Hire for {n} empty cells",
+    "credit": "Bought on credit, owed at year end",
+    "broken": "Broken on the road",
+    "note": "Landed cost is your floor price. Sell above it.",
+    "toStall": "To the stall"
+  },
+  "shop": {
+    "setup": "Set your prices, then open the stall.",
+    "setup2": "Watch the customers.",
+    "open": "Open stall",
+    "openFor": "Stall open · {s}s",
+    "closed": "Stall closed",
+    "cost": "cost {n}",
+    "empty": "Empty",
+    "tapToChange": "Tap to change",
+    "spoilSoon": "Spoils tomorrow",
+    "inspector": "The market inspector checked your scale. The stall opens at midday.",
+    "crierCaravan": "The crier: a caravan is late. Dates are short today.",
+    "crierHarith": "Hoarding food to raise its price (ihtikar) is forbidden.",
+    "crierEnd": "The crier: the year is over. Count what you own.",
+    "rest": "Nothing to sell today. Close the stall"
+  },
+  "scale": {
+    "title": "A customer asks by weight",
+    "hint": "Hold to fill the pan. Let go at the line.",
+    "hold": "Hold",
+    "fair": "A fair weight.",
+    "short": "Short weight. The customer noticed.",
+    "over": "Too much. You gave stock away."
+  },
+  "harith": {
+    "title": "Harith leans over your stall",
+    "body": "\"The caravan is late. Hold your dates until tomorrow and sell them dear.\"",
+    "fair": "Sell at a fair price",
+    "hold": "Hold the dates",
+    "fairOutcome": "You sold fairly. Word spreads, and a regular comes each day.",
+    "holdOutcome": "The inspector saw the empty shelf. The caravan came in the night, and dates are cheap now."
+  },
+  "night": {
+    "title": "Night",
+    "sold": "Sold",
+    "takings": "Takings",
+    "credit": "Sold on credit",
+    "walked": "Walked off",
+    "spoiled": "Spoiled",
+    "soon": "Spoils tomorrow",
+    "inspector": "The inspector visits tomorrow morning.",
+    "next": "Next morning",
+    "toLedger": "Open the ledger"
+  },
+  "ledger": {
+    "title": "Week {week} ledger",
+    "revenue": "Revenue",
+    "cogs": "Cost of goods sold (landed)",
+    "rent": "Stall rent",
+    "written": "Spoiled, broken and straw",
+    "wasted": "Hire for empty cells",
+    "profit": "Profit for the week",
+    "cash": "Cash in the chest",
+    "stock": "Stock carried forward (landed)",
+    "owedToYou": "Owed to you",
+    "youOwe": "You owe",
+    "next": "Next week",
+    "yearEnd": "The year is over"
+  },
+  "bayt": {
+    "title": "The bayt al-mal",
+    "clerk": "The clerk opens your ledger. \"Let us count what you own today.\"",
+    "valueTitle": "Value your stock",
+    "valueHint": "Pick the price for each stack.",
+    "tagPaid": "Paid {n}",
+    "tagMarket": "Market today {n}",
+    "tagHoped": "Hoped {n}",
+    "wrongPaid": "Not what you paid. Trade goods are valued at today's market price.",
+    "wrongHoped": "Not what you hope to get. Use the price the market pays today.",
+    "noStock": "Your storeroom is empty. Nothing to value.",
+    "cash": "Cash in the chest",
+    "stock": "Stock at today's market price",
+    "owed": "Owed to you",
+    "debts": "Debts due now",
+    "total": "Zakatable total",
+    "nisab": "Nisab",
+    "due": "Zakat due (one fortieth)",
+    "under": "You are under the nisab. No zakat is due this year.",
+    "pay": "Pay {n} dirham",
+    "continue": "Continue",
+    "paid": "The clerk writes your zakat in his register.",
+    "sadaqahTitle": "Sadaqah",
+    "sadaqahBody": "Zakat is paid. Would you like to give extra, by choice?",
+    "none": "Not now",
+    "give": "Give {n}"
+  },
+  "asnaf": {
+    "title": "Where zakat goes",
+    "names": [
+      "The poor",
+      "The needy",
+      "The collectors",
+      "Hearts brought close",
+      "Freeing captives",
+      "Debtors",
+      "In the way of Allah",
+      "The stranded traveller"
+    ],
+    "scenes": [
+      "A widow with no income receives food for the month.",
+      "A labourer who works but cannot cover his rent gets help.",
+      "The clerk himself is paid for his work.",
+      "A Persian craftsman, new to Islam, is helped to settle in the city.",
+      "A man pays to buy back his freedom.",
+      "A boatman whose boat sank has his debt cleared.",
+      "Support for good works for the community.",
+      "A traveller robbed on the road gets enough to reach home."
+    ],
+    "others": "Other traders' zakat did this work this year."
+  },
+  "end": {
+    "title": "Your year",
+    "profit": "Total profit",
+    "amanah": "Amanah",
+    "zakat": "Zakat paid",
+    "sadaqah": "Sadaqah given",
+    "line": "Zakat on trade goods is still due today. Count yours.",
+    "cta": "Count my zakat",
+    "share": "Share",
+    "again": "Play again",
+    "shareText": "My year at the Basra bazaar: {profit} dirham profit, amanah {amanah}, {zakat} dirham zakat paid."
+  }
+}
